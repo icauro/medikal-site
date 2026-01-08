@@ -6,12 +6,12 @@ import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIza-REDACTED-BY-HISTORY-REWRITE",
-  authDomain: "mpturkey-ccd57.firebaseapp.com",
-  projectId: "mpturkey-ccd57",
-  storageBucket: "mpturkey-ccd57.firebasestorage.app",
-  messagingSenderId: "22291262944",
-  appId: "1:22291262944:web:cb0b0035d011ce7ff5cf85"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIza-REDACTED-BY-HISTORY-REWRITE",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mpturkey-ccd57.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "mpturkey-ccd57",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "mpturkey-ccd57.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "22291262944",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:22291262944:web:cb0b0035d011ce7ff5cf85"
 };
 
 // Initialize Firebase
