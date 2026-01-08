@@ -1,4 +1,5 @@
 import Link from "next/link";
+import UserMenu from "./UserMenu";
 
 export default function Navbar() {
   return (
@@ -38,8 +39,13 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* User Menu / Login */}
+          <div className="flex items-center">
+            <UserMenu />
+          </div>
+
+          {/* Mobile Menu Button - hidden when user menu is visible */}
+          <div className="md:hidden ml-4">
             <button
               type="button"
               className="text-zinc-400 hover:text-white"
