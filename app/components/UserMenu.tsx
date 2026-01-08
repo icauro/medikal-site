@@ -1,34 +1,37 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
-import Link from "next/link";
-import Image from "next/image";
+import { useAuth } from '@/lib/contexts/AuthContext';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function UserMenu() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, logout, loading } = useAuth();
 
-  // Get first name from full name
-  const getFirstName = (name: string | null | undefined) => {
-    if (!name) return "";
-    return name.split(" ")[0];
-  };
-
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
     );
   }
 
-  if (!session) {
+  if (!user || !userProfile) {
     return (
       <Link
         href="/login"
         className="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
       >
-        Login / Sign Up
+        Login
       </Link>
     );
   }
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'text-red-400';
+      case 'doctor': return 'text-blue-400';
+      case 'patient': return 'text-green-400';
+      default: return 'text-zinc-400';
+    }
+  };
 
   return (
     <div className="flex items-center gap-3">
@@ -36,25 +39,30 @@ export default function UserMenu() {
         href="/profile"
         className="flex items-center gap-3 hover:opacity-80 transition-opacity"
       >
-        {session.user?.image ? (
+        {userProfile.photoURL ? (
           <Image
-            src={session.user.image}
-            alt={session.user.name || "User"}
+            src={userProfile.photoURL}
+            alt={userProfile.displayName}
             width={32}
             height={32}
             className="rounded-full"
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-white text-sm font-medium">
-            {session.user?.name?.charAt(0).toUpperCase() || "U"}
+            {userProfile.displayName.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="hidden md:block text-white text-sm font-medium">
-          {getFirstName(session.user?.name) || session.user?.email?.split("@")[0]}
-        </span>
+        <div className="hidden md:block">
+          <div className="text-white text-sm font-medium">
+            {userProfile.displayName}
+          </div>
+          <div className={`text-xs capitalize ${getRoleColor(userProfile.role)}`}>
+            {userProfile.role}
+          </div>
+        </div>
       </Link>
       <button
-        onClick={() => signOut({ callbackUrl: "/" })}
+        onClick={logout}
         className="text-zinc-400 hover:text-white transition-colors text-sm"
         title="Sign Out"
       >
