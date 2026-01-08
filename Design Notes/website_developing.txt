@@ -1,18 +1,30 @@
 there is 3 types of users
+
 patients, Doctors, admins
+
 patients can post reviews on doctors pages
 patients also comment on other reviews (reddit style)
 patient can post that can be seen only from other clinics or doctors (Treatment Plan Request)
 patients can get treatment plan and cost inquires from clinics and doctors by payment
+
 doctors can respond the reviews,
 doctors can edit their page (not the reviews from patients) and post links and images
 doctors can claim to connected to clinics
+
 admins can moderate conservations
-clinics can claim to have doctors
-Clinic pages states location info
-Users can be logged via google account.
+
+
+Doctors can request to moderate clinic page from admins
+Clinic pages can claim to have doctors
+Clinic pages states location and communication info of the clinic
+
+All type of users can be logged via google account.
+
 Visuals
 Ui is Dark, clean, modern,
 
 
-
+Tech stack:
+User login: Firebase auth, only google account login
+Storage of the Data (Reviews, Doctor data): Firestore Database
+Storage of the Images and Videos: Firebase Storage
