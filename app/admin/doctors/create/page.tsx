@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 
@@ -86,12 +87,12 @@ export default function CreateDoctorPage() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <a
-            href="/admin/doctors"
+          <Link
+            href="/admin"
             className="text-zinc-400 hover:text-white transition-colors"
           >
-            ← Back to Admin
-          </a>
+            ← Back to Admin Dashboard
+          </Link>
           <h1 className="text-4xl font-bold mt-4">Create Doctor</h1>
         </div>
 
