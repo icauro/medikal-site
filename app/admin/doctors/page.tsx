@@ -51,13 +51,15 @@ export default function AdminDoctorsPage() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Admin - Doctors</h1>
-          <Link
-            href="/admin/doctors/create"
-            className="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors"
-          >
-            + Create Doctor
-          </Link>
+          <div>
+            <Link
+              href="/admin"
+              className="text-zinc-400 hover:text-white transition-colors text-sm mb-2 inline-block"
+            >
+              ← Back to Admin Dashboard
+            </Link>
+            <h1 className="text-4xl font-bold">Doctors Management</h1>
+          </div>
         </div>
 
         {loading ? (
