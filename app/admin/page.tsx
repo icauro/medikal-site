@@ -34,6 +34,14 @@ export default function AdminDashboard() {
 
   const adminSections = [
     {
+      title: "Verification Requests",
+      description: "Review doctor verification applications",
+      href: "/admin/verifications",
+      icon: "✅",
+      color: "bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20",
+      highlight: true,
+    },
+    {
       title: "Doctors",
       description: "Manage doctors and their profiles",
       href: "/admin/doctors",
@@ -46,7 +54,6 @@ export default function AdminDashboard() {
       href: "/admin/doctors/create",
       icon: "➕",
       color: "bg-green-500/10 border-green-500/20 hover:bg-green-500/20",
-      highlight: true,
     },
     // Add more sections as needed
     // {

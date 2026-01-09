@@ -98,12 +98,20 @@ export default function ProfilePage() {
                   Go Home
                 </a>
                 {userProfile.role === 'doctor' && (
-                  <a
-                    href="/doctor/dashboard"
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    Doctor Dashboard
-                  </a>
+                  <>
+                    <a
+                      href="/doctor/verify"
+                      className="px-6 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors mr-4"
+                    >
+                      Verify Account
+                    </a>
+                    <a
+                      href="/doctor/dashboard"
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    >
+                      Doctor Dashboard
+                    </a>
+                  </>
                 )}
                 {userProfile.role === 'admin' && (
                   <a

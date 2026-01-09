@@ -51,6 +51,57 @@ export interface AdminInfo {
   lastLogin: Date;
 }
 
+// Doctor Verification System
+export type VerificationStatus = 'waiting' | 'approved' | 'denied';
+
+export interface DoctorVerificationRequest {
+  id?: string;
+  doctorId: string; // Firebase Auth UID
+  doctorEmail: string;
+  doctorName: string;
+
+  // Personal Information
+  fullName: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+
+  // Professional Information
+  medicalLicenseNumber: string;
+  licenseIssuingAuthority: string;
+  licenseExpirationDate: string;
+  specialization: string;
+  yearsOfExperience: number;
+
+  // Education
+  medicalSchool: string;
+  graduationYear: number;
+  certifications?: string[];
+
+  // Employment
+  currentClinic?: string;
+  clinicAddress?: string;
+  position: string;
+
+  // Documents (URLs to Firebase Storage)
+  licenseDocumentUrl?: string;
+  certificationDocumentUrls?: string[];
+  photoIdUrl?: string;
+
+  // Additional Information
+  reasonForVerification: string;
+  references?: string[];
+
+  // System fields
+  status: VerificationStatus;
+  submittedAt: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string; // Admin UID who reviewed
+  reviewNotes?: string;
+
+  // Metadata
+  updatedAt: Date;
+}
+
 
 
 
