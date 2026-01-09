@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
+import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 
 export default function CreateDoctorPage() {
   const router = useRouter();
@@ -84,178 +85,180 @@ export default function CreateDoctorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <Link
-            href="/admin"
-            className="text-zinc-400 hover:text-white transition-colors"
-          >
-            ← Back to Admin Dashboard
-          </Link>
-          <h1 className="text-4xl font-bold mt-4">Create Doctor</h1>
-        </div>
+    <ProtectedRoute requiredRole="admin">
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <Link
+              href="/admin"
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              ← Back to Admin Dashboard
+            </Link>
+            <h1 className="text-4xl font-bold mt-4">Create Doctor</h1>
+          </div>
 
-        <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800">
-          {error && (
-            <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
-              {error}
-            </div>
-          )}
+          <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800">
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
+                {error}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Name <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="Dr. John Doe"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="Dr. John Doe"
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="specialty"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Specialty <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                id="specialty"
-                name="specialty"
-                required
-                value={formData.specialty}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="Cardiologist"
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="specialty"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Specialty <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="specialty"
+                  name="specialty"
+                  required
+                  value={formData.specialty}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="Cardiologist"
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="slug"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Slug (URL-friendly identifier)
-              </label>
-              <input
-                type="text"
-                id="slug"
-                name="slug"
-                value={formData.slug}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="dr-john-doe (auto-generated if empty)"
-              />
-              <p className="mt-1 text-sm text-zinc-500">
-                Leave empty to auto-generate from name
-              </p>
-            </div>
+              <div>
+                <label
+                  htmlFor="slug"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Slug (URL-friendly identifier)
+                </label>
+                <input
+                  type="text"
+                  id="slug"
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="dr-john-doe (auto-generated if empty)"
+                />
+                <p className="mt-1 text-sm text-zinc-500">
+                  Leave empty to auto-generate from name
+                </p>
+              </div>
 
-            <div>
-              <label
-                htmlFor="bio"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                name="bio"
-                rows={4}
-                value={formData.bio}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent resize-none"
-                placeholder="Doctor's biography and background..."
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="bio"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  rows={4}
+                  value={formData.bio}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent resize-none"
+                  placeholder="Doctor's biography and background..."
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="image"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Image URL
-              </label>
-              <input
-                type="url"
-                id="image"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="https://example.com/doctor-image.jpg"
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="image"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  id="image"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="https://example.com/doctor-image.jpg"
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="rating"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                Rating (1-5)
-              </label>
-              <input
-                type="number"
-                id="rating"
-                name="rating"
-                min="1"
-                max="5"
-                step="0.1"
-                value={formData.rating}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="4.5"
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="rating"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Rating (1-5)
+                </label>
+                <input
+                  type="number"
+                  id="rating"
+                  name="rating"
+                  min="1"
+                  max="5"
+                  step="0.1"
+                  value={formData.rating}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="4.5"
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="userId"
-                className="block text-sm font-medium text-zinc-300 mb-2"
-              >
-                User ID (Reference to User document)
-              </label>
-              <input
-                type="text"
-                id="userId"
-                name="userId"
-                value={formData.userId}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                placeholder="user-document-id"
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="userId"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  User ID (Reference to User document)
+                </label>
+                <input
+                  type="text"
+                  id="userId"
+                  name="userId"
+                  value={formData.userId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="user-document-id"
+                />
+              </div>
 
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating..." : "Create Doctor"}
-              </button>
-              <a
-                href="/admin/doctors"
-                className="px-6 py-3 bg-zinc-800 text-white font-medium rounded-lg hover:bg-zinc-700 transition-colors"
-              >
-                Cancel
-              </a>
-            </div>
-          </form>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Creating..." : "Create Doctor"}
+                </button>
+                <a
+                  href="/admin/doctors"
+                  className="px-6 py-3 bg-zinc-800 text-white font-medium rounded-lg hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </a>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

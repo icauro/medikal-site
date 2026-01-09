@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 
 interface DashboardStats {
   doctorsCount: number;
@@ -73,78 +74,80 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-zinc-400">Manage your medical site content and data</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-zinc-400 text-sm mb-1">Total Doctors</p>
-                {loading ? (
-                  <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
-                ) : (
-                  <p className="text-3xl font-bold text-white">{stats.doctorsCount}</p>
-                )}
-              </div>
-              <div className="text-4xl">👨‍⚕️</div>
-            </div>
+    <ProtectedRoute requiredRole="admin">
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+            <p className="text-zinc-400">Manage your medical site content and data</p>
           </div>
 
-          {/* Add more stat cards as needed */}
-          {/* <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-zinc-400 text-sm mb-1">Total Reviews</p>
-                <p className="text-3xl font-bold text-white">0</p>
-              </div>
-              <div className="text-4xl">⭐</div>
-            </div>
-          </div> */}
-        </div>
-
-        {/* Quick Actions / Admin Sections */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adminSections.map((section) => (
-              <Link
-                key={section.href}
-                href={section.href}
-                className={`block p-6 rounded-lg border transition-all ${
-                  section.color
-                } ${section.highlight ? "ring-2 ring-green-500/50" : ""}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">{section.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2 text-white">
-                      {section.title}
-                    </h3>
-                    <p className="text-zinc-400 text-sm">{section.description}</p>
-                  </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-zinc-400 text-sm mb-1">Total Doctors</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-white">{stats.doctorsCount}</p>
+                  )}
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+                <div className="text-4xl">👨‍⚕️</div>
+              </div>
+            </div>
 
-        {/* Navigation Back */}
-        <div className="mt-8">
-          <Link
-            href="/"
-            className="text-zinc-400 hover:text-white transition-colors"
-          >
-            ← Back to Home
-          </Link>
+            {/* Add more stat cards as needed */}
+            {/* <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-zinc-400 text-sm mb-1">Total Reviews</p>
+                  <p className="text-3xl font-bold text-white">0</p>
+                </div>
+                <div className="text-4xl">⭐</div>
+              </div>
+            </div> */}
+          </div>
+
+          {/* Quick Actions / Admin Sections */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {adminSections.map((section) => (
+                <Link
+                  key={section.href}
+                  href={section.href}
+                  className={`block p-6 rounded-lg border transition-all ${
+                    section.color
+                  } ${section.highlight ? "ring-2 ring-green-500/50" : ""}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">{section.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold mb-2 text-white">
+                        {section.title}
+                      </h3>
+                      <p className="text-zinc-400 text-sm">{section.description}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation Back */}
+          <div className="mt-8">
+            <Link
+              href="/"
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              ← Back to Home
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
