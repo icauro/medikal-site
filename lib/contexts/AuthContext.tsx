@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { UserProfile, UserRole } from '@/lib/types';
 
@@ -20,6 +20,21 @@ interface AuthContextType {
   updateUserRole: (role: UserRole) => Promise<void>;
   refreshUserProfile: () => Promise<void>;
 }
+
+// Helper function to convert Firestore Timestamps to Date objects
+const convertTimestampsToDates = (profile: any): UserProfile => {
+  return {
+    ...profile,
+    createdAt: profile.createdAt instanceof Timestamp ? profile.createdAt.toDate() : profile.createdAt,
+    updatedAt: profile.updatedAt instanceof Timestamp ? profile.updatedAt.toDate() : profile.updatedAt,
+    ...(profile.adminInfo?.lastLogin && {
+      adminInfo: {
+        ...profile.adminInfo,
+        lastLogin: profile.adminInfo.lastLogin instanceof Timestamp ? profile.adminInfo.lastLogin.toDate() : profile.adminInfo.lastLogin
+      }
+    })
+  };
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -93,7 +108,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     } else {
       console.log('🔄 [PROFILE] Existing user detected, updating last login...');
-      const existingProfile = userSnap.data() as UserProfile;
+      const rawProfile = userSnap.data();
+      const existingProfile = convertTimestampsToDates(rawProfile) as UserProfile;
 
       try {
         console.log('💾 [PROFILE] Updating user profile timestamp...');
@@ -189,7 +205,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      const profile = userSnap.data() as UserProfile;
+      const rawProfile = userSnap.data();
+      const profile = convertTimestampsToDates(rawProfile) as UserProfile;
       setUserProfile(profile);
       console.log('✅ [PROFILE] User profile refreshed successfully');
     } else {
