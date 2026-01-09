@@ -69,7 +69,7 @@ export default function DoctorsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8">Doctors</h1>
           <div className="text-center py-12">
             <p className="text-zinc-400 text-lg">Loading doctors...</p>
@@ -81,7 +81,7 @@ export default function DoctorsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold">Doctors</h1>
         </div>

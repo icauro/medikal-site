@@ -1,0 +1,5 @@
+# 3D Models Directory
+
+This directory stores 3D model assets (GLTF, GLB, OBJ, etc.) for use in the application.
+
+Access models via: `/models/filename.glb`

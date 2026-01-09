@@ -164,7 +164,7 @@ export default function DoctorVerificationPage() {
     return (
       <ProtectedRoute requiredRole="doctor">
         <div className="min-h-screen bg-black text-white p-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
               <p className="text-zinc-400 text-lg">Loading...</p>
             </div>
@@ -177,7 +177,7 @@ export default function DoctorVerificationPage() {
   return (
     <ProtectedRoute requiredRole="doctor">
       <div className="min-h-screen bg-black text-white p-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <Link
               href="/profile"
