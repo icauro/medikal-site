@@ -7,13 +7,22 @@ import Image from 'next/image';
 export default function UserMenu() {
   const { user, userProfile, logout, loading } = useAuth();
 
+  console.log('👤 [USERMENU] UserMenu rendered', {
+    loading: loading,
+    hasUser: !!user,
+    hasProfile: !!userProfile,
+    userRole: userProfile?.role
+  });
+
   if (loading) {
+    console.log('⏳ [USERMENU] Showing loading state');
     return (
       <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
     );
   }
 
   if (!user || !userProfile) {
+    console.log('🔗 [USERMENU] Showing login link (no authenticated user)');
     return (
       <Link
         href="/login"
@@ -23,6 +32,12 @@ export default function UserMenu() {
       </Link>
     );
   }
+
+  console.log('👤 [USERMENU] Showing authenticated user menu', {
+    displayName: userProfile.displayName,
+    role: userProfile.role,
+    email: userProfile.email
+  });
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -62,7 +77,16 @@ export default function UserMenu() {
         </div>
       </Link>
       <button
-        onClick={logout}
+        onClick={async () => {
+          console.log('🚪 [USERMENU] User initiated logout');
+
+          try {
+            await logout();
+            console.log('✅ [USERMENU] Logout completed successfully');
+          } catch (error) {
+            console.error('❌ [USERMENU] Logout failed:', error);
+          }
+        }}
         className="text-zinc-400 hover:text-white transition-colors text-sm"
         title="Sign Out"
       >

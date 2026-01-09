@@ -42,6 +42,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Create or update user profile in Firestore
   const createUserProfile = async (firebaseUser: User, role: UserRole = 'patient') => {
+    console.log('👤 [PROFILE] Creating/loading user profile...', {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email
+    });
+
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
@@ -56,9 +61,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     if (!userSnap.exists()) {
-      // New user - set default role based on email or other criteria
+      console.log('🆕 [PROFILE] New user detected, creating profile...');
+
+      // Check admin email list
       const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
       const isAdmin = adminEmails.includes(firebaseUser.email!);
+
+      console.log('👑 [PROFILE] Role determination:', {
+        email: firebaseUser.email,
+        adminEmails: adminEmails,
+        isAdmin: isAdmin,
+        assignedRole: isAdmin ? 'admin' : role
+      });
 
       const profile: UserProfile = {
         ...baseProfile,
@@ -67,86 +81,160 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           preferredLanguage: 'en',
         } : undefined,
       };
-      await setDoc(userRef, profile);
-      return profile;
+
+      try {
+        console.log('💾 [PROFILE] Saving new user profile to Firestore...');
+        await setDoc(userRef, profile);
+        console.log('✅ [PROFILE] New user profile created successfully');
+        return profile;
+      } catch (error) {
+        console.error('❌ [PROFILE] Failed to create user profile:', error);
+        throw error;
+      }
     } else {
-      // Existing user - update last login
+      console.log('🔄 [PROFILE] Existing user detected, updating last login...');
       const existingProfile = userSnap.data() as UserProfile;
-      existingProfile.updatedAt = new Date();
-      await updateDoc(userRef, { updatedAt: new Date() });
-      return existingProfile;
+
+      try {
+        console.log('💾 [PROFILE] Updating user profile timestamp...');
+        await updateDoc(userRef, { updatedAt: new Date() });
+        existingProfile.updatedAt = new Date();
+        console.log('✅ [PROFILE] User profile updated successfully');
+        return existingProfile;
+      } catch (error) {
+        console.error('❌ [PROFILE] Failed to update user profile:', error);
+        throw error;
+      }
     }
   };
 
   const signInWithGoogle = async () => {
+    console.log('🔐 [AUTH] Starting Google sign-in process...');
+
     try {
+      console.log('🔐 [AUTH] Opening Google OAuth popup...');
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
-      // Profile will be created/loaded by the auth state listener
-      console.log('User signed in:', user.email);
-    } catch (error) {
-      console.error('Google sign in error:', error);
+      console.log('✅ [AUTH] Google OAuth successful', {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        provider: 'google'
+      });
+
+      console.log('🔐 [AUTH] User signed in:', user.email);
+      console.log('🔐 [AUTH] Profile creation/update will be handled by auth state listener');
+
+    } catch (error: unknown) {
+      console.error('❌ [AUTH] Google sign in error:', error);
       throw error;
     }
   };
 
   const logout = async () => {
+    console.log('🔐 [AUTH] Starting logout process...');
+
     try {
+      console.log('🔐 [AUTH] Signing out from Firebase...');
       await firebaseSignOut(auth);
       setUser(null);
       setUserProfile(null);
+      console.log('✅ [AUTH] Successfully signed out');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ [AUTH] Logout error:', error);
       throw error;
     }
   };
 
   const updateUserRole = async (role: UserRole) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('⚠️ [AUTH] Cannot update role: No user logged in');
+      return;
+    }
 
-    const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, {
-      role,
-      updatedAt: new Date()
+    console.log('👑 [PROFILE] Updating user role...', {
+      uid: user.uid,
+      currentRole: userProfile?.role,
+      newRole: role
     });
 
-    if (userProfile) {
-      setUserProfile({ ...userProfile, role });
+    const userRef = doc(db, 'users', user.uid);
+
+    try {
+      await updateDoc(userRef, {
+        role,
+        updatedAt: new Date()
+      });
+
+      if (userProfile) {
+        setUserProfile({ ...userProfile, role });
+        console.log('✅ [PROFILE] User role updated successfully');
+      }
+    } catch (error) {
+      console.error('❌ [PROFILE] Failed to update user role:', error);
+      throw error;
     }
   };
 
   const refreshUserProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      console.warn('⚠️ [AUTH] Cannot refresh profile: No user logged in');
+      return;
+    }
+
+    console.log('🔄 [PROFILE] Refreshing user profile from Firestore...');
 
     const userRef = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      setUserProfile(userSnap.data() as UserProfile);
+      const profile = userSnap.data() as UserProfile;
+      setUserProfile(profile);
+      console.log('✅ [PROFILE] User profile refreshed successfully');
+    } else {
+      console.warn('⚠️ [PROFILE] No profile found in Firestore for user:', user.uid);
     }
   };
 
   useEffect(() => {
+    console.log('👂 [AUTH] Setting up Firebase auth state listener...');
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        console.log('🔐 [AUTH] Auth state changed: User signed in', {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          emailVerified: firebaseUser.emailVerified
+        });
+
         setUser(firebaseUser);
 
         // Load or create user profile from Firestore
         try {
+          console.log('👤 [PROFILE] Loading/creating user profile...');
           const profile = await createUserProfile(firebaseUser);
           setUserProfile(profile);
-        } catch (error) {
-          console.error('Error loading user profile:', error);
+          console.log('✅ [AUTH] User authentication and profile setup complete');
+        } catch (error: unknown) {
+          console.error('❌ [AUTH] Error loading user profile:', error);
+          // Still set loading to false so UI doesn't hang
         }
       } else {
+        console.log('🔐 [AUTH] Auth state changed: User signed out');
         setUser(null);
         setUserProfile(null);
       }
+
       setLoading(false);
+      console.log('🏁 [AUTH] Auth state listener initialization complete');
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('🧹 [AUTH] Cleaning up auth state listener');
+      unsubscribe();
+    };
   }, []);
 
   const value = {

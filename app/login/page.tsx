@@ -8,9 +8,23 @@ export default function LoginPage() {
   const { user, signInWithGoogle, loading } = useAuth();
   const router = useRouter();
 
+  console.log('📱 [LOGIN] Login page rendered', {
+    hasUser: !!user,
+    loading: loading,
+    currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
+  });
+
   useEffect(() => {
+    console.log('🔄 [LOGIN] Checking authentication state...');
+
     if (user) {
+      console.log('✅ [LOGIN] User already authenticated, redirecting to home', {
+        uid: user.uid,
+        email: user.email
+      });
       router.push('/');
+    } else {
+      console.log('ℹ️ [LOGIN] No authenticated user found');
     }
   }, [user, router]);
 
@@ -32,7 +46,12 @@ export default function LoginPage() {
           </p>
 
           <button
-            onClick={signInWithGoogle}
+            onClick={() => {
+              console.log('🔐 [LOGIN] User initiated Google sign-in');
+              signInWithGoogle().catch((error) => {
+                console.error('❌ [LOGIN] Google sign-in failed:', error);
+              });
+            }}
             className="w-full flex items-center justify-center gap-3 bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

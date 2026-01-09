@@ -7,6 +7,18 @@ import Image from 'next/image';
 export default function ProfilePage() {
   const { userProfile } = useAuth();
 
+  console.log('👤 [PROFILE] Profile page rendered', {
+    hasProfile: !!userProfile,
+    profileData: userProfile ? {
+      uid: userProfile.uid,
+      email: userProfile.email,
+      displayName: userProfile.displayName,
+      role: userProfile.role,
+      createdAt: userProfile.createdAt,
+      updatedAt: userProfile.updatedAt
+    } : null
+  });
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'text-red-400';
