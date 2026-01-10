@@ -5,7 +5,9 @@ import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function ProfilePage() {
   const { user, userProfile, logout, deleteAccount } = useAuth();
@@ -13,6 +15,65 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [syncingStatus, setSyncingStatus] = useState(false);
+  const [syncError, setSyncError] = useState('');
+
+  useEffect(() => {
+    if (syncingStatus || !syncError) {
+      return;
+    }
+
+    const timer = setTimeout(() => setSyncError(''), 7000);
+    return () => clearTimeout(timer);
+  }, [syncError, syncingStatus]);
+
+  useEffect(() => {
+    const updateDoctorApproval = async () => {
+      if (!user || !userProfile?.doctorInfo?.verificationRequestId) {
+        return;
+      }
+
+      try {
+        const requestRef = doc(db, 'verification_requests', userProfile.doctorInfo.verificationRequestId);
+        const requestSnap = await getDoc(requestRef);
+
+        if (!requestSnap.exists()) {
+          return;
+        }
+
+        const requestData = requestSnap.data();
+        const status = requestData.status; 
+
+        if (status !== 'approved') {
+          router.replace('/doctor/pending-approval');
+          return;
+        }
+
+        if (!userProfile.doctorInfo.verified || userProfile.accountStatus !== 'active') {
+          try {
+            setSyncingStatus(true);
+            setSyncError('');
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, {
+              accountStatus: 'active',
+              'doctorInfo.verified': true,
+              updatedAt: new Date(),
+            });
+            router.refresh();
+          } catch (error) {
+            console.error('Failed to update doctor status:', error);
+            setSyncError('We approved your profile but could not update your account. Please refresh or contact support.');
+          } finally {
+            setSyncingStatus(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking verification request:', error);
+      }
+    };
+
+    updateDoctorApproval();
+  }, [user, userProfile, router]);
 
   console.log('👤 [PROFILE] Profile page rendered', {
     hasProfile: !!userProfile,
@@ -23,7 +84,8 @@ export default function ProfilePage() {
       role: userProfile.role,
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt
-    } : null
+    } : null,
+    syncingStatus
   });
 
   const getRoleColor = (role: string | null) => {
@@ -243,6 +305,11 @@ export default function ProfilePage() {
                   >
                     🏠 Home
                   </Link>
+                  {syncError && (
+                    <span className="px-6 py-2.5 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">
+                      {syncError}
+                    </span>
+                  )}
                   <Link
                     href="/support"
                     className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors font-medium"

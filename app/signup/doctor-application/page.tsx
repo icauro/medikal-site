@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DOCTOR_SPECIALTIES, DoctorSpecialty } from '@/lib/types';
 
@@ -56,6 +56,17 @@ export default function DoctorApplicationPage() {
 
     try {
       console.log('📝 [APPLICATION] Submitting doctor verification request');
+
+      const existingRequestSnapshot = await getDocs(
+        query(collection(db, 'verification_requests'), where('doctorId', '==', user.uid))
+      );
+
+      if (!existingRequestSnapshot.empty) {
+        console.log('🚫 [APPLICATION] Duplicate verification attempt blocked');
+        setError('You already have a verification request on file. Please contact support to update it.');
+        setLoading(false);
+        return;
+      }
 
       // Create verification request
       const verificationRef = await addDoc(collection(db, 'verification_requests'), {
