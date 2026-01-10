@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 
 type TabKey = "info" | "reviews";
+type ReviewTabKey = "site-reviews" | "google-reviews";
 
 interface DoctorRecord {
   id: string;
@@ -39,6 +40,7 @@ export default function DoctorProfilePage() {
   const slug = params?.slug;
   const [doctor, setDoctor] = useState<DoctorRecord | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("reviews");
+  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabKey>("site-reviews");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -310,33 +312,79 @@ export default function DoctorProfilePage() {
           <div className="p-6 md:p-8">
             {activeTab === "reviews" ? (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold mb-3">Google Maps Location</h3>
-                  <p className="text-sm text-zinc-400 mb-6">
-                    View the clinic's location on Google Maps. The map below uses the Google Place ID provided by the doctor.
-                  </p>
+                {/* Review Sub-tabs */}
+                <div className="flex border-b border-zinc-800">
+                  {[
+                    { key: "site-reviews", label: "Site Reviews" },
+                    { key: "google-reviews", label: "Google Reviews" }
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.key}
+                      type="button"
+                      onClick={() => setActiveReviewTab(subTab.key as ReviewTabKey)}
+                      className={`flex-1 px-4 md:px-6 py-3 text-sm font-semibold transition-colors ${
+                        activeReviewTab === subTab.key
+                          ? "text-white border-b-2 border-white"
+                          : "text-zinc-400 hover:text-white border-b-2 border-transparent"
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
                 </div>
-                {googleMapsEmbedUrl ? (
-                  <div className="w-full overflow-hidden rounded-2xl border border-zinc-800 bg-black">
-                    <div className="aspect-[16/9]">
-                      <iframe
-                        src={googleMapsEmbedUrl}
-                        title="Google Maps Location"
-                        className="h-full w-full"
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
+
+                {/* Site Reviews Tab */}
+                {activeReviewTab === "site-reviews" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-3">Patient Reviews</h3>
+                      <p className="text-sm text-zinc-400 mb-6">
+                        Reviews from patients who have visited this doctor through our platform.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
+                      <p>
+                        🚧 Site reviews feature is currently under development.
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        This section will display reviews and ratings submitted by users of our platform.
+                      </p>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
-                    <p>
-                      No Google Maps location embedded yet. The doctor has not provided a Google Place ID.
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      Find your Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="underline">Google Place ID Finder</a>.
-                    </p>
+                )}
+
+                {/* Google Reviews Tab */}
+                {activeReviewTab === "google-reviews" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-3">Google Maps Location & Reviews</h3>
+                      <p className="text-sm text-zinc-400 mb-6">
+                        View the clinic's location on Google Maps and access Google reviews. The map below uses the Google Place ID provided by the doctor.
+                      </p>
+                    </div>
+                    {googleMapsEmbedUrl ? (
+                      <div className="w-full overflow-hidden rounded-2xl border border-zinc-800 bg-black">
+                        <div className="aspect-[16/9]">
+                          <iframe
+                            src={googleMapsEmbedUrl}
+                            title="Google Maps Location"
+                            className="h-full w-full"
+                            loading="lazy"
+                            allowFullScreen
+                            referrerPolicy="no-referrer-when-downgrade"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
+                        <p>
+                          No Google Maps location embedded yet. The doctor has not provided a Google Place ID.
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          Find your Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="underline">Google Place ID Finder</a>.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
