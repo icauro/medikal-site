@@ -287,16 +287,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
 
         setUser(firebaseUser);
+        console.log('🔐 [AUTH] Firebase user set:', {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName
+        });
 
         // Load or create user profile from Firestore
         try {
           console.log('👤 [PROFILE] Loading/creating user profile...');
           const profile = await createUserProfile(firebaseUser);
           setUserProfile(profile);
-          console.log('✅ [AUTH] User authentication and profile setup complete');
+          console.log('✅ [AUTH] User authentication and profile setup complete', {
+            profileRole: profile.role,
+            profileStatus: profile.accountStatus,
+            profileEmail: profile.email
+          });
         } catch (error: unknown) {
           console.error('❌ [AUTH] Error loading user profile:', error);
-          // Still set loading to false so UI doesn't hang
+          // If profile creation fails, sign out the user to avoid inconsistent state
+          console.log('🚨 [AUTH] Signing out user due to profile creation failure');
+          try {
+            await firebaseSignOut(auth);
+            setUser(null);
+            setUserProfile(null);
+          } catch (signOutError) {
+            console.error('❌ [AUTH] Failed to sign out after profile error:', signOutError);
+          }
         }
       } else {
         console.log('🔐 [AUTH] Auth state changed: User signed out');

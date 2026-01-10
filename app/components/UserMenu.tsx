@@ -9,6 +9,13 @@ import type { UserRole } from '@/lib/types';
 
 export default function UserMenu() {
   const { user, userProfile, logout, loading } = useAuth();
+
+  // Debug: Log when component re-renders
+  console.log('🔄 [USERMENU] Component re-rendering', {
+    user: user ? 'exists' : 'null',
+    userProfile: userProfile ? 'exists' : 'null',
+    loading
+  });
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -17,7 +24,10 @@ export default function UserMenu() {
     loading: loading,
     hasUser: !!user,
     hasProfile: !!userProfile,
-    userRole: userProfile?.role
+    userRole: userProfile?.role,
+    userEmail: user?.email,
+    userUid: user?.uid,
+    accountStatus: userProfile?.accountStatus
   });
 
   // Close dropdown when clicking outside
@@ -46,6 +56,14 @@ export default function UserMenu() {
 
   if (loading) {
     console.log('⏳ [USERMENU] Showing loading state');
+    return (
+      <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
+    );
+  }
+
+  // If user is authenticated but profile is still loading/being created
+  if (user && !userProfile) {
+    console.log('⏳ [USERMENU] User authenticated but profile not ready, showing loading');
     return (
       <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
     );
