@@ -56,6 +56,13 @@ export default function AdminDashboard() {
       icon: "➕",
       color: "bg-green-500/10 border-green-500/20 hover:bg-green-500/20",
     },
+    {
+      title: "Support Tickets",
+      description: "Manage user support requests",
+      href: "/admin/support",
+      icon: "🎫",
+      color: "bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20",
+    },
     // Add more sections as needed
     // {
     //   title: "Reviews",

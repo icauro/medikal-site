@@ -111,6 +111,60 @@ export interface DoctorVerificationRequest {
   updatedAt: Date;
 }
 
+// Support Ticket System
+export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TicketCategory = 
+  | 'account'
+  | 'billing'
+  | 'technical'
+  | 'doctor_verification'
+  | 'general'
+  | 'medical_question';
+
+export interface TicketMessage {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorRole: UserRole;
+  content: string;
+  attachments?: string[];
+  isInternal?: boolean; // Admin-only notes
+  createdAt: Date;
+}
+
+export interface SupportTicket {
+  id?: string;
+  userId: string; // Firebase Auth UID
+  userEmail: string;
+  userName: string;
+  userRole: UserRole;
+  
+  // Ticket details
+  subject: string;
+  category: TicketCategory;
+  description: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  
+  // Attachments
+  attachments?: string[]; // URLs to Firebase Storage
+  
+  // Threading/Conversation
+  messages: TicketMessage[];
+  
+  // Admin handling
+  assignedTo?: string; // Admin UID
+  resolvedBy?: string; // Admin UID
+  resolutionNotes?: string;
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt?: Date;
+  closedAt?: Date;
+}
+
 
 
 

@@ -37,6 +37,12 @@ export default function Navbar() {
             >
               Doctors
             </Link>
+            <Link
+              href="/support"
+              className="text-zinc-400 transition-colors hover:text-white"
+            >
+              Support
+            </Link>
           </div>
 
           {/* User Menu / Login */}
