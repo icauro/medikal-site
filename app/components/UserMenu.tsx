@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import type { UserRole } from '@/lib/types';
 
 export default function UserMenu() {
   const { user, userProfile, logout, loading } = useAuth();
@@ -68,7 +69,7 @@ export default function UserMenu() {
     email: userProfile.email
   });
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole | null | undefined) => {
     switch (role) {
       case 'admin': return 'text-red-400';
       case 'doctor': return 'text-blue-400';
@@ -77,7 +78,7 @@ export default function UserMenu() {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: UserRole | null | undefined) => {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-400 border-red-500/20';
       case 'doctor': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
@@ -110,7 +111,7 @@ export default function UserMenu() {
             {userProfile.displayName}
           </div>
           <div className={`text-xs capitalize ${getRoleColor(userProfile.role)}`}>
-            {userProfile.role}
+            {userProfile.role ?? 'pending role'}
           </div>
         </div>
         <svg 
@@ -148,7 +149,7 @@ export default function UserMenu() {
               </div>
             </div>
             <span className={`inline-block px-2 py-1 rounded text-xs font-medium capitalize border ${getRoleBadgeColor(userProfile.role)}`}>
-              {userProfile.role}
+              {userProfile.role ?? 'pending role'}
             </span>
           </div>
 

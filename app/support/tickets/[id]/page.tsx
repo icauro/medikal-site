@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { SupportTicket, TicketStatus } from "@/lib/types";
+import { SupportTicket, TicketStatus, TicketMessage } from "@/lib/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -75,6 +75,11 @@ export default function TicketDetailPage({
   const handleAddReply = async () => {
     if (!user || !userProfile || !ticket || !replyContent.trim()) return;
 
+    if (!userProfile.role) {
+      setError("Complete your role setup before replying");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -82,7 +87,7 @@ export default function TicketDetailPage({
       const ticketRef = doc(db, "support_tickets", ticket.id!);
 
       // Use Date objects for messages array (serverTimestamp() not supported in arrays)
-      const newMessage = {
+      const newMessage: TicketMessage = {
         id: Date.now().toString(),
         authorId: user.uid,
         authorName: userProfile.displayName,

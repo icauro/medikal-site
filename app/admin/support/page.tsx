@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
-import { SupportTicket, TicketStatus, TicketPriority } from "@/lib/types";
+import { SupportTicket, TicketStatus, TicketPriority, TicketMessage } from "@/lib/types";
 import Link from "next/link";
 
 export default function AdminSupportPage() {
@@ -101,7 +101,13 @@ export default function AdminSupportPage() {
       if (!ticket) return;
 
       // Use Date objects for messages array (serverTimestamp() not supported in arrays)
-      const newMessage = {
+      if (userProfile.role !== "admin") {
+        setProcessing(null);
+        setError("Admin role required to reply");
+        return;
+      }
+
+      const newMessage: TicketMessage = {
         id: Date.now().toString(),
         authorId: user.uid,
         authorName: userProfile.displayName,
