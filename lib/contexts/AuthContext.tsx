@@ -7,9 +7,10 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import { UserProfile, UserRole } from '@/lib/types';
+import { deleteUser } from 'firebase/auth';
+import { UserProfile, UserRole, AccountStatus } from '@/lib/types';
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserRole: (role: UserRole) => Promise<void>;
   refreshUserProfile: () => Promise<void>;
+  acceptGDPR: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 // Helper function to convert Firestore Timestamps to Date objects
@@ -56,7 +59,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   // Create or update user profile in Firestore
-  const createUserProfile = async (firebaseUser: User, role: UserRole = 'patient') => {
+  const createUserProfile = async (firebaseUser: User) => {
     console.log('👤 [PROFILE] Creating/loading user profile...', {
       uid: firebaseUser.uid,
       email: firebaseUser.email
@@ -65,42 +68,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
-    const baseProfile = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email!,
-      displayName: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-      photoURL: firebaseUser.photoURL || undefined,
-      role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
     if (!userSnap.exists()) {
-      console.log('🆕 [PROFILE] New user detected, creating profile...');
+      console.log('🆕 [PROFILE] New user detected, creating profile with pending_gdpr status...');
 
       // Check admin email list
       const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
       const isAdmin = adminEmails.includes(firebaseUser.email!);
 
-      console.log('👑 [PROFILE] Role determination:', {
+      console.log('👑 [PROFILE] Admin check:', {
         email: firebaseUser.email,
-        adminEmails: adminEmails,
         isAdmin: isAdmin,
-        assignedRole: isAdmin ? 'admin' : role
       });
 
       const profile: UserProfile = {
-        ...baseProfile,
-        role: isAdmin ? 'admin' : role,
-        patientInfo: role === 'patient' || !isAdmin ? {
-          preferredLanguage: 'en',
-        } : undefined,
+        uid: firebaseUser.uid,
+        email: firebaseUser.email!,
+        displayName: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+        photoURL: firebaseUser.photoURL || undefined,
+        role: isAdmin ? 'admin' : null, // null until role is selected (unless admin)
+        accountStatus: isAdmin ? 'active' : 'pending_gdpr', // New users need to accept GDPR first
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // Admin gets active status immediately
+        ...(isAdmin && {
+          adminInfo: {
+            permissions: ['manage_users', 'manage_verifications', 'manage_content'],
+            lastLogin: new Date(),
+          }
+        }),
       };
 
       try {
         console.log('💾 [PROFILE] Saving new user profile to Firestore...');
         await setDoc(userRef, profile);
-        console.log('✅ [PROFILE] New user profile created successfully');
+        console.log('✅ [PROFILE] New user profile created successfully with status:', profile.accountStatus);
         return profile;
       } catch (error) {
         console.error('❌ [PROFILE] Failed to create user profile:', error);
@@ -111,16 +112,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const rawProfile = userSnap.data();
       const existingProfile = convertTimestampsToDates(rawProfile) as UserProfile;
 
-      try {
-        console.log('💾 [PROFILE] Updating user profile timestamp...');
-        await updateDoc(userRef, { updatedAt: new Date() });
-        existingProfile.updatedAt = new Date();
-        console.log('✅ [PROFILE] User profile updated successfully');
-        return existingProfile;
-      } catch (error) {
-        console.error('❌ [PROFILE] Failed to update user profile:', error);
-        throw error;
+      // Migration: Set accountStatus to 'active' for existing users without it
+      if (!existingProfile.accountStatus) {
+        console.log('🔧 [MIGRATION] Setting accountStatus to active for existing user');
+        try {
+          await updateDoc(userRef, { 
+            accountStatus: 'active',
+            updatedAt: new Date() 
+          });
+          existingProfile.accountStatus = 'active';
+          existingProfile.updatedAt = new Date();
+          console.log('✅ [MIGRATION] accountStatus set to active');
+        } catch (error) {
+          console.error('❌ [MIGRATION] Failed to update accountStatus:', error);
+          // Continue with existing profile even if migration fails
+        }
+      } else {
+        // Normal update for users with accountStatus
+        try {
+          console.log('💾 [PROFILE] Updating user profile timestamp...');
+          await updateDoc(userRef, { updatedAt: new Date() });
+          existingProfile.updatedAt = new Date();
+          console.log('✅ [PROFILE] User profile updated successfully');
+        } catch (error) {
+          console.error('❌ [PROFILE] Failed to update user profile:', error);
+          throw error;
+        }
       }
+      
+      return existingProfile;
     }
   };
 
@@ -214,6 +234,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const acceptGDPR = async () => {
+    if (!user) {
+      console.warn('⚠️ [AUTH] Cannot accept GDPR: No user logged in');
+      return;
+    }
+
+    console.log('📋 [GDPR] User accepting GDPR consent...');
+
+    const userRef = doc(db, 'users', user.uid);
+
+    try {
+      await updateDoc(userRef, {
+        accountStatus: 'pending_role', // Move to role selection step
+        gdprConsent: {
+          accepted: true,
+          acceptedAt: new Date(),
+          version: '1.0',
+        },
+        updatedAt: new Date(),
+      });
+
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          accountStatus: 'pending_role',
+          gdprConsent: {
+            accepted: true,
+            acceptedAt: new Date(),
+            version: '1.0',
+          },
+        });
+      }
+
+      console.log('✅ [GDPR] GDPR consent accepted, moving to role selection');
+    } catch (error) {
+      console.error('❌ [GDPR] Failed to accept GDPR:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     console.log('👂 [AUTH] Setting up Firebase auth state listener...');
 
@@ -254,6 +314,73 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
+  const deleteAccount = async () => {
+    if (!user) {
+      console.warn('⚠️ [AUTH] Cannot delete account: No user logged in');
+      throw new Error('No user logged in');
+    }
+
+    console.log('🗑️ [DELETE] Starting account deletion process...', {
+      uid: user.uid,
+      role: userProfile?.role,
+    });
+
+    try {
+      // 1. Delete user-owned data (but NOT doctor pages, clinic pages, or reviews)
+      const collections = [
+        'support_tickets',
+        'treatment_plans',
+      ];
+
+      for (const collectionName of collections) {
+        console.log(`🗑️ [DELETE] Deleting ${collectionName}...`);
+        const q = query(
+          collection(db, collectionName),
+          where('userId', '==', user.uid)
+        );
+        const snapshot = await getDocs(q);
+        
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        console.log(`✅ [DELETE] Deleted ${snapshot.docs.length} ${collectionName}`);
+      }
+
+      // 2. Delete verification requests if doctor
+      if (userProfile?.role === 'doctor' && userProfile.doctorInfo?.verificationRequestId) {
+        console.log('🗑️ [DELETE] Deleting verification request...');
+        const verificationRef = doc(db, 'verification_requests', userProfile.doctorInfo.verificationRequestId);
+        await deleteDoc(verificationRef);
+        console.log('✅ [DELETE] Verification request deleted');
+      }
+
+      // 3. Delete user profile from Firestore
+      console.log('🗑️ [DELETE] Deleting user profile from Firestore...');
+      const userRef = doc(db, 'users', user.uid);
+      await deleteDoc(userRef);
+      console.log('✅ [DELETE] User profile deleted');
+
+      // 4. Delete Firebase Auth account
+      console.log('🗑️ [DELETE] Deleting Firebase Authentication account...');
+      await deleteUser(user);
+      console.log('✅ [DELETE] Firebase Auth account deleted');
+
+      // 5. Clear local state
+      setUser(null);
+      setUserProfile(null);
+
+      console.log('✅ [DELETE] Account deletion complete');
+    } catch (error: any) {
+      console.error('❌ [DELETE] Error deleting account:', error);
+      
+      // Handle re-authentication requirement
+      if (error.code === 'auth/requires-recent-login') {
+        throw new Error('For security, please log out and log back in before deleting your account.');
+      }
+      
+      throw error;
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -262,6 +389,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logout,
     updateUserRole,
     refreshUserProfile,
+    acceptGDPR,
+    deleteAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

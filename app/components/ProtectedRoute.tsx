@@ -39,6 +39,22 @@ export const ProtectedRoute = ({
         return;
       }
 
+      // Check if account is pending approval (doctors waiting for verification)
+      if (userProfile?.accountStatus === 'pending_approval' && userProfile?.role === 'doctor') {
+        console.log('⏳ [PROTECTED] Doctor account pending approval, redirecting to waiting page');
+        router.push('/doctor/pending-approval');
+        return;
+      }
+
+      // Check if account is not active (should be handled by SignupFlowManager, but double-check)
+      // Treat undefined/null accountStatus as active for legacy users
+      const accountStatus = userProfile?.accountStatus;
+      if (accountStatus && accountStatus !== 'active') {
+        console.log('🚫 [PROTECTED] Account not active, status:', accountStatus);
+        // SignupFlowManager will handle the redirect
+        return;
+      }
+
       if (requiredRole && userProfile?.role !== requiredRole) {
         console.log('🚫 [PROTECTED] Access denied: Insufficient role permissions', {
           requiredRole: requiredRole,
@@ -67,7 +83,7 @@ export const ProtectedRoute = ({
     );
   }
 
-  if (!user || (requiredRole && userProfile?.role !== requiredRole)) {
+  if (!user || (userProfile?.accountStatus && userProfile.accountStatus !== 'active') || (requiredRole && userProfile?.role !== requiredRole)) {
     console.log('🚫 [PROTECTED] Rendering null (will redirect)');
     return null;
   }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import SignupFlowManager from "./components/SignupFlowManager";
 import "../lib/firebase"; // Initialize Firebase at app startup
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 
@@ -31,8 +32,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Navbar />
-          {children}
+          <SignupFlowManager>
+            <Navbar />
+            {children}
+          </SignupFlowManager>
         </AuthProvider>
       </body>
     </html>

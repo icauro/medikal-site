@@ -5,10 +5,14 @@ import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function ProfilePage() {
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, deleteAccount } = useAuth();
   const router = useRouter();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   console.log('👤 [PROFILE] Profile page rendered', {
     hasProfile: !!userProfile,
@@ -22,7 +26,7 @@ export default function ProfilePage() {
     } : null
   });
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string | null) => {
     switch (role) {
       case 'admin': return 'text-red-400';
       case 'doctor': return 'text-blue-400';
@@ -39,6 +43,22 @@ export default function ProfilePage() {
       router.push('/');
     } catch (error) {
       console.error('❌ [PROFILE] Logout failed:', error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      console.log('🗑️ [PROFILE] User confirmed account deletion');
+      await deleteAccount();
+      console.log('✅ [PROFILE] Account deleted successfully, redirecting to home');
+      router.push('/');
+    } catch (error: any) {
+      console.error('❌ [PROFILE] Account deletion failed:', error);
+      setDeleteError(error.message || 'Failed to delete account. Please try again.');
+      setIsDeleting(false);
     }
   };
 
@@ -81,10 +101,12 @@ export default function ProfilePage() {
                   <div className="flex-1 text-center md:text-left">
                     <h2 className="text-2xl md:text-3xl font-bold mb-2">{userProfile.displayName}</h2>
                     <p className="text-zinc-400 mb-3">{userProfile.email}</p>
-                    <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
-                      {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'doctor' ? '👨‍⚕️ ' : '👤 '}
-                      {userProfile.role}
-                    </span>
+                    {userProfile.role && (
+                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
+                        {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'doctor' ? '👨‍⚕️ ' : '👤 '}
+                        {userProfile.role}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -102,7 +124,7 @@ export default function ProfilePage() {
 
                   <div className="bg-zinc-800/50 rounded-lg p-4">
                     <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Account Type</label>
-                    <p className="text-white font-medium capitalize">{userProfile.role}</p>
+                    <p className="text-white font-medium capitalize">{userProfile.role || 'Pending'}</p>
                   </div>
 
                   <div className="bg-zinc-800/50 rounded-lg p-4">
@@ -260,6 +282,82 @@ export default function ProfilePage() {
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* Danger Zone - Delete Account */}
+              <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h3>
+                <p className="text-zinc-400 mb-4 text-sm">
+                  {userProfile.role === 'doctor' || userProfile.role === 'admin'
+                    ? 'Deleting your account will remove your personal data, but your doctor profile, clinic information, and reviews will remain on the site as they belong to the platform.'
+                    : 'Once you delete your account, there is no going back. All your data will be permanently deleted.'}
+                </p>
+                
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="px-6 py-2.5 bg-red-900 hover:bg-red-800 text-white rounded-lg transition-colors font-medium border border-red-700"
+                  >
+                    🗑️ Delete Account
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="bg-red-900/30 border border-red-800 rounded-lg p-4">
+                      <p className="font-semibold text-red-300 mb-2">Are you absolutely sure?</p>
+                      <p className="text-sm text-red-200 mb-3">
+                        This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                      </p>
+                      {userProfile.role === 'doctor' && (
+                        <p className="text-sm text-yellow-300 mb-3">
+                          <strong>Note:</strong> Your doctor profile page, clinic listings, and patient reviews will remain visible on the site as they are part of the platform's public directory.
+                        </p>
+                      )}
+                      <p className="text-sm text-zinc-300">
+                        Type <strong className="text-white">DELETE</strong> below to confirm:
+                      </p>
+                      <input
+                        type="text"
+                        id="deleteConfirmText"
+                        className="w-full mt-2 px-3 py-2 bg-zinc-900 border border-red-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                        placeholder="Type DELETE"
+                        disabled={isDeleting}
+                      />
+                    </div>
+
+                    {deleteError && (
+                      <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 text-red-200 text-sm">
+                        {deleteError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setDeleteError('');
+                        }}
+                        disabled={isDeleting}
+                        className="flex-1 px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById('deleteConfirmText') as HTMLInputElement;
+                          if (input?.value === 'DELETE') {
+                            handleDeleteAccount();
+                          } else {
+                            setDeleteError('Please type DELETE to confirm');
+                          }
+                        }}
+                        disabled={isDeleting}
+                        className="flex-1 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting ? 'Deleting...' : 'Permanently Delete Account'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -1,11 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Doctors collection - allow public read/write for development
-    // TODO: Restrict write access in production!
+    // Doctors collection - public read, admin-only write
     match /doctors/{doctorId} {
       allow read: if true;
-      allow write: if true;
+      allow create, update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
     // Users collection - users can only access their own data

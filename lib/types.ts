@@ -58,15 +58,24 @@ export interface Doctor {
 
 // Authentication Types
 export type UserRole = 'patient' | 'doctor' | 'admin';
+export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_application' | 'pending_approval' | 'active' | 'suspended';
 
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL?: string;
-  role: UserRole;
+  role: UserRole | null; // null until role is selected
+  accountStatus: AccountStatus;
   createdAt: Date;
   updatedAt: Date;
+
+  // GDPR & Privacy
+  gdprConsent?: {
+    accepted: boolean;
+    acceptedAt: Date;
+    version: string; // e.g., "1.0"
+  };
 
   // Role-specific fields
   doctorInfo?: DoctorInfo;
@@ -79,6 +88,7 @@ export interface DoctorInfo {
   clinicId?: string;
   licenseNumber: string;
   verified: boolean;
+  verificationRequestId?: string; // Reference to DoctorVerificationRequest
   bio?: string;
   experience?: number;
   procedureTags?: MedicalProcedureType[]; // Medical procedures this doctor can perform
