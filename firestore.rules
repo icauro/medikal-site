@@ -68,6 +68,47 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Treatment Plans collection
+    match /treatment_plans/{planId} {
+      // Helper function to check if doctor has matching procedure tags
+      function doctorHasMatchingTags() {
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        let doctorTags = userDoc.data.doctorInfo.procedureTags;
+        let planTags = resource.data.procedureTags;
+        // Check if any doctor tag matches any plan tag
+        return doctorTags.hasAny(planTags);
+      }
+      
+      // Authenticated users can create treatment plans
+      allow create: if request.auth != null;
+      
+      // Users can read their own plans
+      // Doctors can read plans with matching procedure tags
+      // Admins can read all plans
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' && 
+         doctorHasMatchingTags())
+      );
+      
+      // Users can update their own plans
+      // Doctors with matching tags can add responses
+      // Admins can update any
+      allow update: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' && 
+         doctorHasMatchingTags())
+      );
+      
+      // Only users and admins can delete their own plans
+      allow delete: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
     // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;

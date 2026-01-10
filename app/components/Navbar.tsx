@@ -1,5 +1,6 @@
 import Link from "next/link";
 import UserMenu from "./UserMenu";
+import QuickLinks from "./QuickLinks";
 
 export default function Navbar() {
   return (
@@ -45,8 +46,9 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* User Menu / Login */}
-          <div className="flex items-center">
+          {/* Quick Links & User Menu */}
+          <div className="flex items-center gap-2">
+            <QuickLinks />
             <UserMenu />
           </div>
 

@@ -8,6 +8,43 @@ export const DOCTOR_SPECIALTIES: DoctorSpecialty[] = [
   'Dermatology',
 ];
 
+export const MEDICAL_PROCEDURES = [
+  'Rhinoplasty (Nose Job)',
+  'Blepharoplasty (Eyelid Surgery)',
+  'Rhytidectomy (Face Lift)',
+  'Mentoplasty (Chin Surgery)',
+  'Sliding Genioplasty (Osseous Chin Surgery)',
+  'Otoplasty (Ear Surgery)',
+  'Brow Lift (Forehead Lift)',
+  'Cheek Augmentation (Malar Augmentation)',
+  'Mammoplasty (Breast Surgery)',
+  'Breast Augmentation (Breast Implants)',
+  'Breast Reduction (Reduction Mammoplasty)',
+  'Breast Lift (Mastopexy)',
+  'Gynecomastia Surgery (Male Breast Reduction)',
+  'Abdominoplasty (Tummy Tuck)',
+  'Liposuction (Fat Removal)',
+  'Brachioplasty (Arm Lift)',
+  'Thighplasty (Thigh Lift)',
+  'Brazilian Butt Lift (Fat Transfer)',
+  'Body Lift (Body Contouring)',
+  'Labiaplasty (Labia Minora Reduction)',
+  'Hair Transplant (Hair Restoration)',
+  'Scar Revision Surgery',
+  'Fat Transfer (Fat Grafting)',
+
+  // Non-surgical aesthetic procedures
+  'Botox Injections (Botulinum Toxin)',
+  'Dermal Fillers (Soft Tissue Fillers)',
+  'Chemical Peel (Chemexfoliation)',
+  'Laser Skin Resurfacing',
+  'Microdermabrasion',
+  'Lip Augmentation (Lip Fillers)',
+  'Non-Surgical Nose Job (Liquid Rhinoplasty)',
+] as const;
+
+export type MedicalProcedureType = typeof MEDICAL_PROCEDURES[number];
+
 export interface Doctor {
   id: string;
   slug: string;
@@ -44,6 +81,7 @@ export interface DoctorInfo {
   verified: boolean;
   bio?: string;
   experience?: number;
+  procedureTags?: MedicalProcedureType[]; // Medical procedures this doctor can perform
 }
 
 export interface PatientInfo {
@@ -165,6 +203,54 @@ export interface SupportTicket {
   closedAt?: Date;
 }
 
+// Treatment Plan System
+export type TreatmentPlanStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | 'completed';
+export type TreatmentPlanPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+export interface DoctorResponse {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  doctorEmail: string;
+  doctorSpecialty?: string;
+  response: string;
+  attachments?: string[];
+  recommendedTreatment?: string;
+  estimatedCost?: number;
+  estimatedDuration?: string;
+  createdAt: Date;
+}
 
-
+export interface TreatmentPlan {
+  id?: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  
+  // Treatment Request Details
+  title: string;
+  description: string;
+  medicalCondition: string;
+  currentSymptoms: string;
+  desiredOutcome: string;
+  procedureTags: MedicalProcedureType[]; // Medical procedures patient is interested in
+  budget?: number;
+  preferredDate?: Date;
+  
+  // Attachments
+  attachments?: string[];
+  medicalRecords?: string[];
+  
+  // Status
+  status: TreatmentPlanStatus;
+  priority: TreatmentPlanPriority;
+  
+  // Doctor Responses
+  responses: DoctorResponse[];
+  selectedDoctorId?: string;
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+}
