@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "mpturkey-ccd57"
-  }
+    "default": "mpturkey-ccd57",
+    "mptdb": "mpturkey-ccd57"
+  },
+  "targets": {},
+  "etags": {}
 }

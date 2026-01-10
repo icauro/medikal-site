@@ -61,6 +61,19 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Add Review Button - Only show for logged in users */}
+        {user && userProfile && (
+          <div className="flex justify-center mb-12">
+            <Link
+              href="/add-review"
+              className="bg-green-500 hover:bg-green-600 text-black font-bold text-lg px-8 py-4 rounded-xl transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 inline-flex items-center gap-2"
+            >
+              <span className="text-2xl">+</span>
+              Add Review!
+            </Link>
+          </div>
+        )}
+
         {/* Public Pages */}
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-6 text-center">📄 Public Pages</h2>
