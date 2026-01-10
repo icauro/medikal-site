@@ -1,17 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 export default function Home() {
+  const { user, userProfile, loading } = useAuth();
+
   const publicPages = [
     { name: "About", href: "/about", description: "About our medical site" },
     { name: "Blogs", href: "/blogs", description: "Medical articles & tips" },
     { name: "Doctors", href: "/doctors", description: "Browse doctors directory" },
   ];
 
-  const userPages = [
-    { name: "Login", href: "/login", description: "User authentication" },
+  // Dynamic user pages based on authentication state
+  const userPages = user && userProfile ? [
     { name: "Profile", href: "/profile", description: "User profile management" },
+    { name: "Treatment Plan", href: "/treatment-plan", description: "Your treatment plan" },
     { name: "Doctor Verification", href: "/doctor/verify", description: "Doctor credential verification" },
+  ] : [
+    { name: "Login", href: "/login", description: "User authentication" },
+    { name: "Sign Up", href: "/signup/role-selection", description: "Create new account" },
+    { name: "Doctor Application", href: "/signup/doctor-application", description: "Apply to become a doctor" },
   ];
 
   const adminPages = [
@@ -20,6 +30,14 @@ export default function Home() {
     { name: "Create Doctor", href: "/admin/doctors/create", description: "Add new doctor" },
     { name: "Verification Requests", href: "/admin/verifications", description: "Review doctor applications" },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -36,7 +54,10 @@ export default function Home() {
           />
           <h1 className="text-4xl font-bold mb-4">🏥 Medikal Site</h1>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-            Development Navigation Hub - Access all pages for testing and development
+            {user && userProfile
+              ? `Welcome back, ${userProfile.displayName}! Access your personalized medical services.`
+              : "Development Navigation Hub - Access all pages for testing and development"
+            }
           </p>
         </div>
 
