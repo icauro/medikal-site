@@ -26,6 +26,7 @@ export default function EditDoctorPage({
     slug: "",
     userId: "",
     rating: "",
+    googlePlaceId: "",
   });
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function EditDoctorPage({
           slug: data.slug || "",
           userId: data.userId || "",
           rating: data.rating?.toString() || "",
+          googlePlaceId: data.googlePlaceId || "",
         });
       } catch (err) {
         console.error("Error loading doctor:", err);
@@ -108,6 +110,7 @@ export default function EditDoctorPage({
         image: formData.image || null,
         userId: formData.userId || null,
         rating: formData.rating ? parseFloat(formData.rating) : null,
+        googlePlaceId: formData.googlePlaceId || null,
         updatedAt: serverTimestamp(),
       });
 
@@ -300,6 +303,29 @@ export default function EditDoctorPage({
                   placeholder="user-document-id"
                 />
               </div>
+
+              <div>
+                <label
+                  htmlFor="googlePlaceId"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Google Place ID
+                </label>
+                <input
+                  type="text"
+                  id="googlePlaceId"
+                  name="googlePlaceId"
+                  value={formData.googlePlaceId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+                />
+                <p className="mt-1 text-sm text-zinc-500">
+                  Find your Google Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="underline">Google Place ID Finder</a>.
+                </p>
+              </div>
+
+
 
               <div className="flex gap-4 pt-4">
                 <button

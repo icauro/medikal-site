@@ -1,64 +1,89 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
 
 const TABS = ["reviews", "info"] as const;
 type TabKey = typeof TABS[number];
 
-type Review = {
+interface DoctorDirectoryEntry {
   id: string;
-  patientName: string;
-  rating: number;
-  date: string;
-  comment: string;
-};
+  name: string;
+  slug: string;
+  googlePlaceId?: string | null;
+}
 
 export default function DoctorHomePage() {
+  console.log('👨‍⚕️ [DOCTOR PAGE] DoctorHomePage component rendered');
   const { userProfile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>("reviews");
+  const [directoryEntry, setDirectoryEntry] = useState<DoctorDirectoryEntry | null>(null);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
 
   const doctorInfo = userProfile?.doctorInfo;
   const aboutText = doctorInfo?.bio?.trim()
     ? doctorInfo.bio
     : "Add your professional bio to highlight your expertise and build trust with patients.";
 
-  const reviews = useMemo<Review[]>(
-    () => [
-      {
-        id: "placeholder-1",
-        patientName: "Anonymous Patient",
-        rating: 5,
-        date: "Dec 12, 2025",
-        comment:
-          "Outstanding care from start to finish. Dr. provided thorough explanations and made the entire experience comfortable.",
-      },
-      {
-        id: "placeholder-2",
-        patientName: "Verified Review",
-        rating: 4,
-        date: "Nov 4, 2025",
-        comment:
-          "Professional and attentive. Looking forward to future visits once more availability opens up.",
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    const fetchDirectoryEntry = async () => {
+      if (!userProfile?.uid) {
+        setDirectoryEntry(null);
+        return;
+      }
 
-  if (loading) {
-    return (
-      <ProtectedRoute requiredRole="doctor">
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-            <p className="text-zinc-400">Loading your doctor profile...</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
+      setDirectoryLoading(true);
+      try {
+        const doctorsRef = collection(db, "doctors");
+        const doctorQuery = query(
+          doctorsRef,
+          where("userId", "==", userProfile.uid),
+          limit(1)
+        );
+        const snapshot = await getDocs(doctorQuery);
+
+        if (snapshot.empty) {
+          setDirectoryEntry(null);
+          return;
+        }
+
+        const docSnap = snapshot.docs[0];
+        const data = docSnap.data();
+        setDirectoryEntry({
+          id: docSnap.id,
+          name: data.name || "",
+          slug: data.slug || docSnap.id,
+          googlePlaceId: data.googlePlaceId ?? null,
+        });
+      } catch (err) {
+        console.error("Failed to load doctor directory entry", err);
+        setDirectoryEntry(null);
+      } finally {
+        setDirectoryLoading(false);
+      }
+    };
+
+    fetchDirectoryEntry();
+  }, [userProfile?.uid]);
+
+  const googleMapsEmbedUrl = useMemo(() => {
+    if (!directoryEntry?.googlePlaceId) {
+      console.warn('🗺️ [GOOGLE MAPS EMBED] No googlePlaceId found in directoryEntry:', directoryEntry);
+      return null;
+    }
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.warn('🗺️ [GOOGLE MAPS EMBED] No NEXT_PUBLIC_GOOGLE_MAPS_API_KEY found in environment variables.');
+      return null;
+    }
+    const url = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=place_id:${directoryEntry.googlePlaceId}`;
+    console.log('🗺️ [GOOGLE MAPS EMBED] Embed URL generated:', url);
+    return url;
+  }, [directoryEntry?.googlePlaceId]);
 
   return (
     <ProtectedRoute requiredRole="doctor">
@@ -153,7 +178,49 @@ export default function DoctorHomePage() {
             </div>
 
             <div className="p-6 md:p-8">
-              {activeTab === "info" ? (
+              {activeTab === "reviews" ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-3">Google Maps Location</h3>
+                    <p className="text-sm text-zinc-400 mb-6">
+                      Embed your clinic's location using Google Maps. Enter your Google Place ID in your profile to display the map below.
+                    </p>
+                  </div>
+                  {directoryLoading ? (
+                    <div className="flex items-center justify-center py-16">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white" />
+                    </div>
+                  ) : googleMapsEmbedUrl ? (
+                    <div className="w-full overflow-hidden rounded-2xl border border-zinc-800 bg-black">
+                      <div className="aspect-[16/9]">
+                        <iframe
+                          src={googleMapsEmbedUrl}
+                          title="Google Maps Location"
+                          className="h-full w-full"
+                          loading="lazy"
+                          allowFullScreen
+                          referrerPolicy="no-referrer-when-downgrade"
+                          onError={(e) => {
+                            // Log error if Place ID exists but map fails to load
+                            if (directoryEntry?.googlePlaceId) {
+                              console.error('🗺️ [GOOGLE MAPS EMBED] Failed to load map for Place ID:', directoryEntry.googlePlaceId, e);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
+                      <p>
+                        No Google Maps location embedded yet. Add your Google Place ID to show your clinic's location here.
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        Find your Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="underline">Google Place ID Finder</a>.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-xl font-semibold mb-3">Professional Details</h3>
@@ -211,37 +278,6 @@ export default function DoctorHomePage() {
                         Encourage patients to leave reviews after appointments.
                       </li>
                     </ul>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-3">Patient Reviews</h3>
-                    <p className="text-sm text-zinc-400 mb-6">
-                      Reviews shown here help patients understand the quality of care you provide. Real patient reviews will appear once the review system is connected to Firestore.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {reviews.map((review) => (
-                      <article
-                        key={review.id}
-                        className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-5 space-y-3"
-                      >
-                        <header className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-white">
-                            {review.patientName}
-                          </span>
-                          <span className="text-yellow-400 font-semibold">
-                            ★ {review.rating.toFixed(1)}
-                          </span>
-                        </header>
-                        <p className="text-xs text-zinc-500">{review.date}</p>
-                        <p className="text-sm text-zinc-300 leading-relaxed">
-                          {review.comment}
-                        </p>
-                      </article>
-                    ))}
                   </div>
                 </div>
               )}

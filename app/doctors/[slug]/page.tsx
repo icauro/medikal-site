@@ -31,14 +31,7 @@ interface DoctorRecord {
   images?: string[];
   experience?: number | null;
   procedureTags?: string[];
-}
-
-interface ReviewPlaceholder {
-  id: string;
-  patientName: string;
-  rating: number;
-  date: string;
-  comment: string;
+  googlePlaceId?: string | null;
 }
 
 export default function DoctorProfilePage() {
@@ -49,27 +42,6 @@ export default function DoctorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const reviews = useMemo<ReviewPlaceholder[]>(
-    () => [
-      {
-        id: "placeholder-1",
-        patientName: "Verified Patient",
-        rating: 5,
-        date: "Dec 8, 2025",
-        comment:
-          "The consultation was thorough and the treatment plan exceeded expectations.",
-      },
-      {
-        id: "placeholder-2",
-        patientName: "Anonymous",
-        rating: 4,
-        date: "Nov 21, 2025",
-        comment:
-          "Professional bedside manner and clear post-op instructions. Highly recommended.",
-      },
-    ],
-    []
-  );
 
   useEffect(() => {
     if (!slug) {
@@ -112,6 +84,7 @@ export default function DoctorProfilePage() {
             procedureTags: Array.isArray(data.procedureTags)
               ? data.procedureTags
               : [],
+            googleReviewsEmbedUrl: data.googleReviewsEmbedUrl ?? null,
           });
           return;
         }
@@ -158,6 +131,7 @@ export default function DoctorProfilePage() {
           procedureTags: Array.isArray(matchData.procedureTags)
             ? matchData.procedureTags
             : [],
+          googleReviewsEmbedUrl: matchData.googleReviewsEmbedUrl ?? null,
         });
       } catch (err) {
         console.error("Error loading doctor profile", err);
@@ -169,6 +143,14 @@ export default function DoctorProfilePage() {
 
     fetchDoctor();
   }, [slug]);
+
+
+  const googleMapsEmbedUrl = useMemo(() => {
+    if (!doctor?.googlePlaceId) return null;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return null;
+    return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=place_id:${doctor.googlePlaceId}`;
+  }, [doctor?.googlePlaceId]);
 
   if (loading) {
     return (
@@ -326,7 +308,39 @@ export default function DoctorProfilePage() {
           </div>
 
           <div className="p-6 md:p-8">
-            {activeTab === "info" ? (
+            {activeTab === "reviews" ? (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold mb-3">Google Maps Location</h3>
+                  <p className="text-sm text-zinc-400 mb-6">
+                    View the clinic's location on Google Maps. The map below uses the Google Place ID provided by the doctor.
+                  </p>
+                </div>
+                {googleMapsEmbedUrl ? (
+                  <div className="w-full overflow-hidden rounded-2xl border border-zinc-800 bg-black">
+                    <div className="aspect-[16/9]">
+                      <iframe
+                        src={googleMapsEmbedUrl}
+                        title="Google Maps Location"
+                        className="h-full w-full"
+                        loading="lazy"
+                        allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
+                    <p>
+                      No Google Maps location embedded yet. The doctor has not provided a Google Place ID.
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      Find your Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="underline">Google Place ID Finder</a>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-semibold mb-3">Professional Details</h3>
@@ -391,37 +405,6 @@ export default function DoctorProfilePage() {
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold mb-3">Patient Reviews</h3>
-                  <p className="text-sm text-zinc-400 mb-6">
-                    Reviews appear once patients share feedback after verified visits.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {reviews.map((review) => (
-                    <article
-                      key={review.id}
-                      className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-5 space-y-3"
-                    >
-                      <header className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-white">
-                          {review.patientName}
-                        </span>
-                        <span className="text-yellow-400 font-semibold">
-                          ★ {review.rating.toFixed(1)}
-                        </span>
-                      </header>
-                      <p className="text-xs text-zinc-500">{review.date}</p>
-                      <p className="text-sm text-zinc-300 leading-relaxed">
-                        {review.comment}
-                      </p>
-                    </article>
-                  ))}
                 </div>
               </div>
             )}

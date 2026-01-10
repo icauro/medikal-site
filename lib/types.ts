@@ -54,6 +54,7 @@ export interface Doctor {
   image?: string;
   clinic?: string;
   rating?: number;
+  googlePlaceId?: string; // Google Maps Place ID for embedding reviews/maps
 }
 
 // Authentication Types
