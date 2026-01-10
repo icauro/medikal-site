@@ -1,9 +1,18 @@
 // Shared types for the application
+export type DoctorSpecialty = 
+  | 'Plastic, Reconstructive and Aesthetic Surgery'
+  | 'Dermatology';
+
+export const DOCTOR_SPECIALTIES: DoctorSpecialty[] = [
+  'Plastic, Reconstructive and Aesthetic Surgery',
+  'Dermatology',
+];
+
 export interface Doctor {
   id: string;
   slug: string;
   name: string;
-  specialty: string;
+  specialty: DoctorSpecialty;
   bio?: string;
   image?: string;
   clinic?: string;

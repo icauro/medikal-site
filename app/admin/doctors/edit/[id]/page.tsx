@@ -6,6 +6,7 @@ import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, query, where, getDocs, serverTimestamp, collection } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
+import { DOCTOR_SPECIALTIES } from "@/lib/types";
 
 export default function EditDoctorPage({
   params,
@@ -119,7 +120,7 @@ export default function EditDoctorPage({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -187,16 +188,21 @@ export default function EditDoctorPage({
                 >
                   Specialty <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   id="specialty"
                   name="specialty"
                   required
                   value={formData.specialty}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                  placeholder="Cardiologist"
-                />
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                >
+                  <option value="">Select a specialty</option>
+                  {DOCTOR_SPECIALTIES.map((specialty) => (
+                    <option key={specialty} value={specialty}>
+                      {specialty}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

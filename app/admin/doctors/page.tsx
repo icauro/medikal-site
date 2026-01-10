@@ -6,11 +6,12 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import { DoctorSpecialty } from "@/lib/types";
 
 interface Doctor {
   id: string;
   name: string;
-  specialty: string;
+  specialty: DoctorSpecialty;
   slug: string;
   rating?: number;
 }
