@@ -18,6 +18,19 @@ import {
 type TabKey = "info" | "reviews";
 type ReviewTabKey = "site-reviews" | "google-reviews";
 
+interface Review {
+  id: string;
+  userId: string;
+  userDisplayName: string;
+  doctorId: string;
+  doctorName: string;
+  categories: string[];
+  rating: number;
+  experienceText: string;
+  createdAt: any;
+  status: string;
+}
+
 interface DoctorRecord {
   id: string;
   name: string;
@@ -39,9 +52,11 @@ export default function DoctorProfilePage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
   const [doctor, setDoctor] = useState<DoctorRecord | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("reviews");
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabKey>("site-reviews");
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
 
@@ -145,6 +160,41 @@ export default function DoctorProfilePage() {
 
     fetchDoctor();
   }, [slug]);
+
+  // Fetch reviews for this doctor
+  useEffect(() => {
+    if (!doctor?.id) {
+      return;
+    }
+
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        console.log('Fetching reviews for doctor:', doctor.id);
+        const reviewsRef = collection(db, "reviews");
+        const reviewsQuery = query(
+          reviewsRef,
+          where("doctorId", "==", doctor.id),
+          where("status", "==", "published")
+        );
+
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        const reviewsData = reviewsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Review[];
+
+        console.log('Fetched reviews:', reviewsData.length);
+        setReviews(reviewsData);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [doctor?.id]);
 
 
   const googleMapsEmbedUrl = useMemo(() => {
@@ -342,14 +392,99 @@ export default function DoctorProfilePage() {
                         Reviews from patients who have visited this doctor through our platform.
                       </p>
                     </div>
-                    <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-sm text-zinc-300 space-y-3">
-                      <p>
-                        🚧 Site reviews feature is currently under development.
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        This section will display reviews and ratings submitted by users of our platform.
-                      </p>
-                    </div>
+
+                    {reviewsLoading ? (
+                      <div className="space-y-4">
+                        {[...Array(2)].map((_, i) => (
+                          <div key={i} className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-6">
+                            <div className="animate-pulse space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="h-4 bg-zinc-700 rounded w-32"></div>
+                                <div className="h-4 bg-zinc-700 rounded w-16"></div>
+                              </div>
+                              <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                              <div className="space-y-2">
+                                <div className="h-3 bg-zinc-700 rounded w-full"></div>
+                                <div className="h-3 bg-zinc-700 rounded w-4/5"></div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : reviews.length > 0 ? (
+                      <div className="space-y-4">
+                        {/* Review Summary */}
+                        <div className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-zinc-400">
+                              {reviews.length} review{reviews.length === 1 ? '' : 's'}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-yellow-400 text-lg">★</span>
+                              <span className="text-white font-semibold">
+                                {(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)}
+                              </span>
+                              <span className="text-zinc-400 text-sm">average</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Individual Reviews */}
+                        {reviews.map((review) => (
+                          <div key={review.id} className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-6">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 flex items-center justify-center text-white font-semibold">
+                                  {review.userDisplayName.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-white">{review.userDisplayName}</div>
+                                  <div className="text-sm text-zinc-400">
+                                    {review.createdAt?.toDate ?
+                                      review.createdAt.toDate().toLocaleDateString() :
+                                      new Date().toLocaleDateString()
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-lg ${i < review.rating ? 'text-yellow-400' : 'text-zinc-600'}`}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            {review.categories.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {review.categories.map((category) => (
+                                  <span
+                                    key={category}
+                                    className="px-2 py-1 bg-blue-500/10 text-blue-300 text-xs rounded-full border border-blue-500/20"
+                                  >
+                                    {category}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            <p className="text-zinc-300 leading-relaxed">{review.experienceText}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-xl p-6 text-center">
+                        <div className="text-4xl mb-3">📝</div>
+                        <p className="text-zinc-300 mb-2">No reviews yet</p>
+                        <p className="text-sm text-zinc-500">
+                          Be the first to share your experience with this doctor!
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
