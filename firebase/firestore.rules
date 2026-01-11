@@ -7,10 +7,38 @@ service cloud.firestore {
       allow create, update, delete: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    // Open Doctor Data collection - public read, admin-only write
+    match /open_doctor_data/{openDataId} {
+      allow read: if true; // Public read for doctor search
+      allow create, update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
     
-    // Users collection - users can only access their own data
+    // Users collection - users can access their own data, but links are admin-controlled
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can create their own profile during signup
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own profile
+      allow update: if request.auth != null && request.auth.uid == userId &&
+        // Allow changing role from null to a valid role during signup, or keep role unchanged
+        (request.resource.data.role == resource.data.role || 
+         (resource.data.role == null && request.resource.data.role in ['patient', 'doctor', 'clinic', 'agency'])) &&
+        // Doctors cannot edit their openDoctorDataId link (admin-only)
+        (!request.resource.data.keys().hasAny(['personalDoctorData']) ||
+         !request.resource.data.personalDoctorData.keys().hasAny(['openDoctorDataId']) ||
+         request.resource.data.personalDoctorData.openDoctorDataId == resource.data.get('personalDoctorData', {}).get('openDoctorDataId', null)) &&
+        // Clinics cannot edit their openClinicDataId link (admin-only)
+        (!request.resource.data.keys().hasAny(['personalClinicData']) ||
+         !request.resource.data.personalClinicData.keys().hasAny(['openClinicDataId']) ||
+         request.resource.data.personalClinicData.openClinicDataId == resource.data.get('personalClinicData', {}).get('openClinicDataId', null)) &&
+        // Agencies cannot edit their openAgencyDataId link (admin-only)
+        (!request.resource.data.keys().hasAny(['personalAgencyData']) ||
+         !request.resource.data.personalAgencyData.keys().hasAny(['openAgencyDataId']) ||
+         request.resource.data.personalAgencyData.openAgencyDataId == resource.data.get('personalAgencyData', {}).get('openAgencyDataId', null));
     }
     
     // Reviews collection - public read, authenticated write

@@ -112,14 +112,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const rawProfile = userSnap.data();
       const existingProfile = convertTimestampsToDates(rawProfile) as UserProfile;
 
-      // Migration: Set accountStatus to 'active' for existing users without it
-      if (!existingProfile.accountStatus) {
-        console.log('🔧 [MIGRATION] Setting accountStatus to active for existing user');
+      // Check if user is admin (for migration purposes)
+      const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+      const isAdmin = adminEmails.includes(firebaseUser.email!);
+
+      // Migration: Set accountStatus to 'active' for existing users without it, or for admins
+      if (!existingProfile.accountStatus || (isAdmin && existingProfile.accountStatus !== 'active')) {
+        console.log('🔧 [MIGRATION] Setting accountStatus to active for existing user', { isAdmin });
         try {
-          await updateDoc(userRef, { 
+          const updates: any = { 
             accountStatus: 'active',
             updatedAt: new Date() 
-          });
+          };
+          
+          // Ensure admin role and adminInfo are set for admin users
+          if (isAdmin && existingProfile.role !== 'admin') {
+            console.log('👑 [MIGRATION] Upgrading user to admin role');
+            updates.role = 'admin';
+            updates.adminInfo = {
+              permissions: ['manage_users', 'manage_verifications', 'manage_content'],
+              lastLogin: new Date(),
+            };
+            existingProfile.role = 'admin';
+            existingProfile.adminInfo = updates.adminInfo;
+          }
+          
+          await updateDoc(userRef, updates);
           existingProfile.accountStatus = 'active';
           existingProfile.updatedAt = new Date();
           console.log('✅ [MIGRATION] accountStatus set to active');

@@ -1,51 +1,24 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function PendingApprovalPage() {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
-  const [verificationRequest, setVerificationRequest] = useState<any>(null);
-  const [loadingRequest, setLoadingRequest] = useState(true);
 
   useEffect(() => {
-    const fetchVerificationRequest = async () => {
-      if (!user || !userProfile?.doctorInfo?.verificationRequestId) {
-        setLoadingRequest(false);
-        return;
+    if (!loading && userProfile) {
+      // If approved, redirect to profile
+      if (userProfile.accountStatus === 'active') {
+        console.log('✅ [PENDING] Application approved, redirecting to profile');
+        router.push('/profile');
       }
-
-      try {
-        const requestDoc = await getDoc(
-          doc(db, 'verification_requests', userProfile.doctorInfo.verificationRequestId)
-        );
-        
-        if (requestDoc.exists()) {
-          setVerificationRequest({ id: requestDoc.id, ...requestDoc.data() });
-          
-          // If approved, redirect to profile
-          if (requestDoc.data().status === 'approved') {
-            console.log('✅ [PENDING] Application approved, redirecting to profile');
-            router.push('/profile');
-          }
-        }
-      } catch (error) {
-        console.error('🚫 [PENDING] Error fetching verification request:', error);
-      } finally {
-        setLoadingRequest(false);
-      }
-    };
-
-    if (!loading) {
-      fetchVerificationRequest();
     }
-  }, [user, userProfile, loading, router]);
+  }, [userProfile, loading, router]);
 
-  if (loading || loadingRequest) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -61,6 +34,8 @@ export default function PendingApprovalPage() {
     router.push('/');
     return null;
   }
+
+  const personalData = userProfile.personalDoctorData;
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -105,36 +80,32 @@ export default function PendingApprovalPage() {
           </ul>
         </div>
 
-        {verificationRequest && (
+        {personalData && (
           <div className="bg-zinc-800 rounded-lg p-6 mb-6">
-            <h3 className="font-semibold mb-3">Application Summary</h3>
+            <h3 className="font-semibold text-white mb-3">Application Summary</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-zinc-400">Submitted</p>
-                <p className="font-medium">
-                  {verificationRequest.submittedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className="text-zinc-400">Status</p>
-                <p className="font-medium capitalize">
-                  {verificationRequest.status || 'Waiting'}
-                </p>
+                <p className="text-zinc-400">Name</p>
+                <p className="font-medium text-white">{personalData.name}</p>
               </div>
               <div>
                 <p className="text-zinc-400">Specialization</p>
-                <p className="font-medium">{verificationRequest.specialization || 'N/A'}</p>
+                <p className="font-medium text-white">{personalData.specialization}</p>
               </div>
               <div>
                 <p className="text-zinc-400">License Number</p>
-                <p className="font-medium">{verificationRequest.medicalLicenseNumber || 'N/A'}</p>
+                <p className="font-medium text-white">{personalData.licenseNumber}</p>
+              </div>
+              <div>
+                <p className="text-zinc-400">Experience</p>
+                <p className="font-medium text-white">{personalData.yearsOfExperience} years</p>
               </div>
             </div>
 
-            {verificationRequest.status === 'denied' && verificationRequest.reviewNotes && (
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <p className="text-sm font-semibold text-red-300 mb-1">Denial Reason:</p>
-                <p className="text-sm text-red-200">{verificationRequest.reviewNotes}</p>
+            {personalData.verificationNotes && (
+              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-sm font-semibold text-blue-300 mb-1">Notes from Admin:</p>
+                <p className="text-sm text-blue-200">{personalData.verificationNotes}</p>
               </div>
             )}
           </div>

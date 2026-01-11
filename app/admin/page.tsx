@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const adminSections = [
     {
       title: "Verification Requests",
-      description: "Review doctor verification applications",
+      description: "Review doctor/clinic/agency applications",
       href: "/admin/verifications",
       icon: "✅",
       color: "bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20",
@@ -50,34 +50,26 @@ export default function AdminDashboard() {
       color: "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20",
     },
     {
-      title: "Create Doctor",
-      description: "Add a new doctor to the database",
-      href: "/admin/doctors/create",
-      icon: "➕",
+      title: "Clinics",
+      description: "Manage clinic information",
+      href: "/admin/clinics",
+      icon: "🏥",
       color: "bg-green-500/10 border-green-500/20 hover:bg-green-500/20",
+    },
+    {
+      title: "Agencies",
+      description: "Manage medical tourism agencies",
+      href: "/admin/agencies",
+      icon: "✈️",
+      color: "bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20",
     },
     {
       title: "Support Tickets",
       description: "Manage user support requests",
       href: "/admin/support",
       icon: "🎫",
-      color: "bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20",
+      color: "bg-pink-500/10 border-pink-500/20 hover:bg-pink-500/20",
     },
-    // Add more sections as needed
-    // {
-    //   title: "Reviews",
-    //   description: "Moderate patient reviews",
-    //   href: "/admin/reviews",
-    //   icon: "⭐",
-    //   color: "bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20",
-    // },
-    // {
-    //   title: "Clinics",
-    //   description: "Manage clinic information",
-    //   href: "/admin/clinics",
-    //   icon: "🏥",
-    //   color: "bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20",
-    // },
   ];
 
   return (

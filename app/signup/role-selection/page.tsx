@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { UserRole } from '@/lib/types';
 
 export default function RoleSelectionPage() {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,28 +45,48 @@ export default function RoleSelectionPage() {
         });
 
         console.log('✅ [ROLE] Patient account activated, refreshing profile...');
-        
-        // Refresh profile to get latest data
         await refreshUserProfile();
-        
         console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
         window.location.href = '/profile';
-      } else {
-        // Doctor needs to fill application
+      } else if (selectedRole === 'doctor') {
+        // Doctor needs to fill personal data
         console.log('🎭 [ROLE] Updating Firestore for doctor...');
         await updateDoc(userRef, {
           role: 'doctor',
-          accountStatus: 'pending_application',
+          accountStatus: 'pending_personal_data',
           updatedAt: new Date(),
         });
 
         console.log('✅ [ROLE] Doctor role set, refreshing profile...');
-        
-        // Refresh profile to get latest data
         await refreshUserProfile();
-        
         console.log('✅ [ROLE] Profile refreshed, navigating to /signup/doctor-application');
         window.location.href = '/signup/doctor-application';
+      } else if (selectedRole === 'clinic') {
+        // Clinic needs to fill personal data
+        console.log('🎭 [ROLE] Updating Firestore for clinic...');
+        await updateDoc(userRef, {
+          role: 'clinic',
+          accountStatus: 'pending_personal_data',
+          updatedAt: new Date(),
+        });
+
+        console.log('✅ [ROLE] Clinic role set, refreshing profile...');
+        await refreshUserProfile();
+        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/clinic-application');
+        window.location.href = '/signup/clinic-application';
+      } else if (selectedRole === 'agency') {
+        // Agency needs to fill personal data
+        console.log('🎭 [ROLE] Updating Firestore for agency...');
+        await updateDoc(userRef, {
+          role: 'agency',
+          accountStatus: 'pending_personal_data',
+          updatedAt: new Date(),
+        });
+
+        console.log('✅ [ROLE] Agency role set, refreshing profile...');
+        await refreshUserProfile();
+        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/agency-application');
+        window.location.href = '/signup/agency-application';
       }
     } catch (err) {
       console.error('🚫 [ROLE] Error updating role:', err);
@@ -112,30 +133,10 @@ export default function RoleSelectionPage() {
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-white">I'm a Patient</h3>
-            <p className="text-zinc-400 text-sm mb-4">
-              Looking for qualified medical professionals for plastic surgery or dermatology services
+            <h3 className="text-xl font-semibold mb-2 text-white">Patient</h3>
+            <p className="text-zinc-400 text-sm">
+              Search for doctors & request treatments
             </p>
-            <ul className="space-y-2 text-sm text-zinc-300">
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Search verified doctors
-              </li>
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Request treatment plans
-              </li>
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Read reviews & ratings
-              </li>
-            </ul>
           </div>
 
           {/* Doctor Option */}
@@ -163,35 +164,75 @@ export default function RoleSelectionPage() {
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-white">I'm a Doctor</h3>
-            <p className="text-zinc-400 text-sm mb-4">
-              Medical professional specializing in plastic surgery or dermatology
+            <h3 className="text-xl font-semibold mb-2 text-white">Doctor</h3>
+            <p className="text-zinc-400 text-sm mb-2">
+              Build profile & connect with patients
             </p>
-            <ul className="space-y-2 text-sm text-zinc-300">
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <p className="text-xs text-yellow-300">Requires verification</p>
+          </div>
+
+          {/* Clinic Option */}
+          <div
+            onClick={() => setSelectedRole('clinic')}
+            className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+              selectedRole === 'clinic'
+                ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20'
+                : 'border-zinc-700 hover:border-green-400 hover:shadow-md hover:bg-zinc-800/50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                Build your profile
-              </li>
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Connect with patients
-              </li>
-              <li className="flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Verified credentials
-              </li>
-            </ul>
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <p className="text-xs text-yellow-300">
-                <strong>Note:</strong> Doctor accounts require credential verification before activation
-              </p>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                selectedRole === 'clinic' ? 'border-green-500 bg-green-500' : 'border-zinc-600'
+              }`}>
+                {selectedRole === 'clinic' && (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
             </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Clinic</h3>
+            <p className="text-zinc-400 text-sm mb-2">
+              List your medical facility & doctors
+            </p>
+            <p className="text-xs text-yellow-300">Requires verification</p>
+          </div>
+
+          {/* Agency Option */}
+          <div
+            onClick={() => setSelectedRole('agency')}
+            className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+              selectedRole === 'agency'
+                ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                : 'border-zinc-700 hover:border-purple-400 hover:shadow-md hover:bg-zinc-800/50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                selectedRole === 'agency' ? 'border-purple-500 bg-purple-500' : 'border-zinc-600'
+              }`}>
+                {selectedRole === 'agency' && (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Agency</h3>
+            <p className="text-zinc-400 text-sm mb-2">
+              Medical tourism & patient coordination
+            </p>
+            <p className="text-xs text-yellow-300">Requires verification</p>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { collection, addDoc, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DOCTOR_SPECIALTIES, DoctorSpecialty } from '@/lib/types';
 
@@ -14,10 +14,10 @@ export default function DoctorApplicationPage() {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     dateOfBirth: '',
     phoneNumber: '',
-    medicalLicenseNumber: '',
+    licenseNumber: '',
     licenseIssuingAuthority: '',
     licenseExpirationDate: '',
     specialization: '' as DoctorSpecialty | '',
@@ -27,7 +27,8 @@ export default function DoctorApplicationPage() {
     currentClinic: '',
     clinicAddress: '',
     position: '',
-    reasonForVerification: '',
+    motivation: '',
+    bio: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -46,7 +47,7 @@ export default function DoctorApplicationPage() {
     }
 
     // Validation
-    if (!formData.fullName || !formData.medicalLicenseNumber || !formData.specialization) {
+    if (!formData.name || !formData.licenseNumber || !formData.specialization) {
       setError('Please fill in all required fields');
       return;
     }
@@ -55,64 +56,39 @@ export default function DoctorApplicationPage() {
     setError('');
 
     try {
-      console.log('📝 [APPLICATION] Submitting doctor verification request');
+      console.log('📝 [PERSONAL_DATA] Submitting personal doctor data');
 
-      const existingRequestSnapshot = await getDocs(
-        query(collection(db, 'verification_requests'), where('doctorId', '==', user.uid))
-      );
-
-      if (!existingRequestSnapshot.empty) {
-        console.log('🚫 [APPLICATION] Duplicate verification attempt blocked');
-        setError('You already have a verification request on file. Please contact support to update it.');
-        setLoading(false);
-        return;
-      }
-
-      // Create verification request
-      const verificationRef = await addDoc(collection(db, 'verification_requests'), {
-        doctorId: user.uid,
-        doctorEmail: user.email,
-        doctorName: user.displayName || formData.fullName,
-        fullName: formData.fullName,
-        dateOfBirth: formData.dateOfBirth,
-        phoneNumber: formData.phoneNumber,
-        medicalLicenseNumber: formData.medicalLicenseNumber,
-        licenseIssuingAuthority: formData.licenseIssuingAuthority,
-        licenseExpirationDate: formData.licenseExpirationDate,
-        specialization: formData.specialization,
-        yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
-        medicalSchool: formData.medicalSchool,
-        graduationYear: parseInt(formData.graduationYear) || new Date().getFullYear(),
-        currentClinic: formData.currentClinic,
-        clinicAddress: formData.clinicAddress,
-        position: formData.position,
-        reasonForVerification: formData.reasonForVerification,
-        status: 'waiting',
-        submittedAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      console.log('✅ [APPLICATION] Verification request created:', verificationRef.id);
-
-      // Update user profile with doctor info and status
+      // Update user profile with personalDoctorData
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         accountStatus: 'pending_approval',
-        doctorInfo: {
+        personalDoctorData: {
+          name: formData.name,
+          dateOfBirth: formData.dateOfBirth,
+          phoneNumber: formData.phoneNumber,
+          licenseNumber: formData.licenseNumber,
+          licenseIssuingAuthority: formData.licenseIssuingAuthority,
+          licenseExpirationDate: formData.licenseExpirationDate,
           specialization: formData.specialization,
-          licenseNumber: formData.medicalLicenseNumber,
+          yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
+          medicalSchool: formData.medicalSchool,
+          graduationYear: parseInt(formData.graduationYear) || new Date().getFullYear(),
+          currentClinic: formData.currentClinic,
+          clinicAddress: formData.clinicAddress,
+          position: formData.position,
+          motivation: formData.motivation,
+          bio: formData.bio,
           verified: false,
-          verificationRequestId: verificationRef.id,
-          experience: parseInt(formData.yearsOfExperience) || 0,
+          photoUrl: user.photoURL || undefined,
         },
         updatedAt: new Date(),
       });
 
-      console.log('✅ [APPLICATION] User profile updated, redirecting to pending page');
+      console.log('✅ [PERSONAL_DATA] Personal doctor data saved, redirecting to pending page');
       window.location.href = '/doctor/pending-approval';
     } catch (err) {
-      console.error('🚫 [APPLICATION] Error submitting application:', err);
-      setError('Failed to submit application. Please try again.');
+      console.error('🚫 [PERSONAL_DATA] Error saving personal data:', err);
+      setError('Failed to save personal data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -122,9 +98,9 @@ export default function DoctorApplicationPage() {
     <div className="min-h-screen bg-black py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-800">
-          <h1 className="text-3xl font-bold mb-2 text-white">Doctor Verification Application</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white">Personal Doctor Information</h1>
           <p className="text-zinc-400 mb-6">
-            Please provide your professional credentials for verification. Your account will be activated once our admin team reviews and approves your application.
+            Please provide your professional information. Your account will be activated once our admin team reviews and approves your profile.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -138,8 +114,8 @@ export default function DoctorApplicationPage() {
                   </label>
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
                     required
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-blue-500 text-white"
@@ -186,8 +162,8 @@ export default function DoctorApplicationPage() {
                   </label>
                   <input
                     type="text"
-                    name="medicalLicenseNumber"
-                    value={formData.medicalLicenseNumber}
+                    name="licenseNumber"
+                    value={formData.licenseNumber}
                     onChange={handleChange}
                     required
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -337,14 +313,28 @@ export default function DoctorApplicationPage() {
               </div>
             </div>
 
-            {/* Reason for Verification */}
+            {/* Bio & Motivation */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-zinc-300">
+                Professional Bio
+              </label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                rows={3}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 placeholder:text-zinc-500"
+                placeholder="Brief description of your practice and expertise..."
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1 text-zinc-300">
                 Why do you want to join our platform? <span className="text-red-400">*</span>
               </label>
               <textarea
-                name="reasonForVerification"
-                value={formData.reasonForVerification}
+                name="motivation"
+                value={formData.motivation}
                 onChange={handleChange}
                 required
                 rows={4}

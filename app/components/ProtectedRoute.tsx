@@ -39,10 +39,22 @@ export const ProtectedRoute = ({
         return;
       }
 
-      // Check if account is pending approval (doctors waiting for verification)
-      if (userProfile?.accountStatus === 'pending_approval' && userProfile?.role === 'doctor') {
-        console.log('⏳ [PROTECTED] Doctor account pending approval, redirecting to waiting page');
-        router.push('/doctor/pending-approval');
+      // Admin users bypass all status checks
+      if (userProfile?.role === 'admin') {
+        console.log('👑 [PROTECTED] Admin user detected, bypassing status checks');
+        return;
+      }
+
+      // Check if account is pending approval (doctors/clinics/agencies waiting for verification)
+      if (userProfile?.accountStatus === 'pending_approval') {
+        console.log('⏳ [PROTECTED] Account pending approval, redirecting to waiting page');
+        if (userProfile.role === 'doctor') {
+          router.push('/doctor/pending-approval');
+        } else if (userProfile.role === 'clinic') {
+          router.push('/clinic/pending-approval');
+        } else if (userProfile.role === 'agency') {
+          router.push('/agency/pending-approval');
+        }
         return;
       }
 
@@ -83,8 +95,13 @@ export const ProtectedRoute = ({
     );
   }
 
-  if (!user || (userProfile?.accountStatus && userProfile.accountStatus !== 'active') || (requiredRole && userProfile?.role !== requiredRole)) {
-    console.log('🚫 [PROTECTED] Rendering null (will redirect)');
+  // Admin users always get access
+  const isAdmin = userProfile?.role === 'admin';
+  const hasValidStatus = !userProfile?.accountStatus || userProfile.accountStatus === 'active' || isAdmin;
+  const hasRequiredRole = !requiredRole || userProfile?.role === requiredRole;
+
+  if (!user || !hasValidStatus || !hasRequiredRole) {
+    console.log('🚫 [PROTECTED] Rendering null (will redirect)', { hasValidStatus, hasRequiredRole, isAdmin });
     return null;
   }
 

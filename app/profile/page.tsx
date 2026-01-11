@@ -27,54 +27,6 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [syncError, syncingStatus]);
 
-  useEffect(() => {
-    const updateDoctorApproval = async () => {
-      if (!user || !userProfile?.doctorInfo?.verificationRequestId) {
-        return;
-      }
-
-      try {
-        const requestRef = doc(db, 'verification_requests', userProfile.doctorInfo.verificationRequestId);
-        const requestSnap = await getDoc(requestRef);
-
-        if (!requestSnap.exists()) {
-          return;
-        }
-
-        const requestData = requestSnap.data();
-        const status = requestData.status; 
-
-        if (status !== 'approved') {
-          router.replace('/doctor/pending-approval');
-          return;
-        }
-
-        if (!userProfile.doctorInfo.verified || userProfile.accountStatus !== 'active') {
-          try {
-            setSyncingStatus(true);
-            setSyncError('');
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, {
-              accountStatus: 'active',
-              'doctorInfo.verified': true,
-              updatedAt: new Date(),
-            });
-            router.refresh();
-          } catch (error) {
-            console.error('Failed to update doctor status:', error);
-            setSyncError('We approved your profile but could not update your account. Please refresh or contact support.');
-          } finally {
-            setSyncingStatus(false);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking verification request:', error);
-      }
-    };
-
-    updateDoctorApproval();
-  }, [user, userProfile, router]);
-
   console.log('👤 [PROFILE] Profile page rendered', {
     hasProfile: !!userProfile,
     profileData: userProfile ? {
@@ -92,7 +44,9 @@ export default function ProfilePage() {
     switch (role) {
       case 'admin': return 'text-red-400';
       case 'doctor': return 'text-blue-400';
-      case 'patient': return 'text-green-400';
+      case 'clinic': return 'text-green-400';
+      case 'agency': return 'text-purple-400';
+      case 'patient': return 'text-cyan-400';
       default: return 'text-zinc-400';
     }
   };
@@ -219,30 +173,52 @@ export default function ProfilePage() {
               </div>
 
               {/* Role-Specific Information */}
-              {userProfile.doctorInfo && (
+              {userProfile.personalDoctorData && (
                 <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6">
                   <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                     👨‍⚕️ Doctor Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="text-blue-300 text-sm block mb-1">Name</label>
+                      <p className="text-white">{userProfile.personalDoctorData.name}</p>
+                    </div>
+                    <div>
                       <label className="text-blue-300 text-sm block mb-1">Specialization</label>
-                      <p className="text-white">{userProfile.doctorInfo.specialization}</p>
+                      <p className="text-white">{userProfile.personalDoctorData.specialization}</p>
                     </div>
                     <div>
                       <label className="text-blue-300 text-sm block mb-1">License Number</label>
-                      <p className="text-white font-mono">{userProfile.doctorInfo.licenseNumber}</p>
+                      <p className="text-white font-mono">{userProfile.personalDoctorData.licenseNumber}</p>
                     </div>
                     <div>
                       <label className="text-blue-300 text-sm block mb-1">Verification Status</label>
-                      <p className={userProfile.doctorInfo.verified ? 'text-green-400' : 'text-yellow-400'}>
-                        {userProfile.doctorInfo.verified ? '✅ Verified' : '⏳ Pending'}
+                      <p className={userProfile.personalDoctorData.verified ? 'text-green-400' : 'text-yellow-400'}>
+                        {userProfile.personalDoctorData.verified ? '✅ Verified' : '⏳ Pending'}
                       </p>
                     </div>
-                    {userProfile.doctorInfo.experience && (
+                    {userProfile.personalDoctorData.yearsOfExperience && (
                       <div>
                         <label className="text-blue-300 text-sm block mb-1">Years of Experience</label>
-                        <p className="text-white">{userProfile.doctorInfo.experience} years</p>
+                        <p className="text-white">{userProfile.personalDoctorData.yearsOfExperience} years</p>
+                      </div>
+                    )}
+                    {userProfile.personalDoctorData.medicalSchool && (
+                      <div>
+                        <label className="text-blue-300 text-sm block mb-1">Medical School</label>
+                        <p className="text-white">{userProfile.personalDoctorData.medicalSchool}</p>
+                      </div>
+                    )}
+                    {userProfile.personalDoctorData.currentClinic && (
+                      <div>
+                        <label className="text-blue-300 text-sm block mb-1">Current Clinic</label>
+                        <p className="text-white">{userProfile.personalDoctorData.currentClinic}</p>
+                      </div>
+                    )}
+                    {userProfile.personalDoctorData.openDoctorDataId && (
+                      <div>
+                        <label className="text-blue-300 text-sm block mb-1">Public Profile Link</label>
+                        <p className="text-green-400">✅ Linked to public profile</p>
                       </div>
                     )}
                   </div>
@@ -270,6 +246,118 @@ export default function ProfilePage() {
                           <p className="text-white">{userProfile.patientInfo.emergencyContact.phone}</p>
                         </div>
                       </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {userProfile.personalClinicData && (
+                <div className="bg-green-900/20 border border-green-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    🏥 Clinic Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Clinic Name</label>
+                      <p className="text-white">{userProfile.personalClinicData.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Contact Person</label>
+                      <p className="text-white">{userProfile.personalClinicData.contactPerson}</p>
+                    </div>
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Phone</label>
+                      <p className="text-white">{userProfile.personalClinicData.phone}</p>
+                    </div>
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Email</label>
+                      <p className="text-white">{userProfile.personalClinicData.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Location</label>
+                      <p className="text-white">{userProfile.personalClinicData.city}, {userProfile.personalClinicData.country}</p>
+                    </div>
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Registration Number</label>
+                      <p className="text-white font-mono">{userProfile.personalClinicData.registrationNumber}</p>
+                    </div>
+                    {userProfile.personalClinicData.establishedYear && (
+                      <div>
+                        <label className="text-green-300 text-sm block mb-1">Established Year</label>
+                        <p className="text-white">{userProfile.personalClinicData.establishedYear}</p>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-green-300 text-sm block mb-1">Verification Status</label>
+                      <p className={userProfile.personalClinicData.verified ? 'text-green-400' : 'text-yellow-400'}>
+                        {userProfile.personalClinicData.verified ? '✅ Verified' : '⏳ Pending'}
+                      </p>
+                    </div>
+                    {userProfile.personalClinicData.openClinicDataId && (
+                      <div>
+                        <label className="text-green-300 text-sm block mb-1">Public Profile Link</label>
+                        <p className="text-green-400">✅ Linked to public profile</p>
+                      </div>
+                    )}
+                    {userProfile.personalClinicData.specialties && userProfile.personalClinicData.specialties.length > 0 && (
+                      <div className="md:col-span-2">
+                        <label className="text-green-300 text-sm block mb-1">Specialties</label>
+                        <p className="text-white">{userProfile.personalClinicData.specialties.join(', ')}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {userProfile.personalAgencyData && (
+                <div className="bg-purple-900/20 border border-purple-800 rounded-lg p-6">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    ✈️ Agency Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Agency Name</label>
+                      <p className="text-white">{userProfile.personalAgencyData.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Contact Person</label>
+                      <p className="text-white">{userProfile.personalAgencyData.contactPerson}</p>
+                    </div>
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Phone</label>
+                      <p className="text-white">{userProfile.personalAgencyData.phone}</p>
+                    </div>
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Email</label>
+                      <p className="text-white">{userProfile.personalAgencyData.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Location</label>
+                      <p className="text-white">{userProfile.personalAgencyData.city}, {userProfile.personalAgencyData.country}</p>
+                    </div>
+                    <div>
+                      <label className="text-purple-300 text-sm block mb-1">Verification Status</label>
+                      <p className={userProfile.personalAgencyData.verified ? 'text-green-400' : 'text-yellow-400'}>
+                        {userProfile.personalAgencyData.verified ? '✅ Verified' : '⏳ Pending'}
+                      </p>
+                    </div>
+                    {userProfile.personalAgencyData.openAgencyDataId && (
+                      <div>
+                        <label className="text-purple-300 text-sm block mb-1">Public Profile Link</label>
+                        <p className="text-green-400">✅ Linked to public profile</p>
+                      </div>
+                    )}
+                    {userProfile.personalAgencyData.focusCountries && userProfile.personalAgencyData.focusCountries.length > 0 && (
+                      <div className="md:col-span-2">
+                        <label className="text-purple-300 text-sm block mb-1">Focus Countries</label>
+                        <p className="text-white">{userProfile.personalAgencyData.focusCountries.join(', ')}</p>
+                      </div>
+                    )}
+                    {userProfile.personalAgencyData.servicesOffered && userProfile.personalAgencyData.servicesOffered.length > 0 && (
+                      <div className="md:col-span-2">
+                        <label className="text-purple-300 text-sm block mb-1">Services Offered</label>
+                        <p className="text-white">{userProfile.personalAgencyData.servicesOffered.join(', ')}</p>
+                      </div>
                     )}
                   </div>
                 </div>

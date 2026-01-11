@@ -39,6 +39,18 @@ export default function Navbar() {
               Doctors
             </Link>
             <Link
+              href="/clinics"
+              className="text-zinc-400 transition-colors hover:text-white"
+            >
+              Clinics
+            </Link>
+            <Link
+              href="/agencies"
+              className="text-zinc-400 transition-colors hover:text-white"
+            >
+              Agencies
+            </Link>
+            <Link
               href="/support"
               className="text-zinc-400 transition-colors hover:text-white"
             >

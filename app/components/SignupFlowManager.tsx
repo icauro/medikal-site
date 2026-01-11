@@ -9,8 +9,8 @@ import GDPRConsent from './GDPRConsent';
  * SignupFlowManager handles the multi-step signup process
  * - GDPR consent
  * - Role selection
- * - Doctor application (if doctor role)
- * - Pending approval (for doctors)
+ * - Professional application (doctor/clinic/agency)
+ * - Pending approval (for professional roles)
  */
 export default function SignupFlowManager({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading, acceptGDPR, logout } = useAuth();
@@ -58,24 +58,55 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         }
         break;
 
-      case 'pending_application':
-        if (pathname !== '/signup/doctor-application') {
+      case 'pending_personal_data':
+        // Redirect based on role
+        if (userProfile.role === 'doctor' && pathname !== '/signup/doctor-application') {
           console.log('📝 [SIGNUP_FLOW] Doctor application required, redirecting...');
           router.push('/signup/doctor-application');
+        } else if (userProfile.role === 'clinic' && pathname !== '/signup/clinic-application') {
+          console.log('📝 [SIGNUP_FLOW] Clinic application required, redirecting...');
+          router.push('/signup/clinic-application');
+        } else if (userProfile.role === 'agency' && pathname !== '/signup/agency-application') {
+          console.log('📝 [SIGNUP_FLOW] Agency application required, redirecting...');
+          router.push('/signup/agency-application');
         }
         break;
 
       case 'pending_approval':
-        if (pathname !== '/doctor/pending-approval' && !isAllowedPath) {
-          console.log('⏳ [SIGNUP_FLOW] Approval pending, redirecting to waiting page...');
-          router.push('/doctor/pending-approval');
+        // Redirect based on role to respective pending pages
+        const pendingPages = [
+          '/doctor/pending-approval',
+          '/clinic/pending-approval',
+          '/agency/pending-approval'
+        ];
+        const shouldRedirect = !pendingPages.some(page => pathname === page) && !isAllowedPath;
+
+        if (shouldRedirect) {
+          if (userProfile.role === 'doctor') {
+            console.log('⏳ [SIGNUP_FLOW] Doctor approval pending, redirecting...');
+            router.push('/doctor/pending-approval');
+          } else if (userProfile.role === 'clinic') {
+            console.log('⏳ [SIGNUP_FLOW] Clinic approval pending, redirecting...');
+            router.push('/clinic/pending-approval');
+          } else if (userProfile.role === 'agency') {
+            console.log('⏳ [SIGNUP_FLOW] Agency approval pending, redirecting...');
+            router.push('/agency/pending-approval');
+          }
         }
         break;
 
       case 'active':
         console.log('✅ [SIGNUP_FLOW] Account active');
         // If on signup pages but account is active, redirect to home/profile
-        if (pathname.startsWith('/signup/') || pathname === '/doctor/pending-approval') {
+        const signupPendingPages = [
+          '/signup/',
+          '/doctor/pending-approval',
+          '/clinic/pending-approval',
+          '/agency/pending-approval'
+        ];
+        const isOnSignupPage = signupPendingPages.some(page => pathname.startsWith(page) || pathname === page);
+        
+        if (isOnSignupPage) {
           console.log('🔄 [SIGNUP_FLOW] Account active, redirecting away from signup pages');
           router.push('/profile');
         }
@@ -93,7 +124,15 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         // Legacy users without accountStatus - treat as active
         console.log('🔧 [SIGNUP_FLOW] Legacy user without accountStatus, treating as active');
         // If on signup pages, redirect away
-        if (pathname.startsWith('/signup/') || pathname === '/doctor/pending-approval') {
+        const legacySignupPages = [
+          '/signup/',
+          '/doctor/pending-approval',
+          '/clinic/pending-approval',
+          '/agency/pending-approval'
+        ];
+        const isOnLegacySignupPage = legacySignupPages.some(page => pathname.startsWith(page) || pathname === page);
+        
+        if (isOnLegacySignupPage) {
           router.push('/profile');
         }
         break;
@@ -101,7 +140,15 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
       default:
         console.warn('⚠️ [SIGNUP_FLOW] Unknown account status:', userProfile.accountStatus);
         // Treat unknown status as active for safety
-        if (pathname.startsWith('/signup/') || pathname === '/doctor/pending-approval') {
+        const unknownSignupPages = [
+          '/signup/',
+          '/doctor/pending-approval',
+          '/clinic/pending-approval',
+          '/agency/pending-approval'
+        ];
+        const isOnUnknownSignupPage = unknownSignupPages.some(page => pathname.startsWith(page) || pathname === page);
+        
+        if (isOnUnknownSignupPage) {
           router.push('/profile');
         }
     }

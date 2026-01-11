@@ -58,8 +58,8 @@ export interface Doctor {
 }
 
 // Authentication Types
-export type UserRole = 'patient' | 'doctor' | 'admin';
-export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_application' | 'pending_approval' | 'active' | 'suspended';
+export type UserRole = 'patient' | 'doctor' | 'admin' | 'clinic' | 'agency';
+export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_personal_data' | 'pending_approval' | 'active' | 'suspended';
 
 export interface UserProfile {
   uid: string;
@@ -79,9 +79,14 @@ export interface UserProfile {
   };
 
   // Role-specific fields
-  doctorInfo?: DoctorInfo;
+  doctorInfo?: DoctorInfo; // @deprecated - use personalDoctorData instead
+  personalDoctorData?: PersonalDoctorData;
   patientInfo?: PatientInfo;
   adminInfo?: AdminInfo;
+  clinicInfo?: ClinicInfo; // @deprecated - use personalClinicData instead
+  personalClinicData?: PersonalClinicData;
+  agencyInfo?: AgencyInfo; // @deprecated - use personalAgencyData instead
+  personalAgencyData?: PersonalAgencyData;
 }
 
 export interface DoctorInfo {
@@ -107,6 +112,190 @@ export interface PatientInfo {
 export interface AdminInfo {
   permissions: string[];
   lastLogin: Date;
+}
+
+// Personal Doctor Data (private, doctor-managed)
+export interface PersonalDoctorData {
+  // Personal Information
+  name: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+  photoUrl?: string;
+
+  // Professional Information
+  licenseNumber: string;
+  licenseIssuingAuthority: string;
+  licenseExpirationDate: string;
+  specialization: DoctorSpecialty;
+  yearsOfExperience: number;
+
+  // Education
+  medicalSchool: string;
+  graduationYear: number;
+  certifications?: string[];
+
+  // Employment
+  currentClinic?: string;
+  clinicAddress?: string;
+  position: string;
+
+  // Additional Information
+  bio?: string;
+  motivation?: string;
+  procedureTags?: MedicalProcedureType[];
+
+  // Verification & Linking (set by admin only)
+  verified: boolean;
+  openDoctorDataId?: string; // Link to openDoctorData (admin-controlled)
+  verificationNotes?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+}
+
+// Open Doctor Data (public, admin-managed)
+export interface OpenDoctorData {
+  id: string;
+  name: string;
+  specialty: DoctorSpecialty;
+  personalDoctorDataId?: string; // Link to user's personalDoctorData (admin-controlled)
+  slug?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string; // Admin UID
+}
+
+// Clinic Information (deprecated - use PersonalClinicData)
+export interface ClinicInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email?: string;
+  website?: string;
+  description?: string;
+  doctorIds?: string[]; // List of associated doctor UIDs
+  verified: boolean;
+}
+
+// Personal Clinic Data (private, clinic-managed)
+export interface PersonalClinicData {
+  // Basic Information
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  country: string;
+
+  // Business Information
+  registrationNumber?: string;
+  establishedYear?: number;
+  website?: string;
+  description?: string;
+  specialties?: DoctorSpecialty[];
+  
+  // Media
+  logoUrl?: string;
+  images?: string[];
+
+  // Staff & Services
+  numberOfDoctors?: number;
+  services?: string[];
+  
+  // Verification & Linking (set by admin only)
+  verified: boolean;
+  openClinicDataId?: string; // Link to openClinicData (admin-controlled)
+  verificationNotes?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+
+  // Doctor Claims (doctors claimed by clinic, pending verification)
+  claimedDoctorIds?: string[]; // Pending verification
+}
+
+// Open Clinic Data (public, admin-managed)
+export interface OpenClinicData {
+  id: string;
+  name: string;
+  address: string;
+  specialties?: DoctorSpecialty[];
+  personalClinicDataId?: string; // Link to user's personalClinicData (admin-controlled)
+  verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this clinic
+  slug?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string; // Admin UID
+}
+
+// Agency Information (deprecated - use PersonalAgencyData)
+export interface AgencyInfo {
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  website?: string;
+  description?: string;
+  verified: boolean;
+}
+
+// Personal Agency Data (private, agency-managed)
+export interface PersonalAgencyData {
+  // Basic Information
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  country: string;
+
+  // Business Information
+  registrationNumber?: string;
+  establishedYear?: number;
+  website?: string;
+  description?: string;
+  servicesOffered?: string[];
+  
+  // Media
+  logoUrl?: string;
+  images?: string[];
+
+  // Specialization
+  focusCountries?: string[];
+  languages?: string[];
+  
+  // Verification & Linking (set by admin only)
+  verified: boolean;
+  openAgencyDataId?: string; // Link to openAgencyData (admin-controlled)
+  verificationNotes?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+}
+
+// Open Agency Data (public, admin-managed)
+export interface OpenAgencyData {
+  id: string;
+  name: string;
+  country: string;
+  servicesOffered?: string[];
+  personalAgencyDataId?: string; // Link to user's personalAgencyData (admin-controlled)
+  slug?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string; // Admin UID
+}
+
+// Clinic-Doctor Link (for verified associations)
+export interface ClinicDoctorLink {
+  id?: string;
+  clinicId: string; // OpenClinicData ID
+  doctorId: string; // User UID with personalDoctorData
+  claimedBy: 'clinic' | 'doctor' | 'admin'; // Who initiated the claim
+  verified: boolean;
+  verifiedBy?: string; // Admin UID
+  verifiedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Doctor Verification System
