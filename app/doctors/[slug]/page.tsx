@@ -263,6 +263,11 @@ export default function DoctorProfilePage() {
     : "This doctor has not added a biography yet.";
   const nameInitial = displayName.charAt(0).toUpperCase();
 
+  // Calculate average rating from reviews
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : null;
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -296,16 +301,14 @@ export default function DoctorProfilePage() {
                   {displayName}
                 </h1>
                 <p className="text-lg text-blue-300 mt-2">{doctor.specialty}</p>
-                {typeof doctor.rating === "number" && (
+                {averageRating !== null && (
                   <div className="mt-4 flex items-center gap-4">
                     <span className="text-yellow-400 text-lg font-semibold">
-                      ★ {doctor.rating.toFixed(1)}
+                      ★ {averageRating.toFixed(1)}
                     </span>
-                    {typeof doctor.reviewCount === "number" && (
-                      <span className="text-sm text-zinc-400">
-                        {doctor.reviewCount} review{doctor.reviewCount === 1 ? "" : "s"}
-                      </span>
-                    )}
+                    <span className="text-sm text-zinc-400">
+                      {reviews.length} review{reviews.length === 1 ? "" : "s"}
+                    </span>
                   </div>
                 )}
               </div>

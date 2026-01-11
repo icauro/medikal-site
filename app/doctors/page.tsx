@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 // Type definition for Doctor
 interface Doctor {
@@ -38,11 +38,33 @@ export default function DoctorsPage() {
       try {
         const doctorsCollection = collection(db, "doctors");
         const doctorsSnapshot = await getDocs(doctorsCollection);
-        
+
         const doctorsList: Doctor[] = [];
-        
-        doctorsSnapshot.forEach((doc) => {
+
+        // Process doctors and calculate ratings from reviews
+        for (const doc of doctorsSnapshot.docs) {
           const data = doc.data();
+
+          // Fetch reviews for this doctor to calculate average rating
+          let averageRating: number | undefined = undefined;
+          try {
+            const reviewsQuery = query(
+              collection(db, "reviews"),
+              where("doctorId", "==", doc.id),
+              where("status", "==", "published")
+            );
+            const reviewsSnapshot = await getDocs(reviewsQuery);
+
+            if (!reviewsSnapshot.empty) {
+              const reviews = reviewsSnapshot.docs.map(reviewDoc => reviewDoc.data());
+              const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+              averageRating = totalRating / reviews.length;
+            }
+          } catch (error) {
+            console.warn(`Error fetching reviews for doctor ${doc.id}:`, error);
+            // Continue with undefined rating if reviews can't be fetched
+          }
+
           doctorsList.push({
             id: doc.id,
             slug: data.slug || "",
@@ -51,10 +73,10 @@ export default function DoctorsPage() {
             bio: data.bio || undefined,
             image: data.image || undefined,
             clinic: data.clinic || undefined,
-            rating: data.rating || undefined,
+            rating: averageRating,
           });
-        });
-        
+        }
+
         setDoctors(doctorsList);
       } catch (error) {
         console.error("Error fetching doctors from Firestore:", error);
@@ -103,8 +125,8 @@ export default function DoctorsPage() {
                 {doctor.name}
               </h2>
               <p className="text-zinc-400 mb-2">{doctor.specialty}</p>
-              {doctor.rating && (
-                <p className="text-yellow-400">★ {doctor.rating}</p>
+              {doctor.rating !== undefined && (
+                <p className="text-yellow-400">★ {doctor.rating.toFixed(1)}</p>
               )}
             </Link>
           ))}
