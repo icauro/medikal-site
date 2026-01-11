@@ -1,4 +1,5 @@
-# Multi-Step Signup Flow Documentation
+
+# Multi-Step Signup Flow Documentation (with Open/Personal Doctor Data Separation)
 
 ## Overview
 The application now implements a comprehensive multi-step signup flow that ensures GDPR compliance, proper role selection, and doctor credential verification before granting full access.
@@ -8,8 +9,8 @@ The application now implements a comprehensive multi-step signup flow that ensur
 ```
 New User Sign In (Google OAuth)
          ↓
-   [User Created]
-   accountStatus: 'pending_gdpr'
+  [User Created]
+  accountStatus: 'pending_gdpr'
          ↓
   GDPR Consent Modal
    (Privacy Policy & Terms)
@@ -20,26 +21,25 @@ New User Sign In (Google OAuth)
    Role Selection Page
    (/signup/role-selection)
          ↓
-    ┌────┴────┐
-    ↓         ↓
- Patient    Doctor
-    ↓         ↓
-  Active   pending_application
-    ↓         ↓
-  Done    Doctor Application Form
-          (/signup/doctor-application)
-                ↓
-          [Form Submitted]
+        ┌────┴────┐
+        ↓         ↓
+     Patient    Doctor
+        ↓         ↓
+      Active   pending_personal_data
+        ↓         ↓
+      Done    Personal Doctor Data Entry
+            ↓
+          [Personal Data Submitted]
           accountStatus: 'pending_approval'
-                ↓
+            ↓
           Pending Approval Page
           (/doctor/pending-approval)
-                ↓
+            ↓
           [Admin Approves]
           accountStatus: 'active'
           verified: true
-                ↓
-              Done
+            ↓
+          Done
 ```
 
 ## Account Statuses
@@ -56,10 +56,11 @@ New User Sign In (Google OAuth)
   - Select **Patient** → `active`
   - Select **Doctor** → `pending_application`
 
-### `pending_application`
-- **Description**: User selected doctor role but hasn't submitted application
-- **Access**: Redirected to `/signup/doctor-application`
-- **Next Step**: Submit application to move to `pending_approval`
+
+### `pending_personal_data`
+- **Description**: User selected doctor role but hasn't submitted their personal doctor data
+- **Access**: Redirected to personal doctor data entry page (replaces application form)
+- **Next Step**: Submit personal data to move to `pending_approval`
 
 ### `pending_approval`
 - **Description**: Doctor submitted application, waiting for admin approval
@@ -104,18 +105,19 @@ Beautiful dual-option selection interface:
 - Patient accounts activated immediately
 - Doctor accounts move to application phase
 
-### 4. **Doctor Application Form** (`app/signup/doctor-application/page.tsx`)
-Comprehensive form collecting:
+
+### 4. **Personal Doctor Data Entry** (replaces Doctor Application Form)
+Doctors fill out their personal doctor data after selecting the doctor role. This data is private and only visible to the doctor and admins until verified. The form collects:
 - **Personal Info**: Name, DOB, phone
 - **Professional Info**: License number, issuing authority, expiration, specialization, experience
 - **Education**: Medical school, graduation year
 - **Employment**: Current clinic, position, address
 - **Motivation**: Why join the platform
+- **Photo**: Profile photo
 
 **On Submit:**
-1. Creates document in `verification_requests` collection
-2. Updates user profile with `doctorInfo` and `accountStatus: 'pending_approval'`
-3. Redirects to pending approval page
+1. Updates user profile with `personalDoctorData` and `accountStatus: 'pending_approval'`
+2. Redirects to pending approval page
 
 ### 5. **Pending Approval Page** (`app/doctor/pending-approval/page.tsx`)
 Waiting screen for doctors showing:
@@ -141,26 +143,54 @@ Enhanced checks:
 
 ## Type Updates
 
+
 ### UserProfile Interface
 ```typescript
 export interface UserProfile {
   // ... existing fields
   role: UserRole | null; // null until role is selected
   accountStatus: AccountStatus;
-  
   gdprConsent?: {
     accepted: boolean;
     acceptedAt: Date;
     version: string;
   };
+  personalDoctorData?: PersonalDoctorData; // Only for doctor users
 }
 ```
 
-### DoctorInfo Interface
+### PersonalDoctorData Interface
+* openDoctorDataId is set by admin after verification; doctors cannot edit this link themselves.
 ```typescript
-export interface DoctorInfo {
-  // ... existing fields
-  verificationRequestId?: string; // Links to verification request
+export interface PersonalDoctorData {
+  name: string;
+  dob: string;
+  phone: string;
+  licenseNumber: string;
+  issuingAuthority: string;
+  licenseExpiration: string;
+  specialization: string;
+  experience: number;
+  medicalSchool: string;
+  graduationYear: number;
+  currentClinic: string;
+  position: string;
+  clinicAddress: string;
+  motivation: string;
+  photoUrl?: string;
+  openDoctorDataId?: string; // Linked after verification
+  verified?: boolean;
+}
+```
+
+### OpenDoctorData Interface (Admin-managed, public, doctor cannot edit links)
+* personalDoctorDataId is set by admin if verified; doctors cannot edit this link themselves.
+```typescript
+export interface OpenDoctorData {
+  id: string;
+  name: string;
+  specialty: string;
+  personalDoctorDataId?: string; // Linked if verified
 }
 ```
 
@@ -177,20 +207,27 @@ export type AccountStatus =
 
 ## Admin Workflow
 
-### Approving Doctor Applications
+### Approving Doctor Applications & Linking Data
 
 1. Admin logs into `/admin/verifications`
-2. Views list of pending verification requests
-3. Clicks on request to see full details
+2. Views list of pending doctor approvals
+3. Clicks on a doctor to see their personalDoctorData
 4. Reviews credentials and information
 5. **Approve**:
-   - Update `verification_requests/{id}` → `status: 'approved'`
-   - Update `users/{uid}` → `accountStatus: 'active'`, `doctorInfo.verified: true`
+  - Admin must manually select the appropriate openDoctorData record to link with this doctor (or create a new one if needed)
+  - Update `users/{uid}`:
+    - `accountStatus: 'active'`
+    - `personalDoctorData.verified: true`
+    - `personalDoctorData.openDoctorDataId = openDoctorData.id`
+  - Update `open_doctor_data/{id}`:
+    - `personalDoctorDataId = uid`
+  - This creates a two-way link between open and personal data
+  - Doctors cannot edit or unlink their openDoctorData themselves; only admins can manage these links
 6. **Deny**:
-   - Update `verification_requests/{id}` → `status: 'denied'`, add `reviewNotes`
-   - Doctor remains in `pending_approval` status and sees denial reason
+  - Doctor remains in `pending_approval` status and sees denial reason
 
 ## Firestore Structure
+
 
 ### `users/{uid}`
 ```javascript
@@ -204,32 +241,35 @@ export type AccountStatus =
     acceptedAt: Timestamp,
     version: "1.0"
   },
-  doctorInfo: {
-    specialization: "Plastic, Reconstructive and Aesthetic Surgery",
+  personalDoctorData: {
+    name: "Dr. John Doe",
+    dob: "1980-01-01",
+    phone: "+1234567890",
     licenseNumber: "MD12345",
-    verified: false,
-    verificationRequestId: "req123",
-    experience: 10
+    issuingAuthority: "Medical Board",
+    licenseExpiration: "2030-01-01",
+    specialization: "Plastic, Reconstructive and Aesthetic Surgery",
+    experience: 10,
+    medicalSchool: "Harvard Medical School",
+    graduationYear: 2013,
+    currentClinic: "Clinic Name",
+    position: "Surgeon",
+    clinicAddress: "123 Main St",
+    motivation: "To help patients",
+    photoUrl: "...",
+    openDoctorDataId: null,
+    verified: false
   }
 }
 ```
 
-### `verification_requests/{id}`
+### `open_doctor_data/{id}`
 ```javascript
 {
-  id: "req123",
-  doctorId: "user123",
-  doctorEmail: "doctor@example.com",
-  fullName: "Dr. John Doe",
-  medicalLicenseNumber: "MD12345",
-  specialization: "Plastic, Reconstructive and Aesthetic Surgery",
-  yearsOfExperience: 10,
-  medicalSchool: "Harvard Medical School",
-  graduationYear: 2013,
-  status: "waiting", // 'waiting' | 'approved' | 'denied'
-  submittedAt: Timestamp,
-  reviewedBy: null,
-  reviewNotes: null
+  id: "open123",
+  name: "Dr. John Doe",
+  specialty: "Plastic, Reconstructive and Aesthetic Surgery",
+  personalDoctorDataId: "user123" // Linked if verified
 }
 ```
 
@@ -281,11 +321,13 @@ NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,another-admin@example.com
 
 ## Migration Notes
 
+
 **Existing Users:**
 Existing user profiles in the database need to be migrated to include:
 - `accountStatus: 'active'` (if they're already using the app)
 - `gdprConsent` can be null (grandfather clause)
 - `role` should already exist
+- If doctor, move doctorInfo fields to personalDoctorData
 
 **Migration Script (run once in Firestore console):**
 ```javascript
@@ -293,9 +335,13 @@ Existing user profiles in the database need to be migrated to include:
 db.collection('users').where('accountStatus', '==', null).get()
   .then(snapshot => {
     snapshot.forEach(doc => {
-      doc.ref.update({
-        accountStatus: 'active'
-      });
+      const data = doc.data();
+      let update = { accountStatus: 'active' };
+      if (data.doctorInfo) {
+        update.personalDoctorData = { ...data.doctorInfo };
+        update.doctorInfo = firebase.firestore.FieldValue.delete();
+      }
+      doc.ref.update(update);
     });
   });
 ```
@@ -305,6 +351,7 @@ db.collection('users').where('accountStatus', '==', null).get()
 1. **Email Notifications**: Send emails when verification status changes
 2. **Document Upload**: Allow doctors to upload license/certification PDFs
 3. **Re-verification**: Periodic credential re-verification for doctors
-4. **Partial Applications**: Save draft applications
+4. **Partial Applications**: Save draft personal doctor data
 5. **Multi-language Support**: GDPR consent in multiple languages
 6. **Analytics**: Track conversion rates at each step
+7. **Open/Personal Data Linking**: Automate linking after admin approval
