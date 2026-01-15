@@ -45,19 +45,6 @@ export const ProtectedRoute = ({
         return;
       }
 
-      // Check if account is pending approval (doctors/clinics/agencies waiting for verification)
-      if (userProfile?.accountStatus === 'pending_approval') {
-        console.log('⏳ [PROTECTED] Account pending approval, redirecting to waiting page');
-        if (userProfile.role === 'doctor') {
-          router.push('/doctor/pending-approval');
-        } else if (userProfile.role === 'clinic') {
-          router.push('/clinic/pending-approval');
-        } else if (userProfile.role === 'agency') {
-          router.push('/agency/pending-approval');
-        }
-        return;
-      }
-
       // Check if account is not active (should be handled by SignupFlowManager, but double-check)
       // Treat undefined/null accountStatus as active for legacy users
       const accountStatus = userProfile?.accountStatus;

@@ -74,7 +74,7 @@ export default function AgencyApplicationPage() {
       // Update user profile with personalAgencyData
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        accountStatus: 'pending_approval',
+        accountStatus: 'active',
         personalAgencyData: {
           name: formData.name,
           contactPerson: formData.contactPerson,
@@ -96,8 +96,8 @@ export default function AgencyApplicationPage() {
         updatedAt: new Date(),
       });
 
-      console.log('✅ [AGENCY_DATA] Personal agency data saved, redirecting to pending page');
-      window.location.href = '/agency/pending-approval';
+      console.log('✅ [AGENCY_DATA] Personal agency data saved, redirecting to profile');
+      window.location.href = '/profile';
     } catch (err) {
       console.error('🚫 [AGENCY_DATA] Error saving personal data:', err);
       setError('Failed to save agency data. Please try again.');

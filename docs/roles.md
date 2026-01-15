@@ -17,13 +17,13 @@ This document defines all user roles in the Medikal Site platform, their permiss
 
 The platform supports the following user roles:
 
-| Role      | Description                                      | Signup Flow                    |
-|-----------|--------------------------------------------------|--------------------------------|
-| `patient` | End users seeking medical services               | GDPR → Role selection → Active |
-| `doctor`  | Medical professionals with verified credentials  | GDPR → Role selection → Personal data → Admin approval |
-| `admin`   | Platform administrators                          | Auto-assigned via ADMIN_EMAILS |
-| `clinic`  | Medical clinics/facilities (future)              | TBD                           |
-| `agency`  | Medical tourism agencies (future)                | TBD                           |
+| Role                   | Description                                      | Signup Flow                                              |
+|------------------------|--------------------------------------------------|----------------------------------------------------------|
+| `patient`              | End users seeking medical services               | GDPR → Role selection → Active                           |
+| `healthcare_personnel` | Medical professionals with personal profiles     | GDPR → Role selection → Personal personnel data → Active |
+| `admin`                | Platform administrators                          | Auto-assigned via ADMIN_EMAILS                           |
+| `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Facility data → Active           |
+| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Agency data → Active             |
 
 ---
 
@@ -31,76 +31,93 @@ The platform supports the following user roles:
 
 ### Patient Role
 
-**Description**: Regular users who search for doctors, submit reviews, and request treatment plans.
+**Description**: Regular users who search for healthcare personnel, submit reviews, and request treatment plans.
 
 **Capabilities**:
-- ✅ Search and browse doctors
-- ✅ View doctor profiles and reviews
-- ✅ Submit reviews on doctor pages
+- ✅ Search and browse healthcare personnel (Doctors/Coordinators)
+- ✅ View professional profiles and reviews
+- ✅ Submit reviews on professional pages
 - ✅ Comment on other reviews (Reddit-style)
-- ✅ Post treatment plan requests (visible to clinics/doctors)
+- ✅ Post treatment plan requests (visible to facilities/personnel)
 - ✅ Receive treatment plan proposals and cost inquiries (paid)
 - ✅ Create and manage support tickets
 - ✅ Edit own profile
 
 **Restrictions**:
 - ❌ Cannot access admin pages
-- ❌ Cannot edit doctor profiles
+- ❌ Cannot edit professional profiles
 - ❌ Cannot moderate content
-- ❌ Cannot approve verifications
 
 **Account Status**: `active` immediately after role selection
 
 ---
 
-### Doctor Role
+### Healthcare Personnel Role
 
-**Description**: Verified medical professionals who manage their profiles and interact with patients.
+**Description**: Medical professionals (Doctors, Patient Coordinators) who manage their profiles and interact with patients.
 
 **Capabilities**:
 - ✅ All patient capabilities
 - ✅ Respond to reviews on their profile
-- ✅ Edit their personalDoctorData (name, photo, bio, etc.)
+- ✅ Edit their personalHealthcarePersonnelData (name, photo, bio, personnelType, etc.)
 - ✅ Post links and images on their profile
-- ✅ Claim connection to clinics
-- ✅ Request to moderate clinic pages (requires admin approval)
+- ✅ Claim connection to medical facilities
+- ✅ Request to moderate medical facility pages (requires admin approval)
 - ✅ Respond to treatment plan requests
 - ✅ Receive patient inquiries
 
 **Restrictions**:
 - ❌ Cannot access admin pages
-- ❌ Cannot edit openDoctorData (name, specialty - admin only)
-- ❌ Cannot link/unlink their openDoctorData (admin only)
-- ❌ Cannot moderate other doctors or delete reviews
-- ❌ Cannot approve verifications
+- ❌ Cannot edit openHealthcarePersonnelData (name, specialty - admin only)
+- ❌ Cannot link/unlink their openHealthcarePersonnelData (admin only)
+- ❌ Cannot moderate other professionals or delete reviews
 
 **Account Status**: 
 - `pending_personal_data` → after role selection
-- `pending_approval` → after submitting personal data
-- `active` → after admin approval
+- `active` → after submitting personal personnel data
 
-**Verification**: Must submit personalDoctorData (license, credentials, education) and wait for admin approval. Once verified, their personalDoctorData is linked to openDoctorData by admin.
+**Verification**: Professionals are active upon submission of their personal data. Admin can manually link personalHealthcarePersonnelData to openHealthcarePersonnelData for public visibility.
 
 ---
 
 ### Admin Role
 
-**Description**: Platform administrators with full access to manage users, content, and verifications.
+**Description**: Platform administrators with full access to manage users, content, and data.
 
 **Capabilities**:
-- ✅ All patient and doctor capabilities
+- ✅ All patient and healthcare personnel capabilities
 - ✅ Access admin dashboard (`/admin`)
-- ✅ View and approve doctor verifications
-- ✅ Manually link personalDoctorData ↔ openDoctorData
-- ✅ Create and edit openDoctorData records
+- ✅ View and manage healthcare personnel profiles
+- ✅ Manually link personalHealthcarePersonnelData ↔ openHealthcarePersonnelData
+- ✅ Create and edit openHealthcarePersonnelData records
 - ✅ Manage support tickets from all users
 - ✅ Moderate conversations and reviews
 - ✅ Suspend/activate user accounts
 - ✅ View all user profiles
-- ✅ Approve clinic moderation requests from doctors
+- ✅ Approve facility moderation requests from personnel
 
 **Restrictions**:
 - ⚠️ Should act responsibly and ethically
+
+---
+
+### Medical Facility Role
+
+**Description**: Clinics, hospitals, and other healthcare centers.
+
+**Capabilities**:
+- ✅ Manage facility information
+- ✅ Link healthcare personnel to the facility
+- ✅ Respond to treatment plan requests
+- ✅ Manage facility-specific support tickets
+
+**Restrictions**:
+- ❌ Cannot access admin pages
+- ❌ Cannot moderate other facilities
+
+**Account Status**: 
+- `pending_personal_data` → after role selection
+- `active` → after submitting facility data
 - ⚠️ All admin actions should be logged for audit
 
 **Account Status**: `active` immediately (bypasses GDPR and role selection)
@@ -268,14 +285,8 @@ match /open_doctor_data/{docId} {
 
 ## Role Transition Workflows
 
-### Patient Becomes Doctor
-1. User logs in as patient (already `active`)
-2. Submits personalDoctorData via profile page
-3. `accountStatus` changes to `pending_approval`
-4. Admin reviews and approves
-5. Admin links personalDoctorData ↔ openDoctorData
-6. `accountStatus` changes to `active`, `personalDoctorData.verified = true`
-7. User now has both patient and doctor capabilities
+### Role Transitions
+Users can request to change or add roles through the support ticketing system. Once a professional role is granted, the user must complete the relevant data application to become `active` in that role. Admin carries out the linking process between user accounts and public directory entries.
 
 ### Admin Demotion (Emergency)
 1. Admin removes email from `NEXT_PUBLIC_ADMIN_EMAILS`

@@ -76,28 +76,28 @@ export default function AddReviewPage() {
     }
   }, [user, userProfile, authLoading, router]);
 
-  // Fetch doctors for dropdown
+  // Fetch personnel for dropdown
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const fetchPersonnel = async () => {
       try {
-        const doctorsRef = collection(db, "doctors");
-        const snapshot = await getDocs(doctorsRef);
-        const doctorsData = snapshot.docs.map((doc) => ({
+        const personnelRef = collection(db, "open_healthcare_personnel_data");
+        const snapshot = await getDocs(personnelRef);
+        const personnelData = snapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data().name || "",
           specialty: doc.data().specialty || "",
           slug: doc.data().slug || "",
         }));
-        setDoctors(doctorsData);
+        setDoctors(personnelData);
       } catch (error) {
-        console.error("Error fetching doctors:", error);
+        console.error("Error fetching healthcare personnel:", error);
       } finally {
         setLoading(false);
       }
     };
 
     if (user && userProfile) {
-      fetchDoctors();
+      fetchPersonnel();
     }
   }, [user, userProfile]);
 

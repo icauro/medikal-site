@@ -13,7 +13,7 @@ interface Doctor {
   specialty: string;
   bio?: string;
   image?: string;
-  clinic?: string;
+  medicalFacility?: string;
   rating?: number;
 }
 
@@ -36,8 +36,10 @@ export default function DoctorsPage() {
   useEffect(() => {
     async function fetchDoctors() {
       try {
-        const doctorsCollection = collection(db, "doctors");
-        const doctorsSnapshot = await getDocs(doctorsCollection);
+        const personnelCollection = collection(db, "open_healthcare_personnel_data");
+        // Only fetch personnel of type 'Doctor' for this page
+        const doctorsQuery = query(personnelCollection, where("personnelType", "==", "Doctor"));
+        const doctorsSnapshot = await getDocs(doctorsQuery);
 
         const doctorsList: Doctor[] = [];
 
@@ -61,7 +63,7 @@ export default function DoctorsPage() {
               averageRating = totalRating / reviews.length;
             }
           } catch (error) {
-            console.warn(`Error fetching reviews for doctor ${doc.id}:`, error);
+            console.warn(`Error fetching reviews for healthcare personnel ${doc.id}:`, error);
             // Continue with undefined rating if reviews can't be fetched
           }
 
@@ -72,14 +74,14 @@ export default function DoctorsPage() {
             specialty: data.specialty || "",
             bio: data.bio || undefined,
             image: data.image || undefined,
-            clinic: data.clinic || undefined,
+            medicalFacility: data.medicalFacility || undefined,
             rating: averageRating,
           });
         }
 
         setDoctors(doctorsList);
       } catch (error) {
-        console.error("Error fetching doctors from Firestore:", error);
+        console.error("Error fetching healthcare personnel from Firestore:", error);
       } finally {
         setLoading(false);
       }

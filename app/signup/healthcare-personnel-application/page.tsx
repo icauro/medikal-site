@@ -5,15 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DOCTOR_SPECIALTIES, DoctorSpecialty } from '@/lib/types';
+import { DOCTOR_SPECIALTIES, DoctorSpecialty, PersonnelType } from '@/lib/types';
 
-export default function DoctorApplicationPage() {
+export default function HealthcarePersonnelApplicationPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
+    personnelType: 'Doctor' as PersonnelType,
     name: '',
     dateOfBirth: '',
     phoneNumber: '',
@@ -24,8 +25,8 @@ export default function DoctorApplicationPage() {
     yearsOfExperience: '',
     medicalSchool: '',
     graduationYear: '',
-    currentClinic: '',
-    clinicAddress: '',
+    currentMedicalFacility: '',
+    medicalFacilityAddress: '',
     position: '',
     motivation: '',
     bio: '',
@@ -56,13 +57,14 @@ export default function DoctorApplicationPage() {
     setError('');
 
     try {
-      console.log('📝 [PERSONAL_DATA] Submitting personal doctor data');
+      console.log('📝 [PERSONAL_DATA] Submitting personal healthcare personnel data');
 
-      // Update user profile with personalDoctorData
+      // Update user profile with personalHealthcarePersonnelData
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        accountStatus: 'pending_approval',
-        personalDoctorData: {
+        accountStatus: 'active',
+        personalHealthcarePersonnelData: {
+          personnelType: formData.personnelType,
           name: formData.name,
           dateOfBirth: formData.dateOfBirth,
           phoneNumber: formData.phoneNumber,
@@ -73,8 +75,8 @@ export default function DoctorApplicationPage() {
           yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
           medicalSchool: formData.medicalSchool,
           graduationYear: parseInt(formData.graduationYear) || new Date().getFullYear(),
-          currentClinic: formData.currentClinic,
-          clinicAddress: formData.clinicAddress,
+          currentMedicalFacility: formData.currentMedicalFacility,
+          medicalFacilityAddress: formData.medicalFacilityAddress,
           position: formData.position,
           motivation: formData.motivation,
           bio: formData.bio,
@@ -84,8 +86,8 @@ export default function DoctorApplicationPage() {
         updatedAt: new Date(),
       });
 
-      console.log('✅ [PERSONAL_DATA] Personal doctor data saved, redirecting to pending page');
-      window.location.href = '/doctor/pending-approval';
+      console.log('✅ [PERSONAL_DATA] Personal healthcare personnel data saved, redirecting to profile');
+      window.location.href = '/profile';
     } catch (err) {
       console.error('🚫 [PERSONAL_DATA] Error saving personal data:', err);
       setError('Failed to save personal data. Please try again.');
@@ -98,12 +100,49 @@ export default function DoctorApplicationPage() {
     <div className="min-h-screen bg-black py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-800">
-          <h1 className="text-3xl font-bold mb-2 text-white">Personal Doctor Information</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white">Healthcare Personnel Information</h1>
           <p className="text-zinc-400 mb-6">
-            Please provide your professional information. Your account will be activated once our admin team reviews and approves your profile.
+            Please provide your professional information to complete your profile.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Personnel Type Selection */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-zinc-700 text-white">Personnel Type</h2>
+              <div className="flex gap-4">
+                <label className={`flex-1 flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  formData.personnelType === 'Doctor'
+                    ? 'border-blue-500 bg-blue-500/10 text-white'
+                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                }`}>
+                  <input
+                    type="radio"
+                    name="personnelType"
+                    value="Doctor"
+                    checked={formData.personnelType === 'Doctor'}
+                    onChange={handleChange}
+                    className="hidden"
+                  />
+                  Doctor
+                </label>
+                <label className={`flex-1 flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  formData.personnelType === 'Patient Coordinator'
+                    ? 'border-blue-500 bg-blue-500/10 text-white'
+                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                }`}>
+                  <input
+                    type="radio"
+                    name="personnelType"
+                    value="Patient Coordinator"
+                    checked={formData.personnelType === 'Patient Coordinator'}
+                    onChange={handleChange}
+                    className="hidden"
+                  />
+                  Patient Coordinator
+                </label>
+              </div>
+            </div>
+
             {/* Personal Information */}
             <div>
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-zinc-700 text-white">Personal Information</h2>
@@ -278,11 +317,11 @@ export default function DoctorApplicationPage() {
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-zinc-700 text-white">Current Employment</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-zinc-300">Current Clinic/Hospital</label>
+                  <label className="block text-sm font-medium mb-1 text-zinc-300">Current Medical Facility</label>
                   <input
                     type="text"
-                    name="currentClinic"
-                    value={formData.currentClinic}
+                    name="currentMedicalFacility"
+                    value={formData.currentMedicalFacility}
                     onChange={handleChange}
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
@@ -301,11 +340,11 @@ export default function DoctorApplicationPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1 text-zinc-300">Clinic Address</label>
+                  <label className="block text-sm font-medium mb-1 text-zinc-300">Medical Facility Address</label>
                   <input
                     type="text"
-                    name="clinicAddress"
-                    value={formData.clinicAddress}
+                    name="medicalFacilityAddress"
+                    value={formData.medicalFacilityAddress}
                     onChange={handleChange}
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                   />

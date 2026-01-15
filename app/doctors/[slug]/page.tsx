@@ -40,7 +40,7 @@ interface DoctorRecord {
   image?: string | null;
   rating?: number | null;
   reviewCount?: number | null;
-  clinicIds?: string[];
+  medicalFacilityIds?: string[];
   links?: string[];
   images?: string[];
   experience?: number | null;
@@ -70,45 +70,9 @@ export default function DoctorProfilePage() {
       setError(null);
 
       try {
-        const docRef = doc(db, "doctors", slug);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setDoctor({
-            id: docSnap.id,
-            name: data.name || "",
-            slug: data.slug || slug,
-            specialty: data.specialty || "",
-            bio: data.bio ?? null,
-            image: data.image ?? null,
-            rating:
-              typeof data.rating === "number"
-                ? data.rating
-                : data.rating
-                ? Number(data.rating)
-                : null,
-            reviewCount: data.reviewCount ?? null,
-            clinicIds: Array.isArray(data.clinicIds) ? data.clinicIds : [],
-            links: Array.isArray(data.links) ? data.links : [],
-            images: Array.isArray(data.images) ? data.images : [],
-            experience:
-              typeof data.experience === "number"
-                ? data.experience
-                : data.experience
-                ? Number(data.experience)
-                : null,
-            procedureTags: Array.isArray(data.procedureTags)
-              ? data.procedureTags
-              : [],
-            googleReviewsEmbedUrl: data.googleReviewsEmbedUrl ?? null,
-          });
-          return;
-        }
-
-        const doctorsRef = collection(db, "doctors");
+        const personnelRef = collection(db, "open_healthcare_personnel_data");
         const slugQuery = query(
-          doctorsRef,
+          personnelRef,
           where("slug", "==", slug),
           limit(1)
         );
@@ -136,7 +100,7 @@ export default function DoctorProfilePage() {
               ? Number(matchData.rating)
               : null,
           reviewCount: matchData.reviewCount ?? null,
-          clinicIds: Array.isArray(matchData.clinicIds) ? matchData.clinicIds : [],
+          medicalFacilityIds: Array.isArray(matchData.medicalFacilityIds) ? matchData.medicalFacilityIds : [],
           links: Array.isArray(matchData.links) ? matchData.links : [],
           images: Array.isArray(matchData.images) ? matchData.images : [],
           experience:
@@ -331,11 +295,11 @@ export default function DoctorProfilePage() {
                 </div>
                 <div className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-4">
                   <p className="text-xs uppercase tracking-widest text-zinc-500 mb-1">
-                    Clinics
+                    Medical Facilities
                   </p>
                   <p className="text-white font-medium">
-                    {doctor.clinicIds && doctor.clinicIds.length > 0
-                      ? `${doctor.clinicIds.length} linked`
+                    {doctor.medicalFacilityIds && doctor.medicalFacilityIds.length > 0
+                      ? `${doctor.medicalFacilityIds.length} linked`
                       : "Not yet listed"}
                   </p>
                 </div>
@@ -497,7 +461,7 @@ export default function DoctorProfilePage() {
                     <div>
                       <h3 className="text-xl font-semibold mb-3">Google Maps Location & Reviews</h3>
                       <p className="text-sm text-zinc-400 mb-6">
-                        View the clinic's location on Google Maps and access Google reviews. The map below uses the Google Place ID provided by the doctor.
+                        View the medical facility&apos;s location on Google Maps and access Google reviews. The map below uses the Google Place ID provided by the doctor.
                       </p>
                     </div>
                     {googleMapsEmbedUrl ? (

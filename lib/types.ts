@@ -57,9 +57,21 @@ export interface Doctor {
   googlePlaceId?: string; // Google Maps Place ID for embedding reviews/maps
 }
 
+export type MedicalFacilityType = 'Solo Practice' | 'Polyclinic' | 'Clinic' | 'Health Center' | 'Hospital';
+
+export const MEDICAL_FACILITY_TYPES: MedicalFacilityType[] = [
+  'Solo Practice',
+  'Polyclinic',
+  'Clinic',
+  'Health Center',
+  'Hospital'
+];
+
 // Authentication Types
-export type UserRole = 'patient' | 'doctor' | 'admin' | 'clinic' | 'agency';
-export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_personal_data' | 'pending_approval' | 'active' | 'suspended';
+export type UserRole = 'patient' | 'healthcare_personnel' | 'admin' | 'medical_facility' | 'agency';
+export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_personal_data' | 'active' | 'suspended';
+
+export type PersonnelType = 'Doctor' | 'Patient Coordinator';
 
 export interface UserProfile {
   uid: string;
@@ -79,25 +91,23 @@ export interface UserProfile {
   };
 
   // Role-specific fields
-  doctorInfo?: DoctorInfo; // @deprecated - use personalDoctorData instead
-  personalDoctorData?: PersonalDoctorData;
+  personnelInfo?: PersonnelInfo; // @deprecated - use personalHealthcarePersonnelData instead
+  personalHealthcarePersonnelData?: PersonalHealthcarePersonnelData;
   patientInfo?: PatientInfo;
   adminInfo?: AdminInfo;
-  clinicInfo?: ClinicInfo; // @deprecated - use personalClinicData instead
-  personalClinicData?: PersonalClinicData;
-  agencyInfo?: AgencyInfo; // @deprecated - use personalAgencyData instead
+  personalMedicalFacilityData?: PersonalMedicalFacilityData;
   personalAgencyData?: PersonalAgencyData;
 }
 
-export interface DoctorInfo {
+export interface PersonnelInfo {
+  personnelType: PersonnelType;
   specialization: string;
-  clinicId?: string;
+  medicalFacilityId?: string;
   licenseNumber: string;
   verified: boolean;
-  verificationRequestId?: string; // Reference to DoctorVerificationRequest
   bio?: string;
   experience?: number;
-  procedureTags?: MedicalProcedureType[]; // Medical procedures this doctor can perform
+  procedureTags?: MedicalProcedureType[]; // Medical procedures this personnel can perform
 }
 
 export interface PatientInfo {
@@ -114,8 +124,11 @@ export interface AdminInfo {
   lastLogin: Date;
 }
 
-// Personal Doctor Data (private, doctor-managed)
-export interface PersonalDoctorData {
+// Personal Healthcare Personnel Data (private, personnel-managed)
+export interface PersonalHealthcarePersonnelData {
+  // Personnel Type
+  personnelType: PersonnelType;
+
   // Personal Information
   name: string;
   dateOfBirth: string;
@@ -135,8 +148,8 @@ export interface PersonalDoctorData {
   certifications?: string[];
 
   // Employment
-  currentClinic?: string;
-  clinicAddress?: string;
+  currentMedicalFacility?: string;
+  medicalFacilityAddress?: string;
   position: string;
 
   // Additional Information
@@ -146,40 +159,38 @@ export interface PersonalDoctorData {
 
   // Verification & Linking (set by admin only)
   verified: boolean;
-  openDoctorDataId?: string; // Link to openDoctorData (admin-controlled)
+  openHealthcarePersonnelDataId?: string; // Link to openHealthcarePersonnelData (admin-controlled)
   verificationNotes?: string;
   verifiedAt?: Date;
   verifiedBy?: string; // Admin UID
 }
 
-// Open Doctor Data (public, admin-managed)
-export interface OpenDoctorData {
+// Open Healthcare Personnel Data (public, admin-managed)
+export interface OpenHealthcarePersonnelData {
   id: string;
   name: string;
+  personnelType: PersonnelType;
   specialty: DoctorSpecialty;
-  personalDoctorDataId?: string; // Link to user's personalDoctorData (admin-controlled)
+  personalHealthcarePersonnelDataId?: string; // Link to user's personalHealthcarePersonnelData (admin-controlled)
   slug?: string;
+  bio?: string;
+  image?: string;
+  rating?: number;
+  reviewCount?: number;
+  googlePlaceId?: string;
+  links?: string[];
+  images?: string[];
+  medicalFacilityIds?: string[];
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin UID
 }
 
-// Clinic Information (deprecated - use PersonalClinicData)
-export interface ClinicInfo {
-  name: string;
-  address: string;
-  phone: string;
-  email?: string;
-  website?: string;
-  description?: string;
-  doctorIds?: string[]; // List of associated doctor UIDs
-  verified: boolean;
-}
-
-// Personal Clinic Data (private, clinic-managed)
-export interface PersonalClinicData {
+// Medical Facility Information (previously Clinic)
+export interface PersonalMedicalFacilityData {
   // Basic Information
   name: string;
+  type: MedicalFacilityType;
   contactPerson: string;
   phone: string;
   email: string;
@@ -204,23 +215,30 @@ export interface PersonalClinicData {
   
   // Verification & Linking (set by admin only)
   verified: boolean;
-  openClinicDataId?: string; // Link to openClinicData (admin-controlled)
+  openMedicalFacilityDataId?: string; // Link to openMedicalFacilityData (admin-controlled)
   verificationNotes?: string;
   verifiedAt?: Date;
   verifiedBy?: string; // Admin UID
 
-  // Doctor Claims (doctors claimed by clinic, pending verification)
+  // Doctor Claims (doctors claimed by facility, pending verification)
   claimedDoctorIds?: string[]; // Pending verification
 }
 
-// Open Clinic Data (public, admin-managed)
-export interface OpenClinicData {
+// Open Medical Facility Data (public, admin-managed)
+export interface OpenMedicalFacilityData {
   id: string;
   name: string;
+  type: MedicalFacilityType;
   address: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  description?: string;
   specialties?: DoctorSpecialty[];
-  personalClinicDataId?: string; // Link to user's personalClinicData (admin-controlled)
-  verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this clinic
+  personalMedicalFacilityDataId?: string; // Link to user's personalMedicalFacilityData (admin-controlled)
+  verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -277,7 +295,14 @@ export interface OpenAgencyData {
   id: string;
   name: string;
   country: string;
+  city?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  description?: string;
   servicesOffered?: string[];
+  focusCountries?: string[];
   personalAgencyDataId?: string; // Link to user's personalAgencyData (admin-controlled)
   slug?: string;
   createdAt: Date;
@@ -285,67 +310,16 @@ export interface OpenAgencyData {
   createdBy?: string; // Admin UID
 }
 
-// Clinic-Doctor Link (for verified associations)
-export interface ClinicDoctorLink {
+// Medical Facility-Personnel Link (for verified associations)
+export interface MedicalFacilityPersonnelLink {
   id?: string;
-  clinicId: string; // OpenClinicData ID
-  doctorId: string; // User UID with personalDoctorData
-  claimedBy: 'clinic' | 'doctor' | 'admin'; // Who initiated the claim
+  medicalFacilityId: string; // OpenMedicalFacilityData ID
+  personnelId: string; // User UID with personalHealthcarePersonnelData
+  claimedBy: 'medical_facility' | 'healthcare_personnel' | 'admin'; // Who initiated the claim
   verified: boolean;
   verifiedBy?: string; // Admin UID
   verifiedAt?: Date;
   createdAt: Date;
-  updatedAt: Date;
-}
-
-// Doctor Verification System
-export type VerificationStatus = 'waiting' | 'approved' | 'denied';
-
-export interface DoctorVerificationRequest {
-  id?: string;
-  doctorId: string; // Firebase Auth UID
-  doctorEmail: string;
-  doctorName: string;
-
-  // Personal Information
-  fullName: string;
-  dateOfBirth: string;
-  phoneNumber: string;
-
-  // Professional Information
-  medicalLicenseNumber: string;
-  licenseIssuingAuthority: string;
-  licenseExpirationDate: string;
-  specialization: string;
-  yearsOfExperience: number;
-
-  // Education
-  medicalSchool: string;
-  graduationYear: number;
-  certifications?: string[];
-
-  // Employment
-  currentClinic?: string;
-  clinicAddress?: string;
-  position: string;
-
-  // Documents (URLs to Firebase Storage)
-  licenseDocumentUrl?: string;
-  certificationDocumentUrls?: string[];
-  photoIdUrl?: string;
-
-  // Additional Information
-  reasonForVerification: string;
-  references?: string[];
-
-  // System fields
-  status: VerificationStatus;
-  submittedAt: Date;
-  reviewedAt?: Date;
-  reviewedBy?: string; // Admin UID who reviewed
-  reviewNotes?: string;
-
-  // Metadata
   updatedAt: Date;
 }
 
@@ -356,7 +330,6 @@ export type TicketCategory =
   | 'account'
   | 'billing'
   | 'technical'
-  | 'doctor_verification'
   | 'general'
   | 'medical_question';
 

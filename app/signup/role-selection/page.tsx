@@ -48,32 +48,32 @@ export default function RoleSelectionPage() {
         await refreshUserProfile();
         console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
         window.location.href = '/profile';
-      } else if (selectedRole === 'doctor') {
-        // Doctor needs to fill personal data
-        console.log('🎭 [ROLE] Updating Firestore for doctor...');
+      } else if (selectedRole === 'healthcare_personnel') {
+        // Healthcare Personnel needs to fill personal data
+        console.log('🎭 [ROLE] Updating Firestore for healthcare personnel...');
         await updateDoc(userRef, {
-          role: 'doctor',
+          role: 'healthcare_personnel',
           accountStatus: 'pending_personal_data',
           updatedAt: new Date(),
         });
 
-        console.log('✅ [ROLE] Doctor role set, refreshing profile...');
+        console.log('✅ [ROLE] Healthcare personnel role set, refreshing profile...');
         await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/doctor-application');
-        window.location.href = '/signup/doctor-application';
-      } else if (selectedRole === 'clinic') {
-        // Clinic needs to fill personal data
-        console.log('🎭 [ROLE] Updating Firestore for clinic...');
+        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/healthcare-personnel-application');
+        window.location.href = '/signup/healthcare-personnel-application';
+      } else if (selectedRole === 'medical_facility') {
+        // Medical Facility needs to fill personal data
+        console.log('🎭 [ROLE] Updating Firestore for medical facility...');
         await updateDoc(userRef, {
-          role: 'clinic',
+          role: 'medical_facility',
           accountStatus: 'pending_personal_data',
           updatedAt: new Date(),
         });
 
-        console.log('✅ [ROLE] Clinic role set, refreshing profile...');
+        console.log('✅ [ROLE] Medical facility role set, refreshing profile...');
         await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/clinic-application');
-        window.location.href = '/signup/clinic-application';
+        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/medical-facility-application');
+        window.location.href = '/signup/medical-facility-application';
       } else if (selectedRole === 'agency') {
         // Agency needs to fill personal data
         console.log('🎭 [ROLE] Updating Firestore for agency...');
@@ -139,11 +139,11 @@ export default function RoleSelectionPage() {
             </p>
           </div>
 
-          {/* Doctor Option */}
+          {/* Healthcare Personnel Option */}
           <div
-            onClick={() => setSelectedRole('doctor')}
+            onClick={() => setSelectedRole('healthcare_personnel')}
             className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
-              selectedRole === 'doctor'
+              selectedRole === 'healthcare_personnel'
                 ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/20'
                 : 'border-zinc-700 hover:border-indigo-400 hover:shadow-md hover:bg-zinc-800/50'
             }`}
@@ -155,27 +155,27 @@ export default function RoleSelectionPage() {
                 </svg>
               </div>
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                selectedRole === 'doctor' ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-600'
+                selectedRole === 'healthcare_personnel' ? 'border-indigo-500 bg-indigo-500' : 'border-zinc-600'
               }`}>
-                {selectedRole === 'doctor' && (
+                {selectedRole === 'healthcare_personnel' && (
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-white">Doctor</h3>
+            <h3 className="text-xl font-semibold mb-2 text-white">Healthcare Personnel</h3>
             <p className="text-zinc-400 text-sm mb-2">
-              Build profile & connect with patients
+              Doctors & Patient Coordinators
             </p>
             <p className="text-xs text-yellow-300">Requires verification</p>
           </div>
 
-          {/* Clinic Option */}
+          {/* Medical Facility Option */}
           <div
-            onClick={() => setSelectedRole('clinic')}
+            onClick={() => setSelectedRole('medical_facility')}
             className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
-              selectedRole === 'clinic'
+              selectedRole === 'medical_facility'
                 ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20'
                 : 'border-zinc-700 hover:border-green-400 hover:shadow-md hover:bg-zinc-800/50'
             }`}
@@ -187,18 +187,18 @@ export default function RoleSelectionPage() {
                 </svg>
               </div>
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                selectedRole === 'clinic' ? 'border-green-500 bg-green-500' : 'border-zinc-600'
+                selectedRole === 'medical_facility' ? 'border-green-500 bg-green-500' : 'border-zinc-600'
               }`}>
-                {selectedRole === 'clinic' && (
+                {selectedRole === 'medical_facility' && (
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-white">Clinic</h3>
+            <h3 className="text-xl font-semibold mb-2 text-white">Medical Facility</h3>
             <p className="text-zinc-400 text-sm mb-2">
-              List your medical facility & doctors
+              Manage your medical facility, polylinic, or hospital
             </p>
             <p className="text-xs text-yellow-300">Requires verification</p>
           </div>

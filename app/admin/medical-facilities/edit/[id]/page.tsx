@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, query, where, getDocs, serverTimestamp, collection } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { DOCTOR_SPECIALTIES } from "@/lib/types";
+import { DOCTOR_SPECIALTIES, MEDICAL_FACILITY_TYPES, OpenMedicalFacilityData } from "@/lib/types";
 
-export default function CreateClinicPage() {
+export default function EditMedicalFacilityPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [facilityId, setFacilityId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    facilityType: "Clinic",
     address: "",
     city: "",
     country: "",
@@ -24,6 +31,47 @@ export default function CreateClinicPage() {
     email: "",
     website: "",
   });
+
+  useEffect(() => {
+    async function loadFacility() {
+      try {
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setFacilityId(id);
+
+        const facilityRef = doc(db, "open_medical_facility_data", id);
+        const facilitySnap = await getDoc(facilityRef);
+
+        if (!facilitySnap.exists()) {
+          setError("Medical facility not found");
+          setLoading(false);
+          return;
+        }
+
+        const data = facilitySnap.data();
+        setFormData({
+          name: data.name || "",
+          facilityType: data.facilityType || "Clinic",
+          address: data.address || "",
+          city: data.city || "",
+          country: data.country || "",
+          slug: data.slug || "",
+          specialties: data.specialties || [],
+          description: data.description || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          website: data.website || "",
+        });
+      } catch (err) {
+        console.error("Error loading medical facility:", err);
+        setError("Failed to load medical facility");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFacility();
+  }, [params]);
 
   // Utility function to generate slug from name
   const generateSlug = (name: string): string => {
@@ -38,25 +86,31 @@ export default function CreateClinicPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError(null);
 
     try {
       // Generate slug if not provided
       const slug = formData.slug || generateSlug(formData.name);
 
-      // Check if slug already exists
-      const clinicsRef = collection(db, "open_clinic_data");
-      const slugQuery = query(clinicsRef, where("slug", "==", slug));
+      // Check if slug already exists (excluding current facility)
+      const facilitiesRef = collection(db, "open_medical_facility_data");
+      const slugQuery = query(facilitiesRef, where("slug", "==", slug));
       const existingDocs = await getDocs(slugQuery);
 
-      if (!existingDocs.empty) {
-        throw new Error(`Clinic with slug "${slug}" already exists`);
+      const slugExists = existingDocs.docs.some(
+        (doc) => doc.id !== facilityId
+      );
+
+      if (slugExists) {
+        throw new Error(`Medical facility with slug "${slug}" already exists`);
       }
 
-      // Create clinic document
-      const clinicData = {
+      // Update facility document
+      const facilityRef = doc(db, "open_medical_facility_data", facilityId);
+      await updateDoc(facilityRef, {
         name: formData.name,
+        facilityType: formData.facilityType,
         address: formData.address,
         city: formData.city || null,
         country: formData.country || null,
@@ -66,19 +120,14 @@ export default function CreateClinicPage() {
         phone: formData.phone || null,
         email: formData.email || null,
         website: formData.website || null,
-        verifiedDoctorIds: [],
-        personalClinicDataId: null,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      };
+      });
 
-      await addDoc(collection(db, "open_clinic_data"), clinicData);
-
-      router.push("/admin/clinics");
+      router.push("/admin/medical-facilities");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create clinic");
-      setLoading(false);
+      setError(err instanceof Error ? err.message : "Failed to update medical facility");
+      setSaving(false);
     }
   };
 
@@ -100,18 +149,32 @@ export default function CreateClinicPage() {
     setFormData((prev) => ({ ...prev, specialties: selectedSpecialties }));
   };
 
+  if (loading) {
+    return (
+      <ProtectedRoute requiredRole="admin">
+        <div className="min-h-screen bg-black text-white p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center py-12">
+              <p className="text-zinc-400 text-lg">Loading medical facility...</p>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute requiredRole="admin">
       <div className="min-h-screen bg-black text-white p-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <Link
-              href="/admin"
+              href="/admin/medical-facilities"
               className="text-zinc-400 hover:text-white transition-colors"
             >
-              ← Back to Admin Dashboard
+              ← Back to Medical Facilities
             </Link>
-            <h1 className="text-4xl font-bold mt-4">Create Clinic</h1>
+            <h1 className="text-4xl font-bold mt-4">Edit Medical Facility</h1>
           </div>
 
           <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800">
@@ -122,23 +185,48 @@ export default function CreateClinicPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-zinc-300 mb-2"
-                >
-                  Clinic Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                  placeholder="Medical Center of Excellence"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-zinc-300 mb-2"
+                  >
+                    Medical Facility Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                    placeholder="Medical Center of Excellence"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="facilityType"
+                    className="block text-sm font-medium text-zinc-300 mb-2"
+                  >
+                    Facility Type <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    id="facilityType"
+                    name="facilityType"
+                    required
+                    value={formData.facilityType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  >
+                    {MEDICAL_FACILITY_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -200,31 +288,10 @@ export default function CreateClinicPage() {
 
               <div>
                 <label
-                  htmlFor="slug"
-                  className="block text-sm font-medium text-zinc-300 mb-2"
-                >
-                  Slug (URL-friendly identifier)
-                </label>
-                <input
-                  type="text"
-                  id="slug"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                  placeholder="medical-center-excellence (auto-generated if empty)"
-                />
-                <p className="mt-1 text-sm text-zinc-500">
-                  Leave empty to auto-generate from name
-                </p>
-              </div>
-
-              <div>
-                <label
                   htmlFor="specialties"
                   className="block text-sm font-medium text-zinc-300 mb-2"
                 >
-                  Specialties (Hold Ctrl/Cmd to select multiple)
+                  Specialties (Hold Cmd/Ctrl to select multiple)
                 </label>
                 <select
                   id="specialties"
@@ -232,8 +299,7 @@ export default function CreateClinicPage() {
                   multiple
                   value={formData.specialties}
                   onChange={handleSpecialtyChange}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                  size={5}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent h-32"
                 >
                   {DOCTOR_SPECIALTIES.map((specialty) => (
                     <option key={specialty} value={specialty}>
@@ -257,11 +323,11 @@ export default function CreateClinicPage() {
                   value={formData.description}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent resize-none"
-                  placeholder="Clinic description and services..."
+                  placeholder="About the medical facility..."
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label
                     htmlFor="phone"
@@ -276,7 +342,7 @@ export default function CreateClinicPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                    placeholder="+90 212 123 4567"
+                    placeholder="+90 555 123 4567"
                   />
                 </div>
 
@@ -294,43 +360,64 @@ export default function CreateClinicPage() {
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                    placeholder="info@clinic.com"
+                    placeholder="contact@facility.com"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="website"
+                    className="block text-sm font-medium text-zinc-300 mb-2"
+                  >
+                    Website
+                  </label>
+                  <input
+                    type="url"
+                    id="website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                    placeholder="https://www.facility.com"
                   />
                 </div>
               </div>
 
               <div>
                 <label
-                  htmlFor="website"
+                  htmlFor="slug"
                   className="block text-sm font-medium text-zinc-300 mb-2"
                 >
-                  Website
+                  Slug (URL-friendly identifier)
                 </label>
                 <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={formData.website}
+                  type="text"
+                  id="slug"
+                  name="slug"
+                  value={formData.slug}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                  placeholder="https://clinic.com"
+                  placeholder="medical-center (auto-generated if empty)"
                 />
+                <p className="mt-1 text-sm text-zinc-500">
+                  Leave empty to auto-generate from name
+                </p>
               </div>
 
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={saving}
                   className="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Creating..." : "Create Clinic"}
+                  {saving ? "Saving..." : "Save Changes"}
                 </button>
-                <a
-                  href="/admin/clinics"
+                <Link
+                  href="/admin/medical-facilities"
                   className="px-6 py-3 bg-zinc-800 text-white font-medium rounded-lg hover:bg-zinc-700 transition-colors"
                 >
                   Cancel
-                </a>
+                </Link>
               </div>
             </form>
           </div>

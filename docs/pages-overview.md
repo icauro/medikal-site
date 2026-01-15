@@ -15,42 +15,45 @@ This document provides a high-level overview of all main pages/routes in the Med
 
 ## Public Pages
 
-| Route                | Purpose                                      | Access        |
-|----------------------|----------------------------------------------|--------------|
-| `/`                  | Home page, search, featured doctors          | Public       |
-| `/about`             | About the platform                           | Public       |
-| `/blogs`             | Blog articles                                | Public       |
-| `/doctors`           | List/search doctors                          | Public       |
-| `/doctors/[slug]`    | Doctor profile page                          | Public       |
+| Route                                     | Purpose                                      | Access        |
+|-------------------------------------------|----------------------------------------------|--------------|
+| `/`                                       | Home page, search, featured professionals    | Public       |
+| `/about`                                  | About the platform                           | Public       |
+| `/blogs`                                  | Blog articles                                | Public       |
+| `/doctors`                                | List/search doctors                          | Public       |
+| `/doctors/[slug]`                         | Professional profile page                    | Public       |
+| `/medical-facilities`                     | List/search facilities                      | Public       |
+| `/agencies`                               | List/search agencies                        | Public       |
 
 ## Authentication & Profile
 
-| Route                        | Purpose                                 | Access        |
-|------------------------------|-----------------------------------------|--------------|
-| `/login`                     | Google OAuth login                      | Public       |
-| `/signup/role-selection`     | Choose user role                        | Public       |
-| `/signup/doctor-application` | Doctor application form                 | Public       |
-| `/profile`                   | User profile (view/edit)                | Authenticated|
+| Route                                     | Purpose                                 | Access        |
+|-------------------------------------------|-----------------------------------------|--------------|
+| `/login`                                  | Google OAuth login                      | Public       |
+| `/signup/role-selection`                  | Choose user role                        | Public       |
+| `/signup/healthcare-personnel-application`| Personnel application form              | Public       |
+| `/signup/medical-facility-application`    | Facility application form               | Public       |
+| `/signup/agency-application`              | Agency application form                 | Public       |
+| `/profile`                                | User profile (view/edit)                | Authenticated|
 
-## Doctor Features
+## Professional Features
 
 | Route                                 | Purpose                                 | Access        |
 |---------------------------------------|-----------------------------------------|--------------|
-| `/doctor/pending-approval`            | Shown to doctors awaiting verification  | Doctor       |
-| `/doctor/verify`                      | Doctor verification submission          | Doctor       |
-| `/add-review`                         | Add review for a doctor                 | Authenticated|
-| `/treatment-plan`                     | View/manage treatment plans             | Doctor       |
+| `/add-review`                         | Add review for a professional           | Authenticated|
+| `/treatment-plan`                     | View/manage treatment plans             | Professional |
 
 ## Admin Features
 
-| Route                                 | Purpose                                 | Access        |
-|---------------------------------------|-----------------------------------------|--------------|
-| `/admin`                              | Admin dashboard                         | Admin        |
-| `/admin/doctors`                      | Manage doctors                          | Admin        |
-| `/admin/doctors/create`               | Add new doctor                          | Admin        |
-| `/admin/doctors/edit/[id]`            | Edit doctor profile                     | Admin        |
-| `/admin/verifications`                | Approve doctor verifications            | Admin        |
-| `/admin/support`                      | Manage support tickets                  | Admin        |
+| Route                                     | Purpose                                 | Access        |
+|-------------------------------------------|-----------------------------------------|--------------|
+| `/admin`                                  | Admin dashboard                         | Admin        |
+| `/admin/healthcare-personnel`             | Manage healthcare personnel             | Admin        |
+| `/admin/healthcare-personnel/create`      | Add new personnel                       | Admin        |
+| `/admin/healthcare-personnel/edit/[id]`   | Edit personnel profile                  | Admin        |
+| `/admin/medical-facilities`               | Manage medical facilities               | Admin        |
+| `/admin/agencies`                         | Manage agencies                         | Admin        |
+| `/admin/support`                          | Manage support tickets                  | Admin        |
 
 ## Support & Misc
 

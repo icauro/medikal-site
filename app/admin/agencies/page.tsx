@@ -6,20 +6,11 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
-
-interface Agency {
-  id: string;
-  name: string;
-  address: string;
-  city?: string;
-  slug?: string;
-  servicesOffered?: string[];
-  focusCountries?: string[];
-}
+import { OpenAgencyData } from "@/lib/types";
 
 export default function AdminAgenciesPage() {
   const router = useRouter();
-  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [agencies, setAgencies] = useState<OpenAgencyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +20,7 @@ export default function AdminAgenciesPage() {
       const agenciesCollection = collection(db, "open_agency_data");
       const agenciesSnapshot = await getDocs(agenciesCollection);
       
-      const agenciesList: Agency[] = [];
+      const agenciesList: OpenAgencyData[] = [];
       
       agenciesSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -41,7 +32,10 @@ export default function AdminAgenciesPage() {
           slug: data.slug || "",
           servicesOffered: data.servicesOffered || [],
           focusCountries: data.focusCountries || [],
-        });
+          country: data.country || "",
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as OpenAgencyData);
       });
       
       setAgencies(agenciesList);

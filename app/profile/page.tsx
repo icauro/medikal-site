@@ -17,6 +17,15 @@ export default function ProfilePage() {
   const [deleteError, setDeleteError] = useState('');
   const [syncingStatus, setSyncingStatus] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState(userProfile?.displayName || '');
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  useEffect(() => {
+    if (userProfile?.displayName) {
+      setNewName(userProfile.displayName);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     if (syncingStatus || !syncError) {
@@ -26,6 +35,30 @@ export default function ProfilePage() {
     const timer = setTimeout(() => setSyncError(''), 7000);
     return () => clearTimeout(timer);
   }, [syncError, syncingStatus]);
+
+  const handleUpdateName = async () => {
+    if (!user || !newName.trim() || newName === userProfile?.displayName) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        displayName: newName.trim(),
+        updatedAt: new Date()
+      });
+      console.log('✅ [PROFILE] Display name updated');
+      setIsEditingName(false);
+      // Wait for AuthContext to sync or manually trigger if needed
+    } catch (error) {
+      console.error('❌ [PROFILE] Failed to update name:', error);
+      setSyncError('Failed to update name');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   console.log('👤 [PROFILE] Profile page rendered', {
     hasProfile: !!userProfile,
@@ -43,8 +76,8 @@ export default function ProfilePage() {
   const getRoleColor = (role: string | null) => {
     switch (role) {
       case 'admin': return 'text-red-400';
-      case 'doctor': return 'text-blue-400';
-      case 'clinic': return 'text-green-400';
+      case 'healthcare_personnel': return 'text-blue-400';
+      case 'medical_facility': return 'text-green-400';
       case 'agency': return 'text-purple-400';
       case 'patient': return 'text-cyan-400';
       default: return 'text-zinc-400';
@@ -99,126 +132,136 @@ export default function ProfilePage() {
           {userProfile && (
             <div className="space-y-6">
               {/* Profile Card */}
-              <div className="bg-zinc-900 rounded-lg p-6 md:p-8 border border-zinc-800">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+              <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                <div className="flex flex-col md:flex-row items-center md:items-center gap-6 mb-6">
                   {userProfile.photoURL ? (
                     <Image
                       src={userProfile.photoURL}
                       alt={userProfile.displayName}
-                      width={120}
-                      height={120}
-                      className="rounded-full border-4 border-zinc-800"
+                      width={100}
+                      height={100}
+                      className="rounded-full border-2 border-zinc-800"
                     />
                   ) : (
-                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-4xl md:text-5xl font-bold border-4 border-zinc-800">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-3xl font-bold border-2 border-zinc-800">
                       {userProfile.displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-2">{userProfile.displayName}</h2>
-                    <p className="text-zinc-400 mb-3">{userProfile.email}</p>
-                    {userProfile.role && (
-                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
-                        {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'doctor' ? '👨‍⚕️ ' : '👤 '}
-                        {userProfile.role}
-                      </span>
-                    )}
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
+                      {isEditingName ? (
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                          <input
+                            type="text"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            className="bg-black border border-zinc-700 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 md:flex-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleUpdateName}
+                            disabled={isSavingName}
+                            className="p-1 px-3 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          >
+                            {isSavingName ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsEditingName(false);
+                              setNewName(userProfile.displayName);
+                            }}
+                            className="p-1 px-3 bg-zinc-800 rounded text-sm hover:bg-zinc-700 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 justify-center md:justify-start">
+                          <h2 className="text-2xl font-bold">{userProfile.displayName}</h2>
+                          <button
+                            onClick={() => setIsEditingName(true)}
+                            className="p-1.5 text-zinc-400 hover:text-white transition-colors"
+                            title="Edit public name"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                      <p className="text-zinc-400 text-sm">{userProfile.email}</p>
+                      {userProfile.role && (
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
+                          {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'healthcare_personnel' ? '⚕️ ' : '👤 '}
+                          {userProfile.role.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Account Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Email Address</label>
-                    <p className="text-white font-medium">{userProfile.email}</p>
-                  </div>
-
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Display Name</label>
-                    <p className="text-white font-medium">{userProfile.displayName}</p>
-                  </div>
-
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Account Type</label>
-                    <p className="text-white font-medium capitalize">{userProfile.role || 'Pending'}</p>
-                  </div>
-
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">User ID</label>
-                    <p className="text-white font-mono text-sm truncate">{userProfile.uid}</p>
-                  </div>
-
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Member Since</label>
-                    <p className="text-white font-medium">
-                      {userProfile.createdAt?.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      }) || 'Unknown'}
+                {/* Compact Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-zinc-800">
+                  <div>
+                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Member Since</label>
+                    <p className="text-white text-sm font-medium">
+                      {userProfile.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) || '-'}
                     </p>
                   </div>
-
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2">Last Active</label>
-                    <p className="text-white font-medium">
-                      {userProfile.updatedAt?.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      }) || 'Unknown'}
+                  <div>
+                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Last Active</label>
+                    <p className="text-white text-sm font-medium">
+                      {userProfile.updatedAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) || '-'}
                     </p>
+                  </div>
+                  <div className="hidden md:block">
+                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Email status</label>
+                    <p className="text-green-500 text-sm font-medium">Verified</p>
+                  </div>
+                  <div className="hidden md:block">
+                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">User ID</label>
+                    <p className="text-zinc-400 text-[10px] font-mono truncate">{userProfile.uid}</p>
                   </div>
                 </div>
               </div>
 
               {/* Role-Specific Information */}
-              {userProfile.personalDoctorData && (
-                <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    👨‍⚕️ Doctor Information
+              {userProfile.personalHealthcarePersonnelData && (
+                <div className="bg-blue-900/10 border border-blue-900/30 rounded-lg p-4">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-blue-400">
+                    ⚕️ Healthcare Personnel Info
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
-                      <label className="text-blue-300 text-sm block mb-1">Name</label>
-                      <p className="text-white">{userProfile.personalDoctorData.name}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Type</label>
+                      <p className="text-white text-sm">{userProfile.personalHealthcarePersonnelData.personnelType}</p>
                     </div>
                     <div>
-                      <label className="text-blue-300 text-sm block mb-1">Specialization</label>
-                      <p className="text-white">{userProfile.personalDoctorData.specialization}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Specialization</label>
+                      <p className="text-white text-sm">{userProfile.personalHealthcarePersonnelData.specialization}</p>
                     </div>
                     <div>
-                      <label className="text-blue-300 text-sm block mb-1">License Number</label>
-                      <p className="text-white font-mono">{userProfile.personalDoctorData.licenseNumber}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">License</label>
+                      <p className="text-white text-sm font-mono">{userProfile.personalHealthcarePersonnelData.licenseNumber}</p>
                     </div>
                     <div>
-                      <label className="text-blue-300 text-sm block mb-1">Verification Status</label>
-                      <p className={userProfile.personalDoctorData.verified ? 'text-green-400' : 'text-yellow-400'}>
-                        {userProfile.personalDoctorData.verified ? '✅ Verified' : '⏳ Pending'}
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
+                      <p className={`text-sm ${userProfile.personalHealthcarePersonnelData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {userProfile.personalHealthcarePersonnelData.verified ? '✅ Verified' : '⏳ Pending'}
                       </p>
                     </div>
-                    {userProfile.personalDoctorData.yearsOfExperience && (
+                    {userProfile.personalHealthcarePersonnelData.yearsOfExperience && (
                       <div>
-                        <label className="text-blue-300 text-sm block mb-1">Years of Experience</label>
-                        <p className="text-white">{userProfile.personalDoctorData.yearsOfExperience} years</p>
+                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Experience</label>
+                        <p className="text-white text-sm">{userProfile.personalHealthcarePersonnelData.yearsOfExperience} years</p>
                       </div>
                     )}
-                    {userProfile.personalDoctorData.medicalSchool && (
+                    {userProfile.personalHealthcarePersonnelData.currentMedicalFacility && (
                       <div>
-                        <label className="text-blue-300 text-sm block mb-1">Medical School</label>
-                        <p className="text-white">{userProfile.personalDoctorData.medicalSchool}</p>
-                      </div>
-                    )}
-                    {userProfile.personalDoctorData.currentClinic && (
-                      <div>
-                        <label className="text-blue-300 text-sm block mb-1">Current Clinic</label>
-                        <p className="text-white">{userProfile.personalDoctorData.currentClinic}</p>
-                      </div>
-                    )}
-                    {userProfile.personalDoctorData.openDoctorDataId && (
-                      <div>
-                        <label className="text-blue-300 text-sm block mb-1">Public Profile Link</label>
-                        <p className="text-green-400">✅ Linked to public profile</p>
+                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Current Facility</label>
+                        <p className="text-white text-sm">{userProfile.personalHealthcarePersonnelData.currentMedicalFacility}</p>
                       </div>
                     )}
                   </div>
@@ -226,24 +269,24 @@ export default function ProfilePage() {
               )}
 
               {userProfile.patientInfo && (
-                <div className="bg-green-900/20 border border-green-800 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <div className="bg-cyan-900/10 border border-cyan-900/30 rounded-lg p-4">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-cyan-400">
                     👤 Patient Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
-                      <label className="text-green-300 text-sm block mb-1">Preferred Language</label>
-                      <p className="text-white capitalize">{userProfile.patientInfo.preferredLanguage}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Language</label>
+                      <p className="text-white text-sm capitalize">{userProfile.patientInfo.preferredLanguage}</p>
                     </div>
                     {userProfile.patientInfo.emergencyContact && (
                       <>
                         <div>
-                          <label className="text-green-300 text-sm block mb-1">Emergency Contact</label>
-                          <p className="text-white">{userProfile.patientInfo.emergencyContact.name}</p>
+                          <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Emergency Contact</label>
+                          <p className="text-white text-sm">{userProfile.patientInfo.emergencyContact.name}</p>
                         </div>
                         <div>
-                          <label className="text-green-300 text-sm block mb-1">Emergency Phone</label>
-                          <p className="text-white">{userProfile.patientInfo.emergencyContact.phone}</p>
+                          <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Emergency Phone</label>
+                          <p className="text-white text-sm">{userProfile.patientInfo.emergencyContact.phone}</p>
                         </div>
                       </>
                     )}
@@ -251,268 +294,108 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {userProfile.personalClinicData && (
-                <div className="bg-green-900/20 border border-green-800 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    🏥 Clinic Information
+              {userProfile.personalMedicalFacilityData && (
+                <div className="bg-green-900/10 border border-green-900/30 rounded-lg p-4">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
+                    🏥 Medical Facility info
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
-                      <label className="text-green-300 text-sm block mb-1">Clinic Name</label>
-                      <p className="text-white">{userProfile.personalClinicData.name}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Name</label>
+                      <p className="text-white text-sm">{userProfile.personalMedicalFacilityData.facilityName}</p>
                     </div>
                     <div>
-                      <label className="text-green-300 text-sm block mb-1">Contact Person</label>
-                      <p className="text-white">{userProfile.personalClinicData.contactPerson}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Type</label>
+                      <p className="text-white text-sm">{userProfile.personalMedicalFacilityData.facilityType}</p>
                     </div>
                     <div>
-                      <label className="text-green-300 text-sm block mb-1">Phone</label>
-                      <p className="text-white">{userProfile.personalClinicData.phone}</p>
-                    </div>
-                    <div>
-                      <label className="text-green-300 text-sm block mb-1">Email</label>
-                      <p className="text-white">{userProfile.personalClinicData.email}</p>
-                    </div>
-                    <div>
-                      <label className="text-green-300 text-sm block mb-1">Location</label>
-                      <p className="text-white">{userProfile.personalClinicData.city}, {userProfile.personalClinicData.country}</p>
-                    </div>
-                    <div>
-                      <label className="text-green-300 text-sm block mb-1">Registration Number</label>
-                      <p className="text-white font-mono">{userProfile.personalClinicData.registrationNumber}</p>
-                    </div>
-                    {userProfile.personalClinicData.establishedYear && (
-                      <div>
-                        <label className="text-green-300 text-sm block mb-1">Established Year</label>
-                        <p className="text-white">{userProfile.personalClinicData.establishedYear}</p>
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-green-300 text-sm block mb-1">Verification Status</label>
-                      <p className={userProfile.personalClinicData.verified ? 'text-green-400' : 'text-yellow-400'}>
-                        {userProfile.personalClinicData.verified ? '✅ Verified' : '⏳ Pending'}
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
+                      <p className={`text-sm ${userProfile.personalMedicalFacilityData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {userProfile.personalMedicalFacilityData.verified ? '✅ Verified' : '⏳ Pending'}
                       </p>
                     </div>
-                    {userProfile.personalClinicData.openClinicDataId && (
-                      <div>
-                        <label className="text-green-300 text-sm block mb-1">Public Profile Link</label>
-                        <p className="text-green-400">✅ Linked to public profile</p>
-                      </div>
-                    )}
-                    {userProfile.personalClinicData.specialties && userProfile.personalClinicData.specialties.length > 0 && (
-                      <div className="md:col-span-2">
-                        <label className="text-green-300 text-sm block mb-1">Specialties</label>
-                        <p className="text-white">{userProfile.personalClinicData.specialties.join(', ')}</p>
-                      </div>
-                    )}
+                    <div className="col-span-2">
+                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Location</label>
+                        <p className="text-white text-sm">{userProfile.personalMedicalFacilityData.city}, {userProfile.personalMedicalFacilityData.country}</p>
+                    </div>
                   </div>
                 </div>
               )}
 
               {userProfile.personalAgencyData && (
-                <div className="bg-purple-900/20 border border-purple-800 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <div className="bg-purple-900/10 border border-purple-900/30 rounded-lg p-4">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-purple-400">
                     ✈️ Agency Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
-                      <label className="text-purple-300 text-sm block mb-1">Agency Name</label>
-                      <p className="text-white">{userProfile.personalAgencyData.name}</p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Agency Name</label>
+                      <p className="text-white text-sm">{userProfile.personalAgencyData.name}</p>
                     </div>
                     <div>
-                      <label className="text-purple-300 text-sm block mb-1">Contact Person</label>
-                      <p className="text-white">{userProfile.personalAgencyData.contactPerson}</p>
-                    </div>
-                    <div>
-                      <label className="text-purple-300 text-sm block mb-1">Phone</label>
-                      <p className="text-white">{userProfile.personalAgencyData.phone}</p>
-                    </div>
-                    <div>
-                      <label className="text-purple-300 text-sm block mb-1">Email</label>
-                      <p className="text-white">{userProfile.personalAgencyData.email}</p>
-                    </div>
-                    <div>
-                      <label className="text-purple-300 text-sm block mb-1">Location</label>
-                      <p className="text-white">{userProfile.personalAgencyData.city}, {userProfile.personalAgencyData.country}</p>
-                    </div>
-                    <div>
-                      <label className="text-purple-300 text-sm block mb-1">Verification Status</label>
-                      <p className={userProfile.personalAgencyData.verified ? 'text-green-400' : 'text-yellow-400'}>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
+                      <p className={`text-sm ${userProfile.personalAgencyData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
                         {userProfile.personalAgencyData.verified ? '✅ Verified' : '⏳ Pending'}
                       </p>
                     </div>
-                    {userProfile.personalAgencyData.openAgencyDataId && (
-                      <div>
-                        <label className="text-purple-300 text-sm block mb-1">Public Profile Link</label>
-                        <p className="text-green-400">✅ Linked to public profile</p>
-                      </div>
-                    )}
-                    {userProfile.personalAgencyData.focusCountries && userProfile.personalAgencyData.focusCountries.length > 0 && (
-                      <div className="md:col-span-2">
-                        <label className="text-purple-300 text-sm block mb-1">Focus Countries</label>
-                        <p className="text-white">{userProfile.personalAgencyData.focusCountries.join(', ')}</p>
-                      </div>
-                    )}
-                    {userProfile.personalAgencyData.servicesOffered && userProfile.personalAgencyData.servicesOffered.length > 0 && (
-                      <div className="md:col-span-2">
-                        <label className="text-purple-300 text-sm block mb-1">Services Offered</label>
-                        <p className="text-white">{userProfile.personalAgencyData.servicesOffered.join(', ')}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {userProfile.adminInfo && (
-                <div className="bg-red-900/20 border border-red-800 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    👑 Admin Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-red-300 text-sm block mb-1">Permissions</label>
-                      <p className="text-white">{userProfile.adminInfo.permissions.join(', ')}</p>
-                    </div>
-                    <div>
-                      <label className="text-red-300 text-sm block mb-1">Last Admin Login</label>
-                      <p className="text-white">
-                        {userProfile.adminInfo.lastLogin?.toLocaleDateString() || 'Unknown'}
-                      </p>
+                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Location</label>
+                      <p className="text-white text-sm">{userProfile.personalAgencyData.city}, {userProfile.personalAgencyData.country}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Quick Actions */}
-              <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-                <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/"
-                    className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors font-medium"
-                  >
-                    🏠 Home
-                  </Link>
-                  {syncError && (
-                    <span className="px-6 py-2.5 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">
-                      {syncError}
-                    </span>
-                  )}
-                  <Link
-                    href="/support"
-                    className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors font-medium"
-                  >
-                    💬 Support
-                  </Link>
-                  {userProfile.role === 'doctor' && (
-                    <>
-                      <Link
-                        href="/doctor/verify"
-                        className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors font-medium"
-                      >
-                        ✅ Verify Account
-                      </Link>
-                    </>
-                  )}
-                  {userProfile.role === 'admin' && (
-                    <>
-                      <Link
-                        href="/admin"
-                        className="px-6 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium"
-                      >
-                        👑 Admin Dashboard
-                      </Link>
-                      <Link
-                        href="/admin/verifications"
-                        className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors font-medium"
-                      >
-                        ✅ Verifications
-                      </Link>
-                      <Link
-                        href="/admin/support"
-                        className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors font-medium"
-                      >
-                        🎫 Manage Tickets
-                      </Link>
-                    </>
-                  )}
+              {/* Quick Actions & Danger Zone */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/" className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-center text-xs font-medium transition-colors">🏠 Home</Link>
+                    <Link href="/support" className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-center text-xs font-medium transition-colors">💬 Support</Link>
+                    {userProfile.role === 'admin' && (
+                      <>
+                        <Link href="/admin" className="px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded text-center text-xs font-medium transition-colors">👑 Admin</Link>
+                        <Link href="/admin/verifications" className="px-3 py-2 bg-orange-900/20 hover:bg-orange-900/40 text-orange-400 border border-orange-900/50 rounded text-center text-xs font-medium transition-colors">✅ Verify</Link>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Danger Zone - Delete Account */}
-              <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-6">
-                <h3 className="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h3>
-                <p className="text-zinc-400 mb-4 text-sm">
-                  {userProfile.role === 'doctor' || userProfile.role === 'admin'
-                    ? 'Deleting your account will remove your personal data, but your doctor profile, clinic information, and reviews will remain on the site as they belong to the platform.'
-                    : 'Once you delete your account, there is no going back. All your data will be permanently deleted.'}
-                </p>
-                
-                {!showDeleteConfirm ? (
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="px-6 py-2.5 bg-red-900 hover:bg-red-800 text-white rounded-lg transition-colors font-medium border border-red-700"
-                  >
-                    🗑️ Delete Account
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="bg-red-900/30 border border-red-800 rounded-lg p-4">
-                      <p className="font-semibold text-red-300 mb-2">Are you absolutely sure?</p>
-                      <p className="text-sm text-red-200 mb-3">
-                        This action cannot be undone. This will permanently delete your account and remove your data from our servers.
-                      </p>
-                      {userProfile.role === 'doctor' && (
-                        <p className="text-sm text-yellow-300 mb-3">
-                          <strong>Note:</strong> Your doctor profile page, clinic listings, and patient reviews will remain visible on the site as they are part of the platform's public directory.
-                        </p>
-                      )}
-                      <p className="text-sm text-zinc-300">
-                        Type <strong className="text-white">DELETE</strong> below to confirm:
-                      </p>
+                <div className="bg-red-950/10 border border-red-900/20 rounded-lg p-4">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-red-900/70 mb-2">Danger Zone</h3>
+                  {!showDeleteConfirm ? (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="text-xs text-red-500/70 hover:text-red-500 underline transition-colors"
+                    >
+                      Delete Account
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[10px] text-red-400 uppercase tracking-tight font-bold">Confirm Deletion</p>
                       <input
                         type="text"
                         id="deleteConfirmText"
-                        className="w-full mt-2 px-3 py-2 bg-zinc-900 border border-red-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="w-full px-2 py-1 bg-black border border-red-900/50 rounded text-xs text-white"
                         placeholder="Type DELETE"
-                        disabled={isDeleting}
                       />
-                    </div>
-
-                    {deleteError && (
-                      <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 text-red-200 text-sm">
-                        {deleteError}
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-1 bg-zinc-800 rounded text-[10px]">Cancel</button>
+                        <button 
+                          onClick={() => {
+                            const input = document.getElementById('deleteConfirmText') as HTMLInputElement;
+                            if (input?.value === 'DELETE') handleDeleteAccount();
+                            else setDeleteError('Type DELETE');
+                          }}
+                          className="flex-1 py-1 bg-red-600 rounded text-[10px] font-bold"
+                        >
+                          DELETE
+                        </button>
                       </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setShowDeleteConfirm(false);
-                          setDeleteError('');
-                        }}
-                        disabled={isDeleting}
-                        className="flex-1 px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          const input = document.getElementById('deleteConfirmText') as HTMLInputElement;
-                          if (input?.value === 'DELETE') {
-                            handleDeleteAccount();
-                          } else {
-                            setDeleteError('Please type DELETE to confirm');
-                          }
-                        }}
-                        disabled={isDeleting}
-                        className="flex-1 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isDeleting ? 'Deleting...' : 'Permanently Delete Account'}
-                      </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}

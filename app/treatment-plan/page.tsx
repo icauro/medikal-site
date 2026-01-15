@@ -76,22 +76,22 @@ export default function TreatmentPlanPage() {
             })),
           } as TreatmentPlan);
         });
-      } else if (userProfile?.role === 'doctor') {
-        // Doctors see plans matching their procedure tags
+      } else if (userProfile?.role === 'healthcare_personnel') {
+        // Healthcare Personnel see plans matching their procedure tags
         plansQuery = query(
           collection(db, "treatment_plans"),
           orderBy("createdAt", "desc")
         );
         
         const querySnapshot = await getDocs(plansQuery);
-        const doctorTags = userProfile.doctorInfo?.procedureTags || [];
+        const personnelTags = userProfile.healthcarePersonnelInfo?.procedureTags || [];
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const planTags = data.procedureTags || [];
           
-          // Check if any doctor tag matches any plan tag
-          const hasMatch = doctorTags.some(tag => planTags.includes(tag));
+          // Check if any personnel tag matches any plan tag
+          const hasMatch = personnelTags.some(tag => planTags.includes(tag));
           
           if (hasMatch) {
             plansData.push({
@@ -209,7 +209,7 @@ export default function TreatmentPlanPage() {
         doctorId: user.uid,
         doctorName: userProfile.displayName,
         doctorEmail: userProfile.email,
-        doctorSpecialty: userProfile.doctorInfo?.specialization,
+        doctorSpecialty: userProfile.healthcarePersonnelInfo?.specialty,
         response: responseText,
         createdAt: new Date(),
       };
@@ -524,9 +524,9 @@ export default function TreatmentPlanPage() {
                   <div className="max-w-4xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-xl font-bold">
-                        Doctor Responses ({selectedPlan.responses.length})
+                        Professional Responses ({selectedPlan.responses.length})
                       </h2>
-                      {userProfile?.role === 'doctor' && (
+                      {userProfile?.role === 'healthcare_personnel' && (
                         <button
                           onClick={() => setRespondingToPlan(selectedPlan.id || null)}
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
@@ -590,7 +590,7 @@ export default function TreatmentPlanPage() {
                                   <div>
                                     <div className="font-semibold">{response.doctorName}</div>
                                     <div className="text-sm text-zinc-400">
-                                      {response.doctorSpecialty || 'Doctor'} • {response.createdAt?.toLocaleDateString()}
+                                      {response.doctorSpecialty || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>

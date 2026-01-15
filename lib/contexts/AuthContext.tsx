@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Admin gets active status immediately
         ...(isAdmin && {
           adminInfo: {
-            permissions: ['manage_users', 'manage_verifications', 'manage_content'],
+            permissions: ['manage_users', 'manage_content'],
             lastLogin: new Date(),
           }
         }),
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             console.log('👑 [MIGRATION] Upgrading user to admin role');
             updates.role = 'admin';
             updates.adminInfo = {
-              permissions: ['manage_users', 'manage_verifications', 'manage_content'],
+              permissions: ['manage_users', 'manage_content'],
               lastLogin: new Date(),
             };
             existingProfile.role = 'admin';
@@ -378,14 +378,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
         await Promise.all(deletePromises);
         console.log(`✅ [DELETE] Deleted ${snapshot.docs.length} ${collectionName}`);
-      }
-
-      // 2. Delete verification requests if doctor
-      if (userProfile?.role === 'doctor' && userProfile.doctorInfo?.verificationRequestId) {
-        console.log('🗑️ [DELETE] Deleting verification request...');
-        const verificationRef = doc(db, 'verification_requests', userProfile.doctorInfo.verificationRequestId);
-        await deleteDoc(verificationRef);
-        console.log('✅ [DELETE] Verification request deleted');
       }
 
       // 3. Delete user profile from Firestore

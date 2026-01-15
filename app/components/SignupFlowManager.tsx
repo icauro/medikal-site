@@ -10,7 +10,6 @@ import GDPRConsent from './GDPRConsent';
  * - GDPR consent
  * - Role selection
  * - Professional application (doctor/clinic/agency)
- * - Pending approval (for professional roles)
  */
 export default function SignupFlowManager({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading, acceptGDPR, logout } = useAuth();
@@ -60,38 +59,15 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
 
       case 'pending_personal_data':
         // Redirect based on role
-        if (userProfile.role === 'doctor' && pathname !== '/signup/doctor-application') {
-          console.log('📝 [SIGNUP_FLOW] Doctor application required, redirecting...');
-          router.push('/signup/doctor-application');
-        } else if (userProfile.role === 'clinic' && pathname !== '/signup/clinic-application') {
-          console.log('📝 [SIGNUP_FLOW] Clinic application required, redirecting...');
-          router.push('/signup/clinic-application');
+        if (userProfile.role === 'healthcare_personnel' && pathname !== '/signup/healthcare-personnel-application') {
+          console.log('📝 [SIGNUP_FLOW] Healthcare personnel application required, redirecting...');
+          router.push('/signup/healthcare-personnel-application');
+        } else if (userProfile.role === 'medical_facility' && pathname !== '/signup/medical-facility-application') {
+          console.log('📝 [SIGNUP_FLOW] Medical facility application required, redirecting...');
+          router.push('/signup/medical-facility-application');
         } else if (userProfile.role === 'agency' && pathname !== '/signup/agency-application') {
           console.log('📝 [SIGNUP_FLOW] Agency application required, redirecting...');
           router.push('/signup/agency-application');
-        }
-        break;
-
-      case 'pending_approval':
-        // Redirect based on role to respective pending pages
-        const pendingPages = [
-          '/doctor/pending-approval',
-          '/clinic/pending-approval',
-          '/agency/pending-approval'
-        ];
-        const shouldRedirect = !pendingPages.some(page => pathname === page) && !isAllowedPath;
-
-        if (shouldRedirect) {
-          if (userProfile.role === 'doctor') {
-            console.log('⏳ [SIGNUP_FLOW] Doctor approval pending, redirecting...');
-            router.push('/doctor/pending-approval');
-          } else if (userProfile.role === 'clinic') {
-            console.log('⏳ [SIGNUP_FLOW] Clinic approval pending, redirecting...');
-            router.push('/clinic/pending-approval');
-          } else if (userProfile.role === 'agency') {
-            console.log('⏳ [SIGNUP_FLOW] Agency approval pending, redirecting...');
-            router.push('/agency/pending-approval');
-          }
         }
         break;
 
@@ -100,9 +76,6 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         // If on signup pages but account is active, redirect to home/profile
         const signupPendingPages = [
           '/signup/',
-          '/doctor/pending-approval',
-          '/clinic/pending-approval',
-          '/agency/pending-approval'
         ];
         const isOnSignupPage = signupPendingPages.some(page => pathname.startsWith(page) || pathname === page);
         
@@ -126,9 +99,6 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         // If on signup pages, redirect away
         const legacySignupPages = [
           '/signup/',
-          '/doctor/pending-approval',
-          '/clinic/pending-approval',
-          '/agency/pending-approval'
         ];
         const isOnLegacySignupPage = legacySignupPages.some(page => pathname.startsWith(page) || pathname === page);
         
@@ -142,9 +112,6 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         // Treat unknown status as active for safety
         const unknownSignupPages = [
           '/signup/',
-          '/doctor/pending-approval',
-          '/clinic/pending-approval',
-          '/agency/pending-approval'
         ];
         const isOnUnknownSignupPage = unknownSignupPages.some(page => pathname.startsWith(page) || pathname === page);
         

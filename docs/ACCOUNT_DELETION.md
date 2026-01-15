@@ -29,7 +29,6 @@ Users can now delete their accounts from the profile page. The deletion process 
 ### Doctor Accounts
 **What Gets Deleted:**
 - ✅ User profile (`users/{uid}`)
-- ✅ Verification requests (`verification_requests/{id}`)
 - ✅ Support tickets (`support_tickets` where `userId == uid`)
 - ✅ Treatment plans/responses (`treatment_plans` where `userId == uid`)
 - ✅ Firebase Authentication account
@@ -49,7 +48,6 @@ Users can now delete their accounts from the profile page. The deletion process 
 
 **What Stays:**
 - ❌ All admin actions/audit trails
-- ❌ Verification decisions (remain for historical records)
 
 ## Technical Implementation
 
@@ -57,10 +55,9 @@ Users can now delete their accounts from the profile page. The deletion process 
 ```typescript
 const deleteAccount = async () => {
   // 1. Delete user-owned data (support tickets, treatment plans)
-  // 2. Delete verification requests (doctors only)
-  // 3. Delete user profile from Firestore
-  // 4. Delete Firebase Auth account
-  // 5. Clear local state
+  // 2. Delete user profile from Firestore
+  // 3. Delete Firebase Auth account
+  // 4. Clear local state
 }
 ```
 

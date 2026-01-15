@@ -11,24 +11,26 @@ export default function Home() {
     { name: "About", href: "/about", description: "About our medical site" },
     { name: "Blogs", href: "/blogs", description: "Medical articles & tips" },
     { name: "Doctors", href: "/doctors", description: "Browse doctors directory" },
+    { name: "Medical Facilities", href: "/medical-facilities", description: "Browse medical facilities" },
+    { name: "Agencies", href: "/agencies", description: "Browse agencies" },
   ];
 
   // Dynamic user pages based on authentication state
   const userPages = user && userProfile ? [
     { name: "Profile", href: "/profile", description: "User profile management" },
     { name: "Treatment Plan", href: "/treatment-plan", description: "Your treatment plan" },
-    { name: "Doctor Verification", href: "/doctor/verify", description: "Doctor credential verification" },
+    { name: "Support Tickets", href: "/support", description: "User support portal" },
   ] : [
     { name: "Login", href: "/login", description: "User authentication" },
     { name: "Sign Up", href: "/signup/role-selection", description: "Create new account" },
-    { name: "Doctor Application", href: "/signup/doctor-application", description: "Apply to become a doctor" },
+    { name: "Personnel Application", href: "/signup/healthcare-personnel-application", description: "Apply as healthcare professional" },
   ];
 
   const adminPages = [
     { name: "Admin Dashboard", href: "/admin", description: "Admin control panel" },
-    { name: "Manage Doctors", href: "/admin/doctors", description: "Doctor management" },
-    { name: "Create Doctor", href: "/admin/doctors/create", description: "Add new doctor" },
-    { name: "Verification Requests", href: "/admin/verifications", description: "Review doctor applications" },
+    { name: "Personnel Management", href: "/admin/healthcare-personnel", description: "Manage healthcare staff" },
+    { name: "Facility Management", href: "/admin/medical-facilities", description: "Manage medical facilities" },
+    { name: "Agency Management", href: "/admin/agencies", description: "Manage agencies" },
   ];
 
   if (loading) {

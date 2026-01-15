@@ -379,17 +379,17 @@ export default function SupportPage() {
                 </div>
               </div>
 
-              {userProfile?.role === "doctor" && (
+              {userProfile?.role === "healthcare_personnel" && (
                 <div className="bg-blue-900/20 rounded-lg border border-blue-800 p-6">
-                  <h3 className="text-lg font-semibold mb-2 text-blue-400">Doctor Verification</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-blue-400">Professional Verification</h3>
                   <p className="text-sm text-zinc-400 mb-4">
-                    Need help with verification? Use the "Doctor Verification" category.
+                    Need help with verification? Use the "Verification" category.
                   </p>
                   <Link
-                    href="/doctor/verify"
+                    href="/profile"
                     className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                   >
-                    View Verification Page →
+                    View Profile Page →
                   </Link>
                 </div>
               )}

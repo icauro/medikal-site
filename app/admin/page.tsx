@@ -7,21 +7,33 @@ import { collection, getDocs } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 
 interface DashboardStats {
-  doctorsCount: number;
-  // Add more stats as needed
+  personnelCount: number;
+  medicalFacilitiesCount: number;
+  agenciesCount: number;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({ doctorsCount: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ 
+    personnelCount: 0,
+    medicalFacilitiesCount: 0,
+    agenciesCount: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        // Fetch doctors count
-        const doctorsSnapshot = await getDocs(collection(db, "doctors"));
+        // Fetch counts from correct collection names (matching types)
+        const [personnelSnap, medicalFacilitiesSnap, agenciesSnap] = await Promise.all([
+          getDocs(collection(db, "open_healthcare_personnel_data")),
+          getDocs(collection(db, "open_medical_facility_data")),
+          getDocs(collection(db, "open_agency_data"))
+        ]);
+
         setStats({
-          doctorsCount: doctorsSnapshot.size,
+          personnelCount: personnelSnap.size,
+          medicalFacilitiesCount: medicalFacilitiesSnap.size,
+          agenciesCount: agenciesSnap.size
         });
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
@@ -35,24 +47,16 @@ export default function AdminDashboard() {
 
   const adminSections = [
     {
-      title: "Verification Requests",
-      description: "Review doctor/clinic/agency applications",
-      href: "/admin/verifications",
-      icon: "✅",
-      color: "bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20",
-      highlight: true,
-    },
-    {
-      title: "Doctors",
-      description: "Manage doctors and their profiles",
-      href: "/admin/doctors",
-      icon: "👨‍⚕️",
+      title: "Healthcare Personnel",
+      description: "Manage doctors and coordinators",
+      href: "/admin/healthcare-personnel",
+      icon: "👥",
       color: "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20",
     },
     {
-      title: "Clinics",
-      description: "Manage clinic information",
-      href: "/admin/clinics",
+      title: "Medical Facilities",
+      description: "Manage medical facility information",
+      href: "/admin/medical-facilities",
       icon: "🏥",
       color: "bg-green-500/10 border-green-500/20 hover:bg-green-500/20",
     },
@@ -87,27 +91,44 @@ export default function AdminDashboard() {
             <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-zinc-400 text-sm mb-1">Total Doctors</p>
+                  <p className="text-zinc-400 text-sm mb-1">Total Personnel</p>
                   {loading ? (
                     <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
                   ) : (
-                    <p className="text-3xl font-bold text-white">{stats.doctorsCount}</p>
+                    <p className="text-3xl font-bold text-white">{stats.personnelCount}</p>
                   )}
                 </div>
                 <div className="text-4xl">👨‍⚕️</div>
               </div>
             </div>
 
-            {/* Add more stat cards as needed */}
-            {/* <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-zinc-400 text-sm mb-1">Total Reviews</p>
-                  <p className="text-3xl font-bold text-white">0</p>
+                  <p className="text-zinc-400 text-sm mb-1">Total Medical Facilities</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-white">{stats.medicalFacilitiesCount}</p>
+                  )}
                 </div>
-                <div className="text-4xl">⭐</div>
+                <div className="text-4xl">🏥</div>
               </div>
-            </div> */}
+            </div>
+
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-zinc-400 text-sm mb-1">Total Agencies</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-3xl font-bold text-white">{stats.agenciesCount}</p>
+                  )}
+                </div>
+                <div className="text-4xl">✈️</div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions / Admin Sections */}

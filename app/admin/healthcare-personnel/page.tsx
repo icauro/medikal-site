@@ -6,71 +6,66 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
-import { DoctorSpecialty } from "@/lib/types";
+import { OpenHealthcarePersonnelData } from "@/lib/types";
 
-interface Doctor {
-  id: string;
-  name: string;
-  specialty: DoctorSpecialty;
-  slug: string;
-  rating?: number;
-}
-
-export default function AdminDoctorsPage() {
+export default function AdminHealthcarePersonnelPage() {
   const router = useRouter();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [personnel, setPersonnel] = useState<OpenHealthcarePersonnelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDoctors = async () => {
+  const fetchPersonnel = async () => {
     try {
-      const doctorsCollection = collection(db, "doctors");
-      const doctorsSnapshot = await getDocs(doctorsCollection);
+      const personnelCollection = collection(db, "open_healthcare_personnel_data");
+      const personnelSnapshot = await getDocs(personnelCollection);
       
-      const doctorsList: Doctor[] = [];
+      const personnelList: OpenHealthcarePersonnelData[] = [];
       
-      doctorsSnapshot.forEach((doc) => {
+      personnelSnapshot.forEach((doc) => {
         const data = doc.data();
-        doctorsList.push({
+        personnelList.push({
           id: doc.id,
           name: data.name || "",
+          personnelType: data.personnelType || "Doctor",
           specialty: data.specialty || "",
           slug: data.slug || "",
           rating: data.rating || undefined,
-        });
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as OpenHealthcarePersonnelData);
       });
       
-      setDoctors(doctorsList);
+      setPersonnel(personnelList);
     } catch (error) {
-      console.error("Error fetching doctors:", error);
-      setError("Failed to fetch doctors");
+      console.error("Error fetching healthcare personnel:", error);
+      setError("Failed to fetch healthcare personnel");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDoctors();
+    fetchPersonnel();
   }, []);
 
-  const handleDelete = async (doctorId: string, doctorName: string) => {
-    if (!confirm(`Are you sure you want to delete "${doctorName}"? This action cannot be undone.`)) {
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
       return;
     }
 
-    setDeletingId(doctorId);
+    setDeletingId(id);
     setError(null);
 
     try {
-      const doctorRef = doc(db, "doctors", doctorId);
-      await deleteDoc(doctorRef);
+      const personnelRef = doc(db, "open_healthcare_personnel_data", id);
+      await deleteDoc(personnelRef);
       
       // Refresh the list
-      await fetchDoctors();
+      await fetchPersonnel();
     } catch (error) {
-      console.error("Error deleting doctor:", error);
-      setError("Failed to delete doctor");
+      console.error("Error deleting healthcare personnel:", error);
+      setError("Failed to delete healthcare personnel");
     } finally {
       setDeletingId(null);
     }
@@ -88,13 +83,13 @@ export default function AdminDoctorsPage() {
               >
                 ← Back to Admin Dashboard
               </Link>
-              <h1 className="text-4xl font-bold">Doctors Management</h1>
+              <h1 className="text-4xl font-bold">Healthcare Personnel Management</h1>
             </div>
             <Link
-              href="/admin/doctors/create"
+              href="/admin/healthcare-personnel/create"
               className="px-4 py-2 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors"
             >
-              + Create Doctor
+              + Create Personnel
             </Link>
           </div>
 
@@ -106,7 +101,7 @@ export default function AdminDoctorsPage() {
 
           {loading ? (
             <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-8 text-center">
-              <p className="text-zinc-400">Loading doctors...</p>
+              <p className="text-zinc-400">Loading personnel...</p>
             </div>
           ) : (
             <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
@@ -116,6 +111,9 @@ export default function AdminDoctorsPage() {
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-medium text-zinc-300">
                         Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-zinc-300">
+                        Type
                       </th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-zinc-300">
                         Specialty
@@ -132,51 +130,54 @@ export default function AdminDoctorsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
-                    {doctors.length === 0 ? (
+                    {personnel.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-6 py-12 text-center text-zinc-400"
                         >
-                          No doctors found. Create your first doctor!
+                          No personnel found. Create your first personnel!
                         </td>
                       </tr>
                     ) : (
-                      doctors.map((doctor) => (
+                      personnel.map((item) => (
                         <tr
-                          key={doctor.id}
+                          key={item.id}
                           className="hover:bg-zinc-800/50 transition-colors"
                         >
-                          <td className="px-6 py-4 text-white">{doctor.name}</td>
+                          <td className="px-6 py-4 text-white">{item.name}</td>
                           <td className="px-6 py-4 text-zinc-400">
-                            {doctor.specialty}
+                            {item.personnelType}
+                          </td>
+                          <td className="px-6 py-4 text-zinc-400">
+                            {item.specialty}
                           </td>
                           <td className="px-6 py-4 text-zinc-400 font-mono text-sm">
-                            {doctor.slug}
+                            {item.slug}
                           </td>
                           <td className="px-6 py-4 text-zinc-400">
-                            {doctor.rating ? `★ ${doctor.rating}` : "-"}
+                            {item.rating ? `★ ${item.rating}` : "-"}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
                               <Link
-                                href={`/doctors/${doctor.slug}`}
+                                href={`/doctors/${item.slug}`}
                                 className="text-blue-400 hover:text-blue-300 transition-colors"
                               >
                                 View
                               </Link>
                               <Link
-                                href={`/admin/doctors/edit/${doctor.id}`}
+                                href={`/admin/healthcare-personnel/edit/${item.id}`}
                                 className="text-green-400 hover:text-green-300 transition-colors"
                               >
                                 Edit
                               </Link>
                               <button
-                                onClick={() => handleDelete(doctor.id, doctor.name)}
-                                disabled={deletingId === doctor.id}
+                                onClick={() => handleDelete(item.id, item.name)}
+                                disabled={deletingId === item.id}
                                 className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {deletingId === doctor.id ? "Deleting..." : "Delete"}
+                                {deletingId === item.id ? "Deleting..." : "Delete"}
                               </button>
                             </div>
                           </td>

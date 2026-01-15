@@ -87,11 +87,16 @@ export default function UserMenu() {
     email: userProfile.email
   });
 
+  const formatRole = (role: UserRole | null | undefined): string => {
+    if (!role) return 'pending role';
+    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+
   const getRoleColor = (role: UserRole | null | undefined) => {
     switch (role) {
       case 'admin': return 'text-red-400';
-      case 'doctor': return 'text-blue-400';
-      case 'clinic': return 'text-green-400';
+      case 'healthcare_personnel': return 'text-blue-400';
+      case 'medical_facility': return 'text-green-400';
       case 'agency': return 'text-purple-400';
       case 'patient': return 'text-cyan-400';
       default: return 'text-zinc-400';
@@ -101,8 +106,8 @@ export default function UserMenu() {
   const getRoleBadgeColor = (role: UserRole | null | undefined) => {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      case 'doctor': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'clinic': return 'bg-green-500/10 text-green-400 border-green-500/20';
+      case 'healthcare_personnel': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'medical_facility': return 'bg-green-500/10 text-green-400 border-green-500/20';
       case 'agency': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
       case 'patient': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
       default: return 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
@@ -132,8 +137,8 @@ export default function UserMenu() {
           <div className="text-white text-sm font-medium">
             {userProfile.displayName}
           </div>
-          <div className={`text-xs capitalize ${getRoleColor(userProfile.role)}`}>
-            {userProfile.role ?? 'pending role'}
+          <div className={`text-xs ${getRoleColor(userProfile.role)}`}>
+            {formatRole(userProfile.role)}
           </div>
         </div>
         <svg 
@@ -170,8 +175,8 @@ export default function UserMenu() {
                 <div className="text-zinc-400 text-sm">{userProfile.email}</div>
               </div>
             </div>
-            <span className={`inline-block px-2 py-1 rounded text-xs font-medium capitalize border ${getRoleBadgeColor(userProfile.role)}`}>
-              {userProfile.role ?? 'pending role'}
+            <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getRoleBadgeColor(userProfile.role)}`}>
+              {formatRole(userProfile.role)}
             </span>
           </div>
 

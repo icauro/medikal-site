@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DOCTOR_SPECIALTIES, DoctorSpecialty } from '@/lib/types';
+import { DOCTOR_SPECIALTIES, DoctorSpecialty, MEDICAL_FACILITY_TYPES } from '@/lib/types';
 
-export default function ClinicApplicationPage() {
+export default function MedicalFacilityApplicationPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -15,6 +15,7 @@ export default function ClinicApplicationPage() {
 
   const [formData, setFormData] = useState({
     name: '',
+    facilityType: 'Clinic',
     contactPerson: '',
     phone: '',
     email: '',
@@ -64,19 +65,20 @@ export default function ClinicApplicationPage() {
     setError('');
 
     try {
-      console.log('📝 [CLINIC_DATA] Submitting personal clinic data');
+      console.log('📝 [FACILITY_DATA] Submitting personal medical facility data');
 
       const servicesArray = formData.services
         .split(',')
         .map(s => s.trim())
         .filter(s => s.length > 0);
 
-      // Update user profile with personalClinicData
+      // Update user profile with personalMedicalFacilityData
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        accountStatus: 'pending_approval',
-        personalClinicData: {
+        accountStatus: 'active',
+        personalMedicalFacilityData: {
           name: formData.name,
+          facilityType: formData.facilityType,
           contactPerson: formData.contactPerson,
           phone: formData.phone,
           email: formData.email,
@@ -96,11 +98,11 @@ export default function ClinicApplicationPage() {
         updatedAt: new Date(),
       });
 
-      console.log('✅ [CLINIC_DATA] Personal clinic data saved, redirecting to pending page');
-      window.location.href = '/clinic/pending-approval';
+      console.log('✅ [FACILITY_DATA] Personal medical facility data saved, redirecting to profile');
+      window.location.href = '/profile';
     } catch (err) {
-      console.error('🚫 [CLINIC_DATA] Error saving personal data:', err);
-      setError('Failed to save clinic data. Please try again.');
+      console.error('🚫 [FACILITY_DATA] Error saving personal data:', err);
+      setError('Failed to save medical facility data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -110,9 +112,9 @@ export default function ClinicApplicationPage() {
     <div className="min-h-screen bg-black py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-800">
-          <h1 className="text-3xl font-bold mb-2 text-white">Clinic Information</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white">Medical Facility Information</h1>
           <p className="text-zinc-400 mb-6">
-            Please provide your clinic information. Your account will be activated once our admin team reviews and approves your profile.
+            Please provide your medical facility information.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -120,18 +122,36 @@ export default function ClinicApplicationPage() {
             <div>
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-zinc-700 text-white">Basic Information</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1 text-zinc-300">
-                    Clinic Name <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-green-500 text-white"
-                  />
+                <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-300">
+                      Facility Name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-green-500 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-300">
+                      Facility Type <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      name="facilityType"
+                      value={formData.facilityType}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-green-500 text-white"
+                    >
+                      {MEDICAL_FACILITY_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
@@ -306,7 +326,7 @@ export default function ClinicApplicationPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1 text-zinc-300">
-                Clinic Description
+                Facility Description
               </label>
               <textarea
                 name="description"
@@ -314,7 +334,7 @@ export default function ClinicApplicationPage() {
                 onChange={handleChange}
                 rows={4}
                 className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:ring-2 focus:ring-green-500 placeholder:text-zinc-500"
-                placeholder="Brief description of your clinic, facilities, and services..."
+                placeholder="Brief description of your facility, departments, and services..."
               />
             </div>
 

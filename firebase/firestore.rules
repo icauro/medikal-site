@@ -1,16 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Doctors collection - public read, admin-only write
-    match /doctors/{doctorId} {
-      allow read: if true;
+    // Open Healthcare Personnel Data collection - public read, admin-only write
+    match /open_healthcare_personnel_data/{openDataId} {
+      allow read: if true; // Public read for healthcare personnel search
       allow create, update, delete: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Open Doctor Data collection - public read, admin-only write
-    match /open_doctor_data/{openDataId} {
-      allow read: if true; // Public read for doctor search
+    // Open Medical Facility Data collection - public read, admin-only write
+    match /open_medical_facility_data/{openDataId} {
+      allow read: if true; // Public read for medical facility search
+      allow create, update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Open Agency Data collection - public read, admin-only write
+    match /open_agency_data/{openDataId} {
+      allow read: if true; // Public read for agency search
       allow create, update, delete: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
@@ -26,15 +33,15 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == userId &&
         // Allow changing role from null to a valid role during signup, or keep role unchanged
         (request.resource.data.role == resource.data.role || 
-         (resource.data.role == null && request.resource.data.role in ['patient', 'doctor', 'clinic', 'agency'])) &&
-        // Doctors cannot edit their openDoctorDataId link (admin-only)
-        (!request.resource.data.keys().hasAny(['personalDoctorData']) ||
-         !request.resource.data.personalDoctorData.keys().hasAny(['openDoctorDataId']) ||
-         request.resource.data.personalDoctorData.openDoctorDataId == resource.data.get('personalDoctorData', {}).get('openDoctorDataId', null)) &&
-        // Clinics cannot edit their openClinicDataId link (admin-only)
-        (!request.resource.data.keys().hasAny(['personalClinicData']) ||
-         !request.resource.data.personalClinicData.keys().hasAny(['openClinicDataId']) ||
-         request.resource.data.personalClinicData.openClinicDataId == resource.data.get('personalClinicData', {}).get('openClinicDataId', null)) &&
+         (resource.data.role == null && request.resource.data.role in ['patient', 'healthcare_personnel', 'medical_facility', 'agency'])) &&
+        // Healthcare personnel cannot edit their openHealthcarePersonnelDataId link (admin-only)
+        (!request.resource.data.keys().hasAny(['personalHealthcarePersonnelData']) ||
+         !request.resource.data.personalHealthcarePersonnelData.keys().hasAny(['openHealthcarePersonnelDataId']) ||
+         request.resource.data.personalHealthcarePersonnelData.openHealthcarePersonnelDataId == resource.data.get('personalHealthcarePersonnelData', {}).get('openHealthcarePersonnelDataId', null)) &&
+        // Medical facilities cannot edit their openMedicalFacilityDataId link (admin-only)
+        (!request.resource.data.keys().hasAny(['personalMedicalFacilityData']) ||
+         !request.resource.data.personalMedicalFacilityData.keys().hasAny(['openMedicalFacilityDataId']) ||
+         request.resource.data.personalMedicalFacilityData.openMedicalFacilityDataId == resource.data.get('personalMedicalFacilityData', {}).get('openMedicalFacilityDataId', null)) &&
         // Agencies cannot edit their openAgencyDataId link (admin-only)
         (!request.resource.data.keys().hasAny(['personalAgencyData']) ||
          !request.resource.data.personalAgencyData.keys().hasAny(['openAgencyDataId']) ||
@@ -50,28 +57,6 @@ service cloud.firestore {
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
-    // Clinics collection - public read, authenticated write
-    match /clinics/{clinicId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Doctor Verification Requests collection
-    match /verification_requests/{requestId} {
-      // Doctors can create their own requests and read their own
-      allow create: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' &&
-        request.auth.uid == request.resource.data.doctorId;
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.doctorId || // Doctor can read their own
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' // Admins can read all
-      );
-      allow update: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; // Only admins can update (approve/deny)
-      allow delete: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; // Only admins can delete
-    }
-
     // Support Tickets collection
     match /support_tickets/{ticketId} {
       // Authenticated users can create tickets
@@ -98,36 +83,36 @@ service cloud.firestore {
 
     // Treatment Plans collection
     match /treatment_plans/{planId} {
-      // Helper function to check if doctor has matching procedure tags
-      function doctorHasMatchingTags() {
+      // Helper function to check if healthcare personnel has matching procedure tags
+      function personnelHasMatchingTags() {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        let doctorTags = userDoc.data.doctorInfo.procedureTags;
+        let personnelTags = userDoc.data.personalHealthcarePersonnelData.procedureTags;
         let planTags = resource.data.procedureTags;
-        // Check if any doctor tag matches any plan tag
-        return doctorTags.hasAny(planTags);
+        // Check if any personnel tag matches any plan tag
+        return personnelTags.hasAny(planTags);
       }
       
       // Authenticated users can create treatment plans
       allow create: if request.auth != null;
       
       // Users can read their own plans
-      // Doctors can read plans with matching procedure tags
+      // Healthcare personnel can read plans with matching procedure tags
       // Admins can read all plans
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' && 
-         doctorHasMatchingTags())
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'healthcare_personnel' && 
+         personnelHasMatchingTags())
       );
       
       // Users can update their own plans
-      // Doctors with matching tags can add responses
+      // Healthcare personnel with matching tags can add responses
       // Admins can update any
       allow update: if request.auth != null && (
         resource.data.userId == request.auth.uid ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' && 
-         doctorHasMatchingTags())
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'healthcare_personnel' && 
+         personnelHasMatchingTags())
       );
       
       // Only users and admins can delete their own plans

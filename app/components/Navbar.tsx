@@ -39,10 +39,10 @@ export default function Navbar() {
               Doctors
             </Link>
             <Link
-              href="/clinics"
+              href="/medical-facilities"
               className="text-zinc-400 transition-colors hover:text-white"
             >
-              Clinics
+              Medical Facilities
             </Link>
             <Link
               href="/agencies"
