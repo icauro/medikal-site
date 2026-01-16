@@ -58,16 +58,10 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         break;
 
       case 'pending_personal_data':
-        // Redirect based on role
-        if (userProfile.role === 'healthcare_personnel' && pathname !== '/signup/healthcare-personnel-application') {
-          console.log('📝 [SIGNUP_FLOW] Healthcare personnel application required, redirecting...');
-          router.push('/signup/healthcare-personnel-application');
-        } else if (userProfile.role === 'medical_facility' && pathname !== '/signup/medical-facility-application') {
-          console.log('📝 [SIGNUP_FLOW] Medical facility application required, redirecting...');
-          router.push('/signup/medical-facility-application');
-        } else if (userProfile.role === 'agency' && pathname !== '/signup/agency-application') {
-          console.log('📝 [SIGNUP_FLOW] Agency application required, redirecting...');
-          router.push('/signup/agency-application');
+        // Professional roles now fill their data directly on the profile page
+        if (pathname !== '/profile') {
+          console.log('📝 [SIGNUP_FLOW] Profile information required, redirecting to profile...');
+          router.push('/profile');
         }
         break;
 

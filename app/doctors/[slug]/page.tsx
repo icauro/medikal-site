@@ -35,7 +35,7 @@ interface DoctorRecord {
   id: string;
   name: string;
   slug: string;
-  specialty: string;
+  specialization: string;
   bio?: string | null;
   image?: string | null;
   rating?: number | null;
@@ -92,7 +92,7 @@ export default function DoctorProfilePage() {
           id: match.id,
           name: matchData.name || "",
           slug: matchData.slug || slug,
-          specialty: matchData.specialty || "",
+          specialization: matchData.specialization || "",
           bio: matchData.bio ?? null,
           image: matchData.image ?? null,
           rating:
@@ -270,7 +270,7 @@ export default function DoctorProfilePage() {
                 <h1 className="text-3xl md:text-4xl font-bold text-white">
                   {displayName}
                 </h1>
-                <p className="text-lg text-blue-300 mt-2">{doctor.specialty}</p>
+                <p className="text-lg text-blue-300 mt-2">{doctor.specialization}</p>
                 {averageRating !== null && (
                   <div className="mt-4 flex items-center gap-4">
                     <span className="text-yellow-400 text-lg font-semibold">

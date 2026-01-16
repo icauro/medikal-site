@@ -1,11 +1,10 @@
 // Shared types for the application
-import { COUNTRIES } from './countries';
 
-export type DoctorSpecialty = 
+export type MedicalSpecialization = 
   | 'Plastic, Reconstructive and Aesthetic Surgery'
   | 'Dermatology';
 
-export const DOCTOR_SPECIALTIES: DoctorSpecialty[] = [
+export const MEDICAL_SPECIALIZATIONS: MedicalSpecialization[] = [
   'Plastic, Reconstructive and Aesthetic Surgery',
   'Dermatology',
 ];
@@ -46,18 +45,6 @@ export const MEDICAL_PROCEDURES = [
 ] as const;
 
 export type MedicalProcedureType = typeof MEDICAL_PROCEDURES[number];
-
-export interface Doctor {
-  id: string;
-  slug: string;
-  name: string;
-  specialty: DoctorSpecialty;
-  bio?: string;
-  image?: string;
-  clinic?: string;
-  rating?: number;
-  googlePlaceId?: string; // Google Maps Place ID for embedding reviews/maps
-}
 
 export type MedicalFacilityType = 'Solo Practice' | 'Polyclinic' | 'Clinic' | 'Health Center' | 'Hospital';
 
@@ -118,7 +105,7 @@ export interface PatientInfo {
 export interface PersonalHealthcarePersonnelData {
   personnelType: PersonnelType;
   name: string;
-  specialization: DoctorSpecialty;
+  specialization: MedicalSpecialization;
   
   // Private Credentials & Identity
   dateOfBirth: string;
@@ -162,7 +149,7 @@ export interface OpenHealthcarePersonnelData {
   id: string;
   name: string;
   personnelType: PersonnelType;
-  specialty: DoctorSpecialty;
+  specialization: MedicalSpecialization;
   personalHealthcarePersonnelDataId?: string; // Link to user's personalHealthcarePersonnelData (admin-controlled)
   slug?: string;
   bio?: string;
@@ -194,7 +181,7 @@ export interface PersonalMedicalFacilityData {
   website?: string;
   description?: string;
   logoUrl?: string;
-  specialties?: DoctorSpecialty[];
+  specializations?: MedicalSpecialization[];
   services?: string[];
 
   // Private Business Information
@@ -223,7 +210,7 @@ export interface PersonalMedicalFacilityData {
 export interface OpenMedicalFacilityData {
   id: string;
   name: string;
-  type: MedicalFacilityType;
+  facilityType: MedicalFacilityType;
   address: string;
   city?: string;
   country: string;
@@ -231,11 +218,13 @@ export interface OpenMedicalFacilityData {
   email?: string;
   website?: string;
   description?: string;
-  specialties?: DoctorSpecialty[];
+  specializations?: MedicalSpecialization[];
   image?: string;
   images?: string[];
   rating?: number;
   reviewCount?: number;
+  googlePlaceId?: string;
+  googleReviewsEmbedUrl?: string;
   services?: string[];
   personalMedicalFacilityDataId?: string; // Link to user's personalMedicalFacilityData (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
@@ -296,6 +285,8 @@ export interface OpenAgencyData {
   images?: string[];
   rating?: number;
   reviewCount?: number;
+  googlePlaceId?: string;
+  googleReviewsEmbedUrl?: string;
   personalAgencyDataId?: string; // Link to user's personalAgencyData (admin-controlled)
   slug?: string;
   createdAt: Date;
@@ -378,7 +369,7 @@ export interface DoctorResponse {
   doctorId: string;
   doctorName: string;
   doctorEmail: string;
-  doctorSpecialty?: string;
+  doctorSpecialization?: string;
   response: string;
   attachments?: string[];
   recommendedTreatment?: string;

@@ -32,7 +32,7 @@ Always use emoji prefixes for console output:
 Wrap sensitive UI with `<ProtectedRoute requiredRole="admin">`. Always Destructure `loading` from `useAuth()` to prevent layout flickering.
 
 ## Key Files
-- [lib/types.ts](lib/types.ts) - Source of truth for roles, statuses, and specialties.
+- [lib/types.ts](lib/types.ts) - Source of truth for roles, statuses, and specializations.
 - [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx) - Firebase Auth + Profile management logic.
 - [firebase/firestore.rules](firebase/firestore.rules) - Defines document-level permissions.
 - [app/components/SignupFlowManager.tsx](app/components/SignupFlowManager.tsx) - Global redirect logic.

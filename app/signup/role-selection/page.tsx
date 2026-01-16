@@ -48,45 +48,19 @@ export default function RoleSelectionPage() {
         await refreshUserProfile();
         console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
         window.location.href = '/profile';
-      } else if (selectedRole === 'healthcare_personnel') {
-        // Healthcare Personnel needs to fill personal data
-        console.log('🎭 [ROLE] Updating Firestore for healthcare personnel...');
+      } else {
+        // Professional roles need to fill personal data in profile
+        console.log(`🎭 [ROLE] Updating Firestore for ${selectedRole}...`);
         await updateDoc(userRef, {
-          role: 'healthcare_personnel',
+          role: selectedRole,
           accountStatus: 'pending_personal_data',
           updatedAt: new Date(),
         });
 
-        console.log('✅ [ROLE] Healthcare personnel role set, refreshing profile...');
+        console.log(`✅ [ROLE] ${selectedRole} role set, refreshing profile...`);
         await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/healthcare-personnel-application');
-        window.location.href = '/signup/healthcare-personnel-application';
-      } else if (selectedRole === 'medical_facility') {
-        // Medical Facility needs to fill personal data
-        console.log('🎭 [ROLE] Updating Firestore for medical facility...');
-        await updateDoc(userRef, {
-          role: 'medical_facility',
-          accountStatus: 'pending_personal_data',
-          updatedAt: new Date(),
-        });
-
-        console.log('✅ [ROLE] Medical facility role set, refreshing profile...');
-        await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/medical-facility-application');
-        window.location.href = '/signup/medical-facility-application';
-      } else if (selectedRole === 'agency') {
-        // Agency needs to fill personal data
-        console.log('🎭 [ROLE] Updating Firestore for agency...');
-        await updateDoc(userRef, {
-          role: 'agency',
-          accountStatus: 'pending_personal_data',
-          updatedAt: new Date(),
-        });
-
-        console.log('✅ [ROLE] Agency role set, refreshing profile...');
-        await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /signup/agency-application');
-        window.location.href = '/signup/agency-application';
+        console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
+        window.location.href = '/profile';
       }
     } catch (err) {
       console.error('🚫 [ROLE] Error updating role:', err);

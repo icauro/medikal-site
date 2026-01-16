@@ -7,10 +7,16 @@ import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from "fi
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { UserProfile, UserRole, OpenHealthcarePersonnelData, OpenMedicalFacilityData, OpenAgencyData, SupportTicket } from "@/lib/types";
 
-// Modals
-import HealthcarePersonnelModal from "./components/HealthcarePersonnelModal";
-import MedicalFacilityModal from "./components/MedicalFacilityModal";
-import AgencyModal from "./components/AgencyModal";
+// Modals - Open Data (Public Listings)
+import OpenHealthcarePersonnelModal from "./components/OpenHealthcarePersonnelModal";
+import OpenMedicalFacilityModal from "./components/OpenMedicalFacilityModal";
+import OpenAgencyModal from "./components/OpenAgencyModal";
+
+// Modals - User Data (Private Accounts)
+import PatientUserModal from "./components/user-data/PatientUserModal";
+import HealthcarePersonnelUserModal from "./components/user-data/HealthcarePersonnelUserModal";
+import MedicalFacilityUserModal from "./components/user-data/MedicalFacilityUserModal";
+import AgencyUserModal from "./components/user-data/AgencyUserModal";
 
 type AdminTab = 'all_users' | 'personnel' | 'facilities' | 'agencies' | 'patients' | 'open_personnel' | 'open_facilities' | 'open_agencies' | 'tickets';
 
@@ -18,10 +24,16 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>('all_users');
   const [loading, setLoading] = useState(true);
   
-  // Modal States
-  const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
-  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
-  const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
+  // Modal States - Open Data
+  const [isOpenPersonnelModalOpen, setIsOpenPersonnelModalOpen] = useState(false);
+  const [isOpenFacilityModalOpen, setIsOpenFacilityModalOpen] = useState(false);
+  const [isOpenAgencyModalOpen, setIsOpenAgencyModalOpen] = useState(false);
+
+  // Modal States - User Data
+  const [isPatientUserModalOpen, setIsPatientUserModalOpen] = useState(false);
+  const [isPersonnelUserModalOpen, setIsPersonnelUserModalOpen] = useState(false);
+  const [isFacilityUserModalOpen, setIsFacilityUserModalOpen] = useState(false);
+  const [isAgencyUserModalOpen, setIsAgencyUserModalOpen] = useState(false);
   
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedOpenData, setSelectedOpenData] = useState<any | null>(null);
@@ -149,14 +161,17 @@ export default function AdminDashboard() {
                     {user.createdAt ? new Date((user.createdAt as any).seconds * 1000).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="p-4 text-right">
+                    {user.role === 'patient' && (
+                      <button onClick={() => { setSelectedUser(user); setIsPatientUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
+                    )}
                     {user.role === 'healthcare_personnel' && (
-                      <button onClick={() => { setSelectedUser(user); setSelectedOpenData(null); setModalMode('edit'); setIsPersonnelModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
+                      <button onClick={() => { setSelectedUser(user); setIsPersonnelUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
                     )}
                     {user.role === 'medical_facility' && (
-                      <button onClick={() => { setSelectedUser(user); setSelectedOpenData(null); setModalMode('edit'); setIsFacilityModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
+                      <button onClick={() => { setSelectedUser(user); setIsFacilityUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
                     )}
                     {user.role === 'agency' && (
-                      <button onClick={() => { setSelectedUser(user); setSelectedOpenData(null); setModalMode('edit'); setIsAgencyModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
+                      <button onClick={() => { setSelectedUser(user); setIsAgencyUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
                     )}
                   </td>
                 </tr>
@@ -180,9 +195,7 @@ export default function AdminDashboard() {
           <button 
             onClick={() => {
               setSelectedUser(null);
-              setSelectedOpenData(null);
-              setModalMode('create');
-              setIsPersonnelModalOpen(true);
+              setIsPersonnelUserModalOpen(true);
             }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -198,7 +211,6 @@ export default function AdminDashboard() {
               <th className="p-4">Specialization</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
-              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -219,18 +231,11 @@ export default function AdminDashboard() {
                     {user.personalHealthcarePersonnelData?.verified ? 'Yes' : 'No'}
                   </span>
                 </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalHealthcarePersonnelData?.openHealthcarePersonnelDataId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.personalHealthcarePersonnelData?.openHealthcarePersonnelDataId ? 'Linked' : 'Not Linked'}
-                  </span>
-                </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setSelectedOpenData(null);
-                      setModalMode('edit');
-                      setIsPersonnelModalOpen(true);
+                      setIsPersonnelUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -258,9 +263,7 @@ export default function AdminDashboard() {
           <button 
             onClick={() => {
               setSelectedUser(null);
-              setSelectedOpenData(null);
-              setModalMode('create');
-              setIsFacilityModalOpen(true);
+              setIsFacilityUserModalOpen(true);
             }}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -275,7 +278,6 @@ export default function AdminDashboard() {
               <th className="p-4">Type</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
-              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -297,18 +299,11 @@ export default function AdminDashboard() {
                     {user.personalMedicalFacilityData?.verified ? 'Yes' : 'No'}
                   </span>
                 </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalMedicalFacilityData?.openMedicalFacilityDataId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.personalMedicalFacilityData?.openMedicalFacilityDataId ? 'Linked' : 'Not Linked'}
-                  </span>
-                </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setSelectedOpenData(null);
-                      setModalMode('edit');
-                      setIsFacilityModalOpen(true);
+                      setIsFacilityUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -336,9 +331,7 @@ export default function AdminDashboard() {
           <button 
             onClick={() => {
               setSelectedUser(null);
-              setSelectedOpenData(null);
-              setModalMode('create');
-              setIsAgencyModalOpen(true);
+              setIsAgencyUserModalOpen(true);
             }}
             className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -352,7 +345,6 @@ export default function AdminDashboard() {
               <th className="p-4">Agency Name</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
-              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -371,18 +363,11 @@ export default function AdminDashboard() {
                     {user.personalAgencyData?.verified ? 'Yes' : 'No'}
                   </span>
                 </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalAgencyData?.openAgencyDataId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.personalAgencyData?.openAgencyDataId ? 'Linked' : 'Not Linked'}
-                  </span>
-                </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setSelectedOpenData(null);
-                      setModalMode('edit');
-                      setIsAgencyModalOpen(true);
+                      setIsAgencyUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -414,6 +399,7 @@ export default function AdminDashboard() {
               <th className="p-4">Email</th>
               <th className="p-4">Status</th>
               <th className="p-4">Created</th>
+              <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
@@ -430,6 +416,17 @@ export default function AdminDashboard() {
                 </td>
                 <td className="p-4 text-xs text-zinc-500">
                   {user.createdAt ? new Date((user.createdAt as any).seconds * 1000).toLocaleDateString() : 'N/A'}
+                </td>
+                <td className="p-4 text-right">
+                  <button 
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setIsPatientUserModalOpen(true);
+                    }}
+                    className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
+                  >
+                    Manage
+                  </button>
                 </td>
               </tr>
             ))}
@@ -450,10 +447,9 @@ export default function AdminDashboard() {
           </div>
           <button 
             onClick={() => {
-              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsPersonnelModalOpen(true);
+              setIsOpenPersonnelModalOpen(true);
             }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -466,7 +462,7 @@ export default function AdminDashboard() {
               <tr>
                 <th className="p-4">Name</th>
                 <th className="p-4">Type</th>
-                <th className="p-4">Specialty</th>
+                <th className="p-4 text-left">Specialization</th>
                 <th className="p-4">Owner ID</th>
                 <th className="p-4">Created</th>
                 <th className="p-4 text-right">Actions</th>
@@ -482,7 +478,7 @@ export default function AdminDashboard() {
                   <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
                     {item.personnelType || 'N/A'}
                   </td>
-                  <td className="p-4 text-sm">{item.specialty || 'N/A'}</td>
+                  <td className="p-4 text-sm">{item.specialization || 'N/A'}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
                     {item.personalHealthcarePersonnelDataId || 'Unlinked'}
                   </td>
@@ -492,10 +488,9 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.personalHealthcarePersonnelDataId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsPersonnelModalOpen(true);
+                        setIsOpenPersonnelModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -521,10 +516,9 @@ export default function AdminDashboard() {
           </div>
           <button 
             onClick={() => {
-              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsFacilityModalOpen(true);
+              setIsOpenFacilityModalOpen(true);
             }}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -550,7 +544,7 @@ export default function AdminDashboard() {
                     <div className="text-xs text-zinc-500">{item.slug}</div>
                   </td>
                   <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                    {item.type || 'N/A'}
+                    {item.facilityType || 'N/A'}
                   </td>
                   <td className="p-4 text-sm">{item.city}, {item.country}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
@@ -559,10 +553,9 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.personalMedicalFacilityDataId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsFacilityModalOpen(true);
+                        setIsOpenFacilityModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -588,10 +581,9 @@ export default function AdminDashboard() {
           </div>
           <button 
             onClick={() => {
-              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsAgencyModalOpen(true);
+              setIsOpenAgencyModalOpen(true);
             }}
             className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -622,10 +614,9 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.personalAgencyDataId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsAgencyModalOpen(true);
+                        setIsOpenAgencyModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -839,40 +830,59 @@ export default function AdminDashboard() {
           {renderContent()}
 
           {/* Modals */}
-          <HealthcarePersonnelModal
-            isOpen={isPersonnelModalOpen}
-            onClose={() => setIsPersonnelModalOpen(false)}
-            user={selectedUser}
+          {/* User Data Modals (Private Accounts) */}
+          {selectedUser && (
+            <>
+              <PatientUserModal
+                isOpen={isPatientUserModalOpen}
+                onClose={() => setIsPatientUserModalOpen(false)}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+              />
+              <HealthcarePersonnelUserModal
+                isOpen={isPersonnelUserModalOpen}
+                onClose={() => setIsPersonnelUserModalOpen(false)}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+              />
+              <MedicalFacilityUserModal
+                isOpen={isFacilityUserModalOpen}
+                onClose={() => setIsFacilityUserModalOpen(false)}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+              />
+              <AgencyUserModal
+                isOpen={isAgencyUserModalOpen}
+                onClose={() => setIsAgencyUserModalOpen(false)}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+              />
+            </>
+          )}
+
+          {/* Open Data Modals (Public Listings) */}
+          <OpenHealthcarePersonnelModal
+            isOpen={isOpenPersonnelModalOpen}
+            onClose={() => setIsOpenPersonnelModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={() => {
-              setIsPersonnelModalOpen(false);
-              fetchUsers();
-            }}
+            onSuccess={fetchUsers}
           />
 
-          <MedicalFacilityModal
-            isOpen={isFacilityModalOpen}
-            onClose={() => setIsFacilityModalOpen(false)}
-            user={selectedUser}
+          <OpenMedicalFacilityModal
+            isOpen={isOpenFacilityModalOpen}
+            onClose={() => setIsOpenFacilityModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={() => {
-              setIsFacilityModalOpen(false);
-              fetchUsers();
-            }}
+            onSuccess={fetchUsers}
           />
 
-          <AgencyModal
-            isOpen={isAgencyModalOpen}
-            onClose={() => setIsAgencyModalOpen(false)}
-            user={selectedUser}
+          <OpenAgencyModal
+            isOpen={isOpenAgencyModalOpen}
+            onClose={() => setIsOpenAgencyModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={() => {
-              setIsAgencyModalOpen(false);
-              fetchUsers();
-            }}
+            onSuccess={fetchUsers}
           />
 
           {/* Navigation Back */}

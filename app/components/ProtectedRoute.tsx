@@ -9,22 +9,26 @@ interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: UserRole;
   fallbackPath?: string;
+  allowPendingPersonalData?: boolean;
 }
 
 export const ProtectedRoute = ({
   children,
   requiredRole,
-  fallbackPath = '/login'
+  fallbackPath = '/login',
+  allowPendingPersonalData = false
 }: ProtectedRouteProps) => {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
   console.log('🛡️ [PROTECTED] ProtectedRoute rendered', {
-    requiredRole: requiredRole,
-    fallbackPath: fallbackPath,
-    loading: loading,
+    requiredRole,
+    fallbackPath,
+    loading,
+    allowPendingPersonalData,
     hasUser: !!user,
     userRole: userProfile?.role,
+    accountStatus: userProfile?.accountStatus,
     currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
   });
 
@@ -45,12 +49,17 @@ export const ProtectedRoute = ({
         return;
       }
 
-      // Check if account is not active (should be handled by SignupFlowManager, but double-check)
-      // Treat undefined/null accountStatus as active for legacy users
+      // Check if account is not active
       const accountStatus = userProfile?.accountStatus;
-      if (accountStatus && accountStatus !== 'active') {
+      
+      // Special exception for profile page or when explicitly allowed
+      if (accountStatus === 'pending_personal_data' && allowPendingPersonalData) {
+        console.log('📝 [PROTECTED] Allowing access with pending_personal_data status');
+        return;
+      }
+
+      if (accountStatus && accountStatus !== 'active' && accountStatus !== 'pending_personal_data') {
         console.log('🚫 [PROTECTED] Account not active, status:', accountStatus);
-        // SignupFlowManager will handle the redirect
         return;
       }
 
@@ -84,11 +93,12 @@ export const ProtectedRoute = ({
 
   // Admin users always get access
   const isAdmin = userProfile?.role === 'admin';
-  const hasValidStatus = !userProfile?.accountStatus || userProfile.accountStatus === 'active' || isAdmin;
+  const isPendingAllowed = allowPendingPersonalData && userProfile?.accountStatus === 'pending_personal_data';
+  const hasValidStatus = !userProfile?.accountStatus || userProfile.accountStatus === 'active' || isAdmin || isPendingAllowed;
   const hasRequiredRole = !requiredRole || userProfile?.role === requiredRole;
 
   if (!user || !hasValidStatus || !hasRequiredRole) {
-    console.log('🚫 [PROTECTED] Rendering null (will redirect)', { hasValidStatus, hasRequiredRole, isAdmin });
+    console.log('🚫 [PROTECTED] Rendering null (will redirect)', { hasValidStatus, hasRequiredRole, isAdmin, isPendingAllowed });
     return null;
   }
 

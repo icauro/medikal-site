@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, setDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
-import { COUNTRIES } from "@/lib/countries";
-import { TURKISH_CITIES } from "@/lib/cities";
+import { listCountries } from "countries-ts";
+
+const COUNTRIES = listCountries();
 
 interface AgencyModalProps {
   isOpen: boolean;
@@ -29,6 +30,39 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
   
   // Open Data Listing
   const [openData, setOpenData] = useState<any>({});
+  const [existingOpenDataId, setExistingOpenDataId] = useState("");
+
+  // Search for linking
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const searchOpenData = async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const q = query(
+          collection(db, "open_agency_data"),
+          where("name", ">=", searchQuery),
+          where("name", "<=", searchQuery + '\uf8ff'),
+          limit(5)
+        );
+        const snap = await getDocs(q);
+        setSearchResults(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(searchOpenData, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +72,7 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
           setUserUid(user.uid); 
           setDisplayName(user.displayName || "");
           setPersonalData(user.personalAgencyData || {}); 
+          setExistingOpenDataId(user.personalAgencyData?.openAgencyDataId || "");
           setActiveTab('private');
         } else if (openDataRecord) {
           setOpenData(openDataRecord); 
@@ -71,7 +106,7 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
       if (field === 'private' && user) {
         await updateDoc(doc(db, "users", user.uid), { 
           displayName, 
-          personalAgencyData: personalData,
+          personalAgencyData: { ...personalData, openAgencyDataId: existingOpenDataId },
           updatedAt: new Date() 
         });
       } else if (field === 'open') {
@@ -107,9 +142,67 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
               
               <div className="pt-4 border-t border-zinc-800">
                 <h3 className="text-[10px] font-bold text-zinc-500 uppercase mb-2">Private Business Details</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <input placeholder="Contact Person" value={personalData.contactPerson || ""} onChange={e => setPersonalData({...personalData, contactPerson: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white" />
                   <input placeholder="Owner Name" value={personalData.ownerName || ""} onChange={e => setPersonalData({...personalData, ownerName: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white" />
+                </div>
+
+                <div className="pt-4 border-t border-zinc-800/50 mb-4">
+                  <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-2">Link to Public Agency Listing</label>
+                  {existingOpenDataId ? (
+                    <div className="p-3 bg-orange-500/10 border border-orange-500/30 rounded flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-orange-400 text-xs font-bold">Linked:</span>
+                        <span className="text-white text-xs">{existingOpenDataId}</span>
+                      </div>
+                      <button 
+                        onClick={() => setExistingOpenDataId("")}
+                        className="text-[10px] text-zinc-500 hover:text-red-400 font-bold uppercase"
+                      >
+                        Unlink
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          placeholder="Search public agencies by name..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white text-xs outline-none focus:border-orange-500"
+                        />
+                        {isSearching && (
+                          <div className="absolute right-3 top-2.5">
+                            <div className="animate-spin h-3 w-3 border-2 border-orange-500 border-t-transparent rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {searchResults.length > 0 && (
+                        <div className="bg-zinc-800 border border-zinc-700 rounded divide-y divide-zinc-700 overflow-hidden">
+                          {searchResults.map(result => (
+                            <button
+                              key={result.id}
+                              type="button"
+                              onClick={() => {
+                                setExistingOpenDataId(result.id);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                              }}
+                              className="w-full p-2 text-left hover:bg-zinc-700 flex justify-between items-center transition-colors"
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-white text-xs font-medium">{result.name}</span>
+                                <span className="text-zinc-500 text-[10px]">{result.city}, {result.country}</span>
+                              </div>
+                              <span className="text-orange-500 text-[10px] font-bold uppercase">Select</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -130,23 +223,19 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
                   >
                     <option value="">Select Country</option>
-                    {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
+                    {COUNTRIES.map(c => <option key={c.code} value={c.label}>{c.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
-                  {openData.country === 'Turkey' ? (
-                    <select 
-                      value={openData.city || ""} 
-                      onChange={(e) => setOpenData({...openData, city: e.target.value})} 
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
-                    >
-                      <option value="">Select City</option>
-                      {TURKISH_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  ) : (
-                    <input placeholder="City" value={openData.city || ""} onChange={e => setOpenData({...openData, city: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none" />
-                  )}
+                  <input 
+                    type="text"
+                    value={openData.city || ""}
+                    onChange={(e) => setOpenData({...openData, city: e.target.value})}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
+                    placeholder={openData.country ? "Enter City" : "Select Country First"}
+                    disabled={!openData.country}
+                  />
                 </div>
               </div>
               <button onClick={() => handleUpdate('open')} className="w-full p-3 bg-orange-600 font-bold">Save Listing</button>

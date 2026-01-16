@@ -15,10 +15,10 @@ import {
 } from "firebase/firestore";
 import Link from "next/link";
 
-interface Doctor {
+interface HealthcarePersonnel {
   id: string;
   name: string;
-  specialty: string;
+  specialization: string;
   slug: string;
 }
 
@@ -52,7 +52,7 @@ export default function AddReviewPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<HealthcarePersonnel[]>([]);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
 
@@ -85,7 +85,7 @@ export default function AddReviewPage() {
         const personnelData = snapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data().name || "",
-          specialty: doc.data().specialty || "",
+          specialization: doc.data().specialization || "",
           slug: doc.data().slug || "",
         }));
         setDoctors(personnelData);
@@ -108,7 +108,7 @@ export default function AddReviewPage() {
     return doctors.filter(
       (doctor) =>
         doctor.name.toLowerCase().includes(searchLower) ||
-        doctor.specialty.toLowerCase().includes(searchLower)
+        doctor.specialization.toLowerCase().includes(searchLower)
     );
   }, [doctors, doctorSearch]);
 
@@ -173,7 +173,7 @@ export default function AddReviewPage() {
         // Doctor information
         doctorId: formData.doctorId,
         doctorName: selectedDoctor.name,
-        doctorSpecialty: selectedDoctor.specialty,
+        doctorSpecialization: selectedDoctor.specialization,
         doctorSlug: selectedDoctor.slug,
 
         // Review content
@@ -305,14 +305,14 @@ export default function AddReviewPage() {
                       type="button"
                       onClick={() => {
                         handleFieldChange("doctorId", doctor.id);
-                        setDoctorSearch(`${doctor.name} - ${doctor.specialty}`);
+                        setDoctorSearch(`${doctor.name} - ${doctor.specialization}`);
                         setShowDoctorDropdown(false);
                         handleFieldBlur("doctorId");
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-b-0"
                     >
                       <div className="font-medium text-white">{doctor.name}</div>
-                      <div className="text-sm text-zinc-400">{doctor.specialty}</div>
+                      <div className="text-sm text-zinc-400">{doctor.specialization}</div>
                     </button>
                   ))}
                 </div>
@@ -323,7 +323,7 @@ export default function AddReviewPage() {
             )}
             {selectedDoctor && (
               <p className="text-green-400 text-sm">
-                Selected: {selectedDoctor.name} - {selectedDoctor.specialty}
+                Selected: {selectedDoctor.name} - {selectedDoctor.specialization}
               </p>
             )}
           </div>

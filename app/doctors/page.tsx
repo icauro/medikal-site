@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
-// Type definition for Doctor
-interface Doctor {
+// Type definition for Healthcare Personnel
+interface HealthcarePersonnel {
   id: string;
   slug: string;
   name: string;
-  specialty: string;
+  specialization: string;
   bio?: string;
   image?: string;
   medicalFacility?: string;
@@ -19,7 +19,7 @@ interface Doctor {
 }
 
 export default function DoctorsPage() {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<HealthcarePersonnel[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Utility function to generate slug from name
@@ -42,7 +42,7 @@ export default function DoctorsPage() {
         const doctorsQuery = query(personnelCollection, where("personnelType", "==", "Doctor"));
         const doctorsSnapshot = await getDocs(doctorsQuery);
 
-        const doctorsList: Doctor[] = [];
+        const doctorsList: HealthcarePersonnel[] = [];
 
         // Process doctors and calculate ratings from reviews
         for (const doc of doctorsSnapshot.docs) {
@@ -72,7 +72,7 @@ export default function DoctorsPage() {
             id: doc.id,
             slug: data.slug || "",
             name: data.name || "",
-            specialty: data.specialty || "",
+            specialization: data.specialization || "",
             bio: data.bio || undefined,
             image: data.image || undefined,
             medicalFacility: data.medicalFacility || undefined,
@@ -141,7 +141,7 @@ export default function DoctorsPage() {
               <h2 className="text-xl font-semibold mb-2 text-white">
                 {doctor.name}
               </h2>
-              <p className="text-zinc-400 mb-2">{doctor.specialty}</p>
+              <p className="text-zinc-400 mb-2">{doctor.specialization}</p>
               {doctor.rating !== undefined && (
                 <p className="text-yellow-400">★ {doctor.rating.toFixed(1)}</p>
               )}

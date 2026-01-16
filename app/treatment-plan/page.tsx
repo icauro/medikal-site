@@ -209,7 +209,7 @@ export default function TreatmentPlanPage() {
         doctorId: user.uid,
         doctorName: userProfile.displayName,
         doctorEmail: userProfile.email,
-        doctorSpecialty: userProfile.personalHealthcarePersonnelData?.specialization,
+        doctorSpecialization: userProfile.personalHealthcarePersonnelData?.specialization,
         response: responseText,
         createdAt: new Date(),
       };
@@ -590,7 +590,7 @@ export default function TreatmentPlanPage() {
                                   <div>
                                     <div className="font-semibold">{response.doctorName}</div>
                                     <div className="text-sm text-zinc-400">
-                                      {response.doctorSpecialty || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
+                                      {response.doctorSpecialization || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>
