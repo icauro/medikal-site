@@ -30,10 +30,10 @@ const convertTimestampsToDates = (profile: any): UserProfile => {
     ...profile,
     createdAt: profile.createdAt instanceof Timestamp ? profile.createdAt.toDate() : profile.createdAt,
     updatedAt: profile.updatedAt instanceof Timestamp ? profile.updatedAt.toDate() : profile.updatedAt,
-    ...(profile.adminInfo?.lastLogin && {
-      adminInfo: {
-        ...profile.adminInfo,
-        lastLogin: profile.adminInfo.lastLogin instanceof Timestamp ? profile.adminInfo.lastLogin.toDate() : profile.adminInfo.lastLogin
+    ...(profile.adminAccountData?.lastLogin && {
+      adminAccountData: {
+        ...profile.adminAccountData,
+        lastLogin: profile.adminAccountData.lastLogin instanceof Timestamp ? profile.adminAccountData.lastLogin.toDate() : profile.adminAccountData.lastLogin
       }
     })
   };
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         updatedAt: new Date(),
         // Admin gets active status immediately
         ...(isAdmin && {
-          adminInfo: {
+          adminAccountData: {
             permissions: ['manage_users', 'manage_content'],
             lastLogin: new Date(),
           }
@@ -125,16 +125,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             updatedAt: new Date() 
           };
           
-          // Ensure admin role and adminInfo are set for admin users
+          // Ensure admin role and adminAccountData are set for admin users
           if (isAdmin && existingProfile.role !== 'admin') {
             console.log('👑 [MIGRATION] Upgrading user to admin role');
             updates.role = 'admin';
-            updates.adminInfo = {
+            updates.adminAccountData = {
               permissions: ['manage_users', 'manage_content'],
               lastLogin: new Date(),
             };
             existingProfile.role = 'admin';
-            existingProfile.adminInfo = updates.adminInfo;
+            existingProfile.adminAccountData = updates.adminAccountData;
           }
           
           await updateDoc(userRef, updates);

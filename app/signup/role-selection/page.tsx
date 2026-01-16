@@ -38,7 +38,7 @@ export default function RoleSelectionPage() {
         await updateDoc(userRef, {
           role: 'patient',
           accountStatus: 'active',
-          patientInfo: {
+          patientAccountData: {
             preferredLanguage: 'en',
           },
           updatedAt: new Date(),

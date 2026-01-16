@@ -29,7 +29,7 @@
 
 ## Next Steps - Template Code
 
-### Step 1: Update One Modal (OpenHealthcarePersonnelModal.tsx)
+### Step 1: Update One Modal (HealthcarePersonnelListingCRUDModal.tsx)
 
 Replace at the top:
 ```tsx
@@ -104,7 +104,7 @@ const handleDelete = async () => {
 const handleConfirmDelete = async () => {
   setLoading(true);
   try {
-    await deleteDoc(doc(db, "open_healthcare_personnel_data", openData.id!));
+    await deleteDoc(doc(db, "healthcare_personnel_listings", openData.id!));
     success("Listing deleted successfully");
     onSuccess();
     onClose();
@@ -237,13 +237,20 @@ const buildQuery = () => {
 
 ## Checklists
 
-### Modal Updates (6 files):
-- [ ] OpenHealthcarePersonnelModal.tsx
-- [ ] OpenMedicalFacilityModal.tsx
-- [ ] OpenAgencyModal.tsx
-- [ ] HealthcarePersonnelUserModal.tsx
-- [ ] MedicalFacilityUserModal.tsx
-- [ ] AgencyUserModal.tsx
+### Modal Updates:
+
+**Listing CRUD Modals (3 files)** - For public listing records:
+- [x] HealthcarePersonnelListingCRUDModal.tsx (renamed from OpenHealthcarePersonnelModal.tsx)
+- [x] MedicalFacilityListingCRUDModal.tsx (renamed from OpenMedicalFacilityModal.tsx)
+- [x] AgencyListingCRUDModal.tsx (renamed from OpenAgencyModal.tsx)
+
+**User CRUD Modal (1 file)** - For user database records:
+- [x] UserCRUDModal.tsx (renamed from UserModal.tsx) - Dynamically handles all user roles
+
+**Deprecated** - These should be removed or consolidated:
+- [ ] HealthcarePersonnelUserModal.tsx (redundant - use UserCRUDModal)
+- [ ] MedicalFacilityUserModal.tsx (redundant - use UserCRUDModal)
+- [ ] AgencyUserModal.tsx (redundant - use UserCRUDModal)
 
 For each, add:
 - [ ] Import from lib/constants, lib/utils, Toast

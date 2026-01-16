@@ -5,35 +5,25 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { UserProfile, UserRole, OpenHealthcarePersonnelData, OpenMedicalFacilityData, OpenAgencyData, SupportTicket } from "@/lib/types";
+import { UserProfile, UserRole, HealthcarePersonnelListing, MedicalFacilityListing, AgencyListing, SupportTicket } from "@/lib/types";
 
-// Modals - Open Data (Public Listings)
-import OpenHealthcarePersonnelModal from "./components/OpenHealthcarePersonnelModal";
-import OpenMedicalFacilityModal from "./components/OpenMedicalFacilityModal";
-import OpenAgencyModal from "./components/OpenAgencyModal";
+// Modals
+import UserCRUDModal from "./components/user-data/UserCRUDModal";
+import AgencyListingCRUDModal from "./components/AgencyListingCRUDModal";
+import HealthcarePersonnelListingCRUDModal from "./components/HealthcarePersonnelListingCRUDModal";
+import MedicalFacilityListingCRUDModal from "./components/MedicalFacilityListingCRUDModal";
 
-// Modals - User Data (Private Accounts)
-import PatientUserModal from "./components/user-data/PatientUserModal";
-import HealthcarePersonnelUserModal from "./components/user-data/HealthcarePersonnelUserModal";
-import MedicalFacilityUserModal from "./components/user-data/MedicalFacilityUserModal";
-import AgencyUserModal from "./components/user-data/AgencyUserModal";
-
-type AdminTab = 'all_users' | 'personnel' | 'facilities' | 'agencies' | 'patients' | 'open_personnel' | 'open_facilities' | 'open_agencies' | 'tickets';
+type AdminTab = 'all_users' | 'personnel' | 'facilities' | 'agencies' | 'patients' | 'personnel_listings' | 'facility_listings' | 'agency_listings' | 'tickets';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>('all_users');
   const [loading, setLoading] = useState(true);
   
-  // Modal States - Open Data
-  const [isOpenPersonnelModalOpen, setIsOpenPersonnelModalOpen] = useState(false);
-  const [isOpenFacilityModalOpen, setIsOpenFacilityModalOpen] = useState(false);
-  const [isOpenAgencyModalOpen, setIsOpenAgencyModalOpen] = useState(false);
-
-  // Modal States - User Data
-  const [isPatientUserModalOpen, setIsPatientUserModalOpen] = useState(false);
-  const [isPersonnelUserModalOpen, setIsPersonnelUserModalOpen] = useState(false);
-  const [isFacilityUserModalOpen, setIsFacilityUserModalOpen] = useState(false);
-  const [isAgencyUserModalOpen, setIsAgencyUserModalOpen] = useState(false);
+  // Modal States
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
+  const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
+  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedOpenData, setSelectedOpenData] = useState<any | null>(null);
@@ -41,9 +31,9 @@ export default function AdminDashboard() {
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [openData, setOpenData] = useState<{
-    personnel: OpenHealthcarePersonnelData[];
-    facilities: OpenMedicalFacilityData[];
-    agencies: OpenAgencyData[];
+    personnel: HealthcarePersonnelListing[];
+    facilities: MedicalFacilityListing[];
+    agencies: AgencyListing[];
   }>({
     personnel: [],
     facilities: [],
@@ -54,31 +44,39 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const usersSnap = await getDocs(collection(db, "users"));
+      // Fetch listings first (public read access)
+      const [personnelSnap, facilitiesSnap, agenciesSnap] = await Promise.all([
+        getDocs(collection(db, "healthcare_personnel_listings")),
+        getDocs(collection(db, "medical_facility_listings")),
+        getDocs(collection(db, "agency_listings"))
+      ]);
+
+      setOpenData({
+        personnel: personnelSnap.docs.map(d => ({ id: d.id, ...d.data() } as HealthcarePersonnelListing)),
+        facilities: facilitiesSnap.docs.map(d => ({ id: d.id, ...d.data() } as MedicalFacilityListing)),
+        agencies: agenciesSnap.docs.map(d => ({ id: d.id, ...d.data() } as AgencyListing))
+      });
+
+      // Fetch users and tickets (requires admin permission)
+      const [usersSnap, ticketsSnap] = await Promise.all([
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "support_tickets"))
+      ]);
+
       const usersList = usersSnap.docs.map(doc => ({
         ...doc.data(),
         uid: doc.id,
       } as UserProfile));
       setUsers(usersList);
 
-      // Also fetch all open data and support tickets
-      const [personnelSnap, facilitiesSnap, agenciesSnap, ticketsSnap] = await Promise.all([
-        getDocs(collection(db, "open_healthcare_personnel_data")),
-        getDocs(collection(db, "open_medical_facility_data")),
-        getDocs(collection(db, "open_agency_data")),
-        getDocs(collection(db, "support_tickets"))
-      ]);
-
-      setOpenData({
-        personnel: personnelSnap.docs.map(d => ({ id: d.id, ...d.data() } as OpenHealthcarePersonnelData)),
-        facilities: facilitiesSnap.docs.map(d => ({ id: d.id, ...d.data() } as OpenMedicalFacilityData)),
-        agencies: agenciesSnap.docs.map(d => ({ id: d.id, ...d.data() } as OpenAgencyData))
-      });
-
       setTickets(ticketsSnap.docs.map(d => ({ id: d.id, ...d.data() } as SupportTicket)));
 
     } catch (error) {
-      console.error("Error fetching admin data:", error);
+      console.error("🚫 [ADMIN] Error fetching admin data:", error);
+      // If permission denied, user might not be an admin yet
+      if (error instanceof Error && error.message.includes('permission')) {
+        console.error("⚠️ [ADMIN] Permission denied - ensure you have admin role in your user profile");
+      }
     } finally {
       setLoading(false);
     }
@@ -88,16 +86,16 @@ export default function AdminDashboard() {
     fetchUsers();
   }, []);
 
-  const tabs: { id: AdminTab; label: string; icon: string; category: string }[] = [
-    { id: 'patients', label: 'Patients', icon: '👤', category: 'Users' },
-    { id: 'facilities', label: 'Facilities', icon: '🏥', category: 'Users' },
-    { id: 'personnel', label: 'Personnel', icon: '🩺', category: 'Users' },
-    { id: 'agencies', label: 'Agencies', icon: '✈️', category: 'Users' },
-    { id: 'all_users', label: 'All Users', icon: '👥', category: 'Users' },
-    { id: 'open_personnel', label: 'Personnel Open Data', icon: '🌐', category: 'Directory' },
-    { id: 'open_facilities', label: 'Facility Open Data', icon: '🏢', category: 'Directory' },
-    { id: 'open_agencies', label: 'Agency Open Data', icon: '🌍', category: 'Directory' },
-    { id: 'tickets', label: 'Tickets', icon: '🎫', category: 'Support' },
+  const tabs: { id: AdminTab; label: string; icon: string; category: string; color?: string }[] = [
+    { id: 'all_users', label: 'All Users', icon: '👥', category: 'Users', color: 'zinc' },
+    { id: 'patients', label: 'Patients', icon: '👤', category: 'Users', color: 'zinc' },
+    { id: 'personnel', label: 'Personnel', icon: '🩺', category: 'Users', color: 'blue' },
+    { id: 'facilities', label: 'Facilities', icon: '🏥', category: 'Users', color: 'emerald' },
+    { id: 'agencies', label: 'Agencies', icon: '✈️', category: 'Users', color: 'orange' },
+    { id: 'personnel_listings', label: 'Personnel', icon: '🩺', category: 'Listings', color: 'blue' },
+    { id: 'facility_listings', label: 'Facilities', icon: '🏥', category: 'Listings', color: 'emerald' },
+    { id: 'agency_listings', label: 'Agencies', icon: '✈️', category: 'Listings', color: 'orange' },
+    { id: 'tickets', label: 'Tickets', icon: '🎫', category: 'Support', color: 'amber' },
   ];
 
   const renderAllUsersTab = () => {
@@ -133,13 +131,17 @@ export default function AdminDashboard() {
               <tr>
                 <th className="p-4">User</th>
                 <th className="p-4">Role</th>
-                <th className="p-4 text-sm">Status</th>
-                <th className="p-4 text-sm">Created</th>
-                <th className="p-4 text-right text-sm">Actions</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Created</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {users.map(user => (
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-zinc-500">No users found</td>
+                </tr>
+              ) : users.map(user => (
                 <tr key={user.uid} className="hover:bg-zinc-800/50">
                   <td className="p-4">
                     <div className="font-medium">{user.displayName || 'Unnamed'}</div>
@@ -161,18 +163,15 @@ export default function AdminDashboard() {
                     {user.createdAt ? new Date((user.createdAt as any).seconds * 1000).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="p-4 text-right">
-                    {user.role === 'patient' && (
-                      <button onClick={() => { setSelectedUser(user); setIsPatientUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
-                    )}
-                    {user.role === 'healthcare_personnel' && (
-                      <button onClick={() => { setSelectedUser(user); setIsPersonnelUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
-                    )}
-                    {user.role === 'medical_facility' && (
-                      <button onClick={() => { setSelectedUser(user); setIsFacilityUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
-                    )}
-                    {user.role === 'agency' && (
-                      <button onClick={() => { setSelectedUser(user); setIsAgencyUserModalOpen(true); }} className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase">Edit</button>
-                    )}
+                    <button 
+                      onClick={() => { 
+                        setSelectedUser(user); 
+                        setIsUserModalOpen(true); 
+                      }} 
+                      className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
+                    >
+                      Manage
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -184,7 +183,7 @@ export default function AdminDashboard() {
   };
 
   const renderPersonnelTab = () => {
-    const personnelUsers = users.filter(u => u.role === 'healthcare_personnel' || u.personalHealthcarePersonnelData);
+    const personnelUsers = users.filter(u => u.role === 'healthcare_personnel' || u.healthcarePersonnelAccountData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -192,15 +191,19 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-semibold">Healthcare Personnel Profiles</h3>
             <p className="text-xs text-zinc-500">{personnelUsers.length} total users</p>
           </div>
+          {/* Modal removed - create disabled
           <button 
             onClick={() => {
               setSelectedUser(null);
-              setIsPersonnelUserModalOpen(true);
+              setSelectedOpenData(null);
+              setModalMode('create');
+              setIsPersonnelModalOpen(true);
             }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold transition-colors"
           >
             + Create New Personnel
           </button>
+          */}
         </div>
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
           <table className="w-full text-left">
@@ -211,31 +214,45 @@ export default function AdminDashboard() {
               <th className="p-4">Specialization</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
+              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {personnelUsers.map(user => (
+            {personnelUsers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-zinc-500">No healthcare personnel found</td>
+              </tr>
+            ) : personnelUsers.map(user => (
               <tr key={user.uid} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.personalHealthcarePersonnelData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.healthcarePersonnelAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                  {user.personalHealthcarePersonnelData?.personnelType || 'N/A'}
+                  {user.healthcarePersonnelAccountData?.personnelType || 'N/A'}
                 </td>
-                <td className="p-4 text-sm">{user.personalHealthcarePersonnelData?.specialization || 'N/A'}</td>
-                <td className="p-4 text-xs text-zinc-500">{user.personalHealthcarePersonnelData?.city || 'N/A'}</td>
+                <td className="p-4 text-sm">{user.healthcarePersonnelAccountData?.specialization || 'N/A'}</td>
+                <td className="p-4 text-sm">
+                  {user.healthcarePersonnelAccountData?.province && user.healthcarePersonnelAccountData?.country 
+                    ? `${user.healthcarePersonnelAccountData.province}, ${user.healthcarePersonnelAccountData.country}` 
+                    : 'N/A'}
+                </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalHealthcarePersonnelData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.personalHealthcarePersonnelData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.healthcarePersonnelAccountData?.verified ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.healthcarePersonnelAccountData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setIsPersonnelUserModalOpen(true);
+                      setIsUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -252,7 +269,7 @@ export default function AdminDashboard() {
   };
 
   const renderFacilitiesTab = () => {
-    const facilityUsers = users.filter(u => u.role === 'medical_facility' || u.personalMedicalFacilityData);
+    const facilityUsers = users.filter(u => u.role === 'medical_facility' || u.medicalFacilityAccountData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -260,15 +277,19 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-semibold">Medical Facility Profiles</h3>
             <p className="text-xs text-zinc-500">{facilityUsers.length} total users</p>
           </div>
+          {/* Modal removed - create disabled
           <button 
             onClick={() => {
               setSelectedUser(null);
-              setIsFacilityUserModalOpen(true);
+              setSelectedOpenData(null);
+              setModalMode('create');
+              setIsFacilityModalOpen(true);
             }}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors"
           >
             + Create New Facility
           </button>
+          */}
         </div>
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
           <table className="w-full text-left">
@@ -278,32 +299,44 @@ export default function AdminDashboard() {
               <th className="p-4">Type</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
+              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {facilityUsers.map(user => (
+            {facilityUsers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-8 text-center text-zinc-500">No medical facilities found</td>
+              </tr>
+            ) : facilityUsers.map(user => (
               <tr key={user.uid} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.personalMedicalFacilityData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.medicalFacilityAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                  {user.personalMedicalFacilityData?.facilityType || 'N/A'}
+                  {user.medicalFacilityAccountData?.facilityType || 'N/A'}
                 </td>
-                <td className="p-4 text-xs text-zinc-500">
-                  {user.personalMedicalFacilityData?.city || 'N/A'}
+                <td className="p-4 text-sm">
+                  {user.medicalFacilityAccountData?.province && user.medicalFacilityAccountData?.country 
+                    ? `${user.medicalFacilityAccountData.province}, ${user.medicalFacilityAccountData.country}` 
+                    : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalMedicalFacilityData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.personalMedicalFacilityData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.medicalFacilityAccountData?.verified ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.medicalFacilityAccountData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setIsFacilityUserModalOpen(true);
+                      setIsUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -320,7 +353,7 @@ export default function AdminDashboard() {
   };
 
   const renderAgenciesTab = () => {
-    const agencyUsers = users.filter(u => u.role === 'agency' || u.personalAgencyData);
+    const agencyUsers = users.filter(u => u.role === 'agency' || u.agencyAccountData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -328,15 +361,6 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-semibold">Agency Profiles</h3>
             <p className="text-xs text-zinc-500">{agencyUsers.length} total users</p>
           </div>
-          <button 
-            onClick={() => {
-              setSelectedUser(null);
-              setIsAgencyUserModalOpen(true);
-            }}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded text-xs font-bold transition-colors"
-          >
-            + Create New Agency
-          </button>
         </div>
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
           <table className="w-full text-left">
@@ -345,29 +369,41 @@ export default function AdminDashboard() {
               <th className="p-4">Agency Name</th>
               <th className="p-4">Location</th>
               <th className="p-4">Verified</th>
+              <th className="p-4">Published</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {agencyUsers.map(user => (
+            {agencyUsers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-zinc-500">No agencies found</td>
+              </tr>
+            ) : agencyUsers.map(user => (
               <tr key={user.uid} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.personalAgencyData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.agencyAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
-                <td className="p-4 text-xs text-zinc-500">
-                  {user.personalAgencyData?.city}, {user.personalAgencyData?.country}
+                <td className="p-4 text-sm">
+                  {user.agencyAccountData?.province && user.agencyAccountData?.country 
+                    ? `${user.agencyAccountData.province}, ${user.agencyAccountData.country}` 
+                    : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.personalAgencyData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.personalAgencyData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.agencyAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.agencyAccountData?.verified ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className={`px-2 py-1 rounded text-xs ${user.agencyAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.agencyAccountData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setIsAgencyUserModalOpen(true);
+                      setIsUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -403,7 +439,11 @@ export default function AdminDashboard() {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {patientUsers.map(user => (
+            {patientUsers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-zinc-500">No patients found</td>
+              </tr>
+            ) : patientUsers.map(user => (
               <tr key={user.uid} className="hover:bg-zinc-800/50">
                 <td className="p-4 font-medium">{user.displayName || 'Unnamed User'}</td>
                 <td className="p-4 text-sm text-zinc-400">{user.email}</td>
@@ -421,7 +461,7 @@ export default function AdminDashboard() {
                   <button 
                     onClick={() => {
                       setSelectedUser(user);
-                      setIsPatientUserModalOpen(true);
+                      setIsUserModalOpen(true);
                     }}
                     className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                   >
@@ -442,14 +482,16 @@ export default function AdminDashboard() {
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-semibold text-blue-400">Personnel Open Data Listing</h3>
+            <h3 className="text-xl font-semibold text-blue-400">Personnel Listings</h3>
             <p className="text-xs text-zinc-500">{openData.personnel.length} listings</p>
           </div>
-          <button 
+          {/* Modal removed - create disabled */}
+          <button
             onClick={() => {
+              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsOpenPersonnelModalOpen(true);
+              setIsPersonnelModalOpen(true);
             }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -462,14 +504,18 @@ export default function AdminDashboard() {
               <tr>
                 <th className="p-4">Name</th>
                 <th className="p-4">Type</th>
-                <th className="p-4 text-left">Specialization</th>
+                <th className="p-4">Specialty</th>
+                <th className="p-4">Location</th>
                 <th className="p-4">Owner ID</th>
-                <th className="p-4">Created</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {openData.personnel.map(item => (
+              {openData.personnel.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-zinc-500">No personnel listings found</td>
+                </tr>
+              ) : openData.personnel.map(item => (
                 <tr key={item.id} className="hover:bg-zinc-800/50">
                   <td className="p-4">
                     <div className="font-medium text-blue-400">{item.name}</div>
@@ -479,18 +525,17 @@ export default function AdminDashboard() {
                     {item.personnelType || 'N/A'}
                   </td>
                   <td className="p-4 text-sm">{item.specialization || 'N/A'}</td>
+                  <td className="p-4 text-sm">{item.province}, {item.country}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
-                    {item.personalHealthcarePersonnelDataId || 'Unlinked'}
-                  </td>
-                  <td className="p-4 text-xs text-zinc-500">
-                    {item.createdAt ? new Date((item.createdAt as any).seconds * 1000).toLocaleDateString() : 'N/A'}
+                    {item.userId || 'Unlinked'}
                   </td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
+                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsOpenPersonnelModalOpen(true);
+                        setIsPersonnelModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -511,14 +556,16 @@ export default function AdminDashboard() {
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-semibold text-green-400">Facility Open Data Listing</h3>
+            <h3 className="text-xl font-semibold text-green-400">Facility Listings</h3>
             <p className="text-xs text-zinc-500">{openData.facilities.length} listings</p>
           </div>
-          <button 
+          {/* Modal removed - create disabled */}
+          <button
             onClick={() => {
+              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsOpenFacilityModalOpen(true);
+              setIsFacilityModalOpen(true);
             }}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -537,7 +584,11 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {openData.facilities.map(item => (
+              {openData.facilities.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-zinc-500">No facility listings found</td>
+                </tr>
+              ) : openData.facilities.map(item => (
                 <tr key={item.id} className="hover:bg-zinc-800/50">
                   <td className="p-4">
                     <div className="font-medium text-green-400">{item.name}</div>
@@ -546,16 +597,17 @@ export default function AdminDashboard() {
                   <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
                     {item.facilityType || 'N/A'}
                   </td>
-                  <td className="p-4 text-sm">{item.city}, {item.country}</td>
+                  <td className="p-4 text-sm">{item.province}, {item.country}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
-                    {item.personalMedicalFacilityDataId || 'Unlinked'}
+                    {item.userId || 'Unlinked'}
                   </td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
+                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsOpenFacilityModalOpen(true);
+                        setIsFacilityModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -576,14 +628,15 @@ export default function AdminDashboard() {
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-semibold text-orange-400">Agency Open Data Listing</h3>
+            <h3 className="text-xl font-semibold text-orange-400">Agency Listings</h3>
             <p className="text-xs text-zinc-500">{openData.agencies.length} listings</p>
           </div>
           <button 
             onClick={() => {
+              setSelectedUser(null);
               setSelectedOpenData(null);
               setModalMode('create');
-              setIsOpenAgencyModalOpen(true);
+              setIsAgencyModalOpen(true);
             }}
             className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded text-xs font-bold transition-colors"
           >
@@ -601,22 +654,27 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {openData.agencies.map(item => (
+              {openData.agencies.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-zinc-500">No agency listings found</td>
+                </tr>
+              ) : openData.agencies.map(item => (
                 <tr key={item.id} className="hover:bg-zinc-800/50">
                   <td className="p-4">
-                    <div className="font-medium text-purple-400">{item.name}</div>
+                    <div className="font-medium text-orange-400">{item.name}</div>
                     <div className="text-xs text-zinc-500">{item.slug}</div>
                   </td>
-                  <td className="p-4 text-sm">{item.country || 'N/A'}</td>
+                  <td className="p-4 text-sm">{item.province}, {item.country}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
-                    {item.personalAgencyDataId || 'Unlinked'}
+                    {item.userId || 'Unlinked'}
                   </td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
+                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
-                        setIsOpenAgencyModalOpen(true);
+                        setIsAgencyModalOpen(true);
                       }}
                       className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition-colors"
                     >
@@ -717,9 +775,9 @@ export default function AdminDashboard() {
       case 'facilities': return renderFacilitiesTab();
       case 'agencies': return renderAgenciesTab();
       case 'patients': return renderPatientsTab();
-      case 'open_personnel': return renderOpenPersonnelTab();
-      case 'open_facilities': return renderOpenFacilitiesTab();
-      case 'open_agencies': return renderOpenAgenciesTab();
+      case 'personnel_listings': return renderOpenPersonnelTab();
+      case 'facility_listings': return renderOpenFacilitiesTab();
+      case 'agency_listings': return renderOpenAgenciesTab();
       case 'tickets': return renderTicketsTab();
       default: return null;
     }
@@ -771,58 +829,73 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-2">Account Database</span>
               <div className="flex border-b border-zinc-900 overflow-x-auto">
-                {tabs.filter(t => t.category === 'Users').map(tab => (
+                {tabs.filter(t => t.category === 'Users').map(tab => {
+                  const color = tab.color || 'blue';
+                  return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap w-[140px] justify-center ${
                       activeTab === tab.id 
-                        ? 'border-blue-500 text-blue-500 bg-blue-500/5' 
+                        ? `border-${color}-500 text-${color}-500 bg-${color}-500/5` 
                         : 'border-transparent text-zinc-400 hover:text-white hover:bg-zinc-900'
                     }`}
                   >
                     <span>{tab.icon}</span>
                     {tab.label}
                   </button>
-                ))}
+                )})}
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-2">Public Directory</span>
+              <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-2">Public Listings</span>
               <div className="flex border-b border-zinc-900 overflow-x-auto">
-                {tabs.filter(t => t.category === 'Directory').map(tab => (
+                {/* Spacers to align with Account Database tabs above (All Users + Patients = 2 × 140px) */}
+                <div className="flex-shrink-0" style={{ width: '140px' }}></div>
+                <div className="flex-shrink-0" style={{ width: '140px' }}></div>
+                {tabs.filter(t => t.category === 'Listings').map(tab => {
+                  const color = tab.color || 'green';
+                  return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap w-[140px] justify-center ${
                       activeTab === tab.id 
-                        ? 'border-green-500 text-green-500 bg-green-500/5' 
+                        ? `border-${color}-500 text-${color}-500 bg-${color}-500/5` 
                         : 'border-transparent text-zinc-400 hover:text-white hover:bg-zinc-900'
                     }`}
                   >
                     <span>{tab.icon}</span>
                     {tab.label}
                   </button>
-                ))}
+                )})}
               </div>
             </div>
 
-            <div className="flex border-b border-zinc-900 overflow-x-auto">
-                {tabs.filter(t => t.category === 'Support').map(tab => (
+            {/* Horizontal Separator */}
+            <div className="border-t border-zinc-800 my-6"></div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-2">Customer Support</span>
+              <div className="flex border-b border-zinc-900 overflow-x-auto">
+                {tabs.filter(t => t.category === 'Support').map(tab => {
+                  const color = tab.color || 'amber';
+                  return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap w-[140px] justify-center ${
                       activeTab === tab.id 
-                        ? 'border-zinc-500 text-white bg-zinc-500/5' 
+                        ? `border-${color}-500 text-${color}-500 bg-${color}-500/5` 
                         : 'border-transparent text-zinc-400 hover:text-white hover:bg-zinc-900'
                     }`}
                   >
                     <span>{tab.icon}</span>
                     {tab.label}
                   </button>
-                ))}
+                )})}
+              </div>
             </div>
           </div>
 
@@ -830,59 +903,49 @@ export default function AdminDashboard() {
           {renderContent()}
 
           {/* Modals */}
-          {/* User Data Modals (Private Accounts) */}
           {selectedUser && (
-            <>
-              <PatientUserModal
-                isOpen={isPatientUserModalOpen}
-                onClose={() => setIsPatientUserModalOpen(false)}
-                user={selectedUser}
-                onSuccess={fetchUsers}
-              />
-              <HealthcarePersonnelUserModal
-                isOpen={isPersonnelUserModalOpen}
-                onClose={() => setIsPersonnelUserModalOpen(false)}
-                user={selectedUser}
-                onSuccess={fetchUsers}
-              />
-              <MedicalFacilityUserModal
-                isOpen={isFacilityUserModalOpen}
-                onClose={() => setIsFacilityUserModalOpen(false)}
-                user={selectedUser}
-                onSuccess={fetchUsers}
-              />
-              <AgencyUserModal
-                isOpen={isAgencyUserModalOpen}
-                onClose={() => setIsAgencyUserModalOpen(false)}
-                user={selectedUser}
-                onSuccess={fetchUsers}
-              />
-            </>
+            <UserCRUDModal
+              isOpen={isUserModalOpen}
+              onClose={() => setIsUserModalOpen(false)}
+              user={selectedUser}
+              onSuccess={() => {
+                setIsUserModalOpen(false);
+                fetchUsers();
+              }}
+            />
           )}
 
-          {/* Open Data Modals (Public Listings) */}
-          <OpenHealthcarePersonnelModal
-            isOpen={isOpenPersonnelModalOpen}
-            onClose={() => setIsOpenPersonnelModalOpen(false)}
+          <AgencyListingCRUDModal
+            isOpen={isAgencyModalOpen}
+            onClose={() => setIsAgencyModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={fetchUsers}
+            onSuccess={() => {
+              setIsAgencyModalOpen(false);
+              fetchUsers();
+            }}
           />
 
-          <OpenMedicalFacilityModal
-            isOpen={isOpenFacilityModalOpen}
-            onClose={() => setIsOpenFacilityModalOpen(false)}
+          <HealthcarePersonnelListingCRUDModal
+            isOpen={isPersonnelModalOpen}
+            onClose={() => setIsPersonnelModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={fetchUsers}
+            onSuccess={() => {
+              setIsPersonnelModalOpen(false);
+              fetchUsers();
+            }}
           />
 
-          <OpenAgencyModal
-            isOpen={isOpenAgencyModalOpen}
-            onClose={() => setIsOpenAgencyModalOpen(false)}
+          <MedicalFacilityListingCRUDModal
+            isOpen={isFacilityModalOpen}
+            onClose={() => setIsFacilityModalOpen(false)}
             openDataRecord={selectedOpenData}
             mode={modalMode}
-            onSuccess={fetchUsers}
+            onSuccess={() => {
+              setIsFacilityModalOpen(false);
+              fetchUsers();
+            }}
           />
 
           {/* Navigation Back */}

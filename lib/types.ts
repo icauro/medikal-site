@@ -80,31 +80,31 @@ export interface UserProfile {
   };
 
   // Role-specific fields
-  adminInfo?: AdminInfo;
-  patientInfo?: PatientInfo;
-  personalHealthcarePersonnelData?: PersonalHealthcarePersonnelData;
-  personalMedicalFacilityData?: PersonalMedicalFacilityData;
-  personalAgencyData?: PersonalAgencyData;
+  adminAccountData?: AdminAccountData;
+  patientAccountData?: PatientAccountData;
+  healthcarePersonnelAccountData?: HealthcarePersonnelAccountData;
+  medicalFacilityAccountData?: MedicalFacilityAccountData;
+  agencyAccountData?: AgencyAccountData;
 }
 
-export interface AdminInfo {
+export interface AdminAccountData {
   permissions: string[];
   lastLogin: Date;
 }
 
-export interface PatientInfo {
+export interface PatientAccountData {
   medicalHistory?: string[];
   preferredLanguage: string;
-  city?: string;      // Optional - patient may not want to share location
   country?: string;   // Optional - patient may not want to share location
+  province?: string;  // Optional - patient may not want to share location
   emergencyContact?: {
     name: string;
     phone: string;
   };
 }
 
-// Personal Healthcare Personnel Data (private, personnel-managed)
-export interface PersonalHealthcarePersonnelData {
+// Healthcare Personnel Account Data (private, personnel-managed)
+export interface HealthcarePersonnelAccountData {
   personnelType: PersonnelType;
   name: string;
   specialization: MedicalSpecialization;
@@ -113,8 +113,8 @@ export interface PersonalHealthcarePersonnelData {
   dateOfBirth: string;
   phoneNumber: string;
   nationalIdNumber?: string;
-  city: string;     // Required field - matches country-state-city library
-  country: string;  // Required field - matches country-state-city library
+  country: string;   // Required field
+  province: string;  // Required field - state/province based on country
   bio?: string;
   photoUrl?: string;
 
@@ -140,24 +140,24 @@ export interface PersonalHealthcarePersonnelData {
 
   // Verification & Linking (set by admin only)
   verified: boolean;
-  openHealthcarePersonnelDataId?: string; // Link to openHealthcarePersonnelData (admin-controlled)
+  listingId?: string; // Link to public healthcare personnel listing (admin-controlled)
   verificationNotes?: string;
   verifiedAt?: Date;
   verifiedBy?: string; // Admin UID
 }
 
-// Open Healthcare Personnel Data (public, admin-managed)
-export interface OpenHealthcarePersonnelData {
+// Healthcare Personnel Listing (public, admin-managed)
+export interface HealthcarePersonnelListing {
   id: string;
   name: string;
   personnelType: PersonnelType;
   specialization: MedicalSpecialization;
-  personalHealthcarePersonnelDataId?: string; // Link to user's personalHealthcarePersonnelData (admin-controlled)
+  userId?: string; // Link to user account (admin-controlled)
   slug?: string;
   bio?: string;
   image?: string;
-  city: string;      // Required field - from country-state-city library
-  country: string;   // Required field - from country-state-city library
+  country: string;   // Required field
+  province: string;  // Required field - state/province based on country
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
@@ -170,14 +170,14 @@ export interface OpenHealthcarePersonnelData {
   createdBy?: string; // Admin UID
 }
 
-// Medical Facility Information (previously Clinic)
-export interface PersonalMedicalFacilityData {
+// Medical Facility Account Data (private, facility-managed)
+export interface MedicalFacilityAccountData {
   // Publicly Visible basic info
   name: string;
   facilityType: MedicalFacilityType;
   address?: string;  // Optional - not required for locating facility
-  city: string;
   country: string;
+  province: string;  // Required field - state/province based on country
   phone: string;
   email: string;
   website?: string;
@@ -199,7 +199,7 @@ export interface PersonalMedicalFacilityData {
   
   // Verification & Linking (set by admin only)
   verified: boolean;
-  openMedicalFacilityDataId?: string; // Link to openMedicalFacilityData (admin-controlled)
+  listingId?: string; // Link to public medical facility listing (admin-controlled)
   verificationNotes?: string;
   verifiedAt?: Date;
   verifiedBy?: string; // Admin UID
@@ -208,14 +208,14 @@ export interface PersonalMedicalFacilityData {
   claimedDoctorIds?: string[]; // Pending verification
 }
 
-// Open Medical Facility Data (public, admin-managed)
-export interface OpenMedicalFacilityData {
+// Medical Facility Listing (public, admin-managed)
+export interface MedicalFacilityListing {
   id: string;
   name: string;
   facilityType: MedicalFacilityType;
   address: string;   // Required for public listing
-  city: string;       // Required field - matches country-state-city library
   country: string;    // Required field
+  province: string;   // Required field - state/province based on country
   phone?: string;
   email?: string;
   website?: string;
@@ -228,7 +228,7 @@ export interface OpenMedicalFacilityData {
   googlePlaceId?: string;
   googleReviewsEmbedUrl?: string;
   services?: string[];
-  personalMedicalFacilityDataId?: string; // Link to user's personalMedicalFacilityData (admin-controlled)
+  userId?: string; // Link to user account (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
   createdAt: Date;
@@ -236,13 +236,13 @@ export interface OpenMedicalFacilityData {
   createdBy?: string; // Admin UID
 }
 
-// Personal Agency Data (private, agency-managed)
-export interface PersonalAgencyData {
+// Agency Account Data (private, agency-managed)
+export interface AgencyAccountData {
   // Publicly Visible basic info
   name: string;
   address?: string;  // Optional - not required for locating agency
-  city: string;
   country: string;
+  province: string;  // Required field - state/province based on country
   phone: string;
   email: string;
   website?: string;
@@ -264,18 +264,18 @@ export interface PersonalAgencyData {
   
   // Verification & Linking (set by admin only)
   verified: boolean;
-  openAgencyDataId?: string; // Link to openAgencyData (admin-controlled)
+  listingId?: string; // Link to public agency listing (admin-controlled)
   verificationNotes?: string;
   verifiedAt?: Date;
   verifiedBy?: string; // Admin UID
 }
 
-// Open Agency Data (public, admin-managed)
-export interface OpenAgencyData {
+// Agency Listing (public, admin-managed)
+export interface AgencyListing {
   id: string;
   name: string;
   country: string;    // Required field
-  city: string;       // Required field - matches country-state-city library
+  province: string;   // Required field - state/province based on country
   address: string;    // Required for public listing
   phone?: string;
   email?: string;
@@ -289,7 +289,7 @@ export interface OpenAgencyData {
   reviewCount?: number;
   googlePlaceId?: string;
   googleReviewsEmbedUrl?: string;
-  personalAgencyDataId?: string; // Link to user's personalAgencyData (admin-controlled)
+  userId?: string; // Link to user account (admin-controlled)
   slug?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -299,8 +299,8 @@ export interface OpenAgencyData {
 // Medical Facility-Personnel Link (for verified associations)
 export interface MedicalFacilityPersonnelLink {
   id?: string;
-  medicalFacilityId: string; // OpenMedicalFacilityData ID
-  personnelId: string; // User UID with personalHealthcarePersonnelData
+  medicalFacilityId: string; // MedicalFacilityListing ID
+  personnelId: string; // User UID with healthcarePersonnelAccountData
   claimedBy: 'medical_facility' | 'healthcare_personnel' | 'admin'; // Who initiated the claim
   verified: boolean;
   verifiedBy?: string; // Admin UID

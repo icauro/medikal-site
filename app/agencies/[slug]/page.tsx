@@ -18,7 +18,7 @@ export default function AgencyProfilePage() {
     async function fetchAgency() {
       try {
         const q = query(
-          collection(db, "open_agency_data"),
+          collection(db, "agency_listings"),
           where("slug", "==", slug),
           limit(1)
         );
@@ -90,10 +90,10 @@ export default function AgencyProfilePage() {
             <h1 className="text-5xl font-bold mb-6 tracking-tight">{agency.name}</h1>
             
             <div className="flex flex-wrap gap-6 mb-8 text-zinc-400">
-               {agency.city && (
+               {agency.province && (
                  <div className="flex items-center gap-2">
                    <span className="text-xl">📍</span>
-                   <span>{agency.city}, {agency.country}</span>
+                   <span>{agency.province}, {agency.country}</span>
                  </div>
                )}
             </div>

@@ -47,7 +47,7 @@ interface DoctorRecord {
   procedureTags?: string[];
   googlePlaceId?: string | null;
   googleReviewsEmbedUrl?: string | null;
-  personalHealthcarePersonnelDataId?: string | null;
+  userId?: string | null;
 }
 
 export default function DoctorProfilePage() {
@@ -72,7 +72,7 @@ export default function DoctorProfilePage() {
       setError(null);
 
       try {
-        const personnelRef = collection(db, "open_healthcare_personnel_data");
+        const personnelRef = collection(db, "healthcare_personnel_listings");
         const slugQuery = query(
           personnelRef,
           where("slug", "==", slug),
@@ -115,7 +115,7 @@ export default function DoctorProfilePage() {
             ? matchData.procedureTags
             : [],
           googleReviewsEmbedUrl: matchData.googleReviewsEmbedUrl ?? null,
-          personalHealthcarePersonnelDataId: matchData.personalHealthcarePersonnelDataId ?? null,
+          userId: matchData.userId ?? null,
         });
       } catch (err) {
         console.error("Error loading doctor profile", err);
@@ -247,7 +247,7 @@ export default function DoctorProfilePage() {
         <section className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 md:p-10">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-72 flex justify-center lg:justify-start">
-              {doctor.image && doctor.personalHealthcarePersonnelDataId ? (
+              {doctor.image && doctor.userId ? (
                 <Image
                   src={doctor.image}
                   alt={displayName}
@@ -258,7 +258,7 @@ export default function DoctorProfilePage() {
               ) : (
                 <div className="w-72 h-72 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-800 flex flex-col items-center justify-center">
                   <span className="text-9xl opacity-10">👤</span>
-                  {!doctor.personalHealthcarePersonnelDataId && (
+                  {!doctor.userId && (
                     <span className="text-[10px] uppercase font-bold text-zinc-500 mt-4 tracking-[0.2em]">Listing Only</span>
                   )}
                 </div>

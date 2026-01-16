@@ -138,14 +138,14 @@ export interface UserProfile {
     acceptedAt: Date;
     version: string;
   };
-  personalHealthcarePersonnelData?: PersonalHealthcarePersonnelData; // Only for healthcare personnel
+  healthcarePersonnelAccountData?: HealthcarePersonnelAccountData; // Only for healthcare personnel
 }
 ```
 
-### PersonalHealthcarePersonnelData Interface
-* openHealthcarePersonnelDataId is set by admin after verification; personnel cannot edit this link themselves.
+### HealthcarePersonnelAccountData Interface
+* listingId is set by admin after verification; personnel cannot edit this link themselves.
 ```typescript
-export interface PersonalHealthcarePersonnelData {
+export interface HealthcarePersonnelAccountData {
   name: string;
   personnelType: PersonnelType; // 'Doctor' | 'Patient Coordinator'
   dob: string;
@@ -162,20 +162,20 @@ export interface PersonalHealthcarePersonnelData {
   facilityAddress: string;
   motivation: string;
   photoUrl?: string;
-  openHealthcarePersonnelDataId?: string; // Linked after verification
+  listingId?: string; // Linked after verification
   verified?: boolean;
 }
 ```
 
-### OpenHealthcarePersonnelData Interface (Admin-managed, public, personnel cannot edit links)
-* personalHealthcarePersonnelDataId is set by admin if verified; personnel cannot edit this link themselves.
+### HealthcarePersonnelListing Interface (Admin-managed, public, personnel cannot edit links)
+* userId is set by admin if verified; personnel cannot edit this link themselves.
 ```typescript
-export interface OpenHealthcarePersonnelData {
+export interface HealthcarePersonnelListing {
   id: string;
   name: string;
   personnelType: PersonnelType;
   specialty: string;
-  personalHealthcarePersonnelDataId?: string; // Linked if verified
+  userId?: string; // Linked if verified
 }
 ```
 
@@ -195,18 +195,18 @@ export type AccountStatus =
 
 1. Admin logs into `/admin/healthcare-personnel`
 2. Views list of pending personnel approvals
-3. Clicks on a personnel to see their personalHealthcarePersonnelData
+3. Clicks on a personnel to see their healthcarePersonnelAccountData
 4. Reviews credentials and information
 5. **Approve**:
-  - Admin must manually select the appropriate openHealthcarePersonnelData record to link with this personnel (or create a new one if needed)
+  - Admin must manually select the appropriate HealthcarePersonnelListing record to link with this personnel (or create a new one if needed)
   - Update `users/{uid}`:
     - `accountStatus: 'active'`
-    - `personalHealthcarePersonnelData.verified: true`
-    - `personalHealthcarePersonnelData.openHealthcarePersonnelDataId = openHealthcarePersonnelData.id`
-  - Update `open_healthcare_personnel_data/{id}`:
-    - `personalHealthcarePersonnelDataId = uid`
-  - This creates a two-way link between open and personal data
-  - Personnel cannot edit or unlink their openHealthcarePersonnelData themselves; only admins can manage these links
+    - `healthcarePersonnelAccountData.verified: true`
+    - `healthcarePersonnelAccountData.listingId = listingId`
+  - Update `healthcare_personnel_listings/{id}`:
+    - `userId = uid`
+  - This creates a two-way link between listing and personal data
+  - Personnel cannot edit or unlink their listing themselves; only admins can manage these links
 6. **Deny**:
   - Personnel remains in `pending_approval` status and sees denial reason
 
@@ -225,7 +225,7 @@ export type AccountStatus =
     acceptedAt: Timestamp,
     version: "1.0"
   },
-  personalHealthcarePersonnelData: {
+  healthcarePersonnelAccountData: {
     name: "Dr. John Doe",
     personnelType: "Doctor",
     dob: "1980-01-01",
@@ -242,20 +242,20 @@ export type AccountStatus =
     facilityAddress: "123 Main St",
     motivation: "To help patients",
     photoUrl: "...",
-    openHealthcarePersonnelDataId: null,
+    listingId: null,
     verified: false
   }
 }
 ```
 
-### `open_healthcare_personnel_data/{id}`
+### `healthcare_personnel_listings/{id}`
 ```javascript
 {
   id: "open123",
   name: "Dr. John Doe",
   personnelType: "Doctor",
   specialty: "Plastic, Reconstructive and Aesthetic Surgery",
-  personalHealthcarePersonnelDataId: "user123" // Linked if verified
+  userId: "user123" // Linked if verified
 }
 ```
 

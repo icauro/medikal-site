@@ -3,35 +3,34 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { Country, City } from "country-state-city";
-import { OpenAgencyData } from "@/lib/types";
+import { Country, State } from "country-state-city";
+import { COUNTRIES } from "@/lib/constants";
+import { AgencyListing } from "@/lib/types";
 
-const COUNTRIES = Country.getAllCountries();
-
-interface OpenAgencyModalProps {
+interface AgencyListingCRUDModalProps {
   isOpen: boolean;
   onClose: () => void;
-  openDataRecord?: OpenAgencyData | null;
+  openDataRecord?: AgencyListing | null;
   mode: 'create' | 'edit';
   onSuccess: () => void;
 }
 
-export default function OpenAgencyModal({ 
+export default function AgencyListingCRUDModal({ 
   isOpen, 
   onClose, 
   openDataRecord,
   mode, 
   onSuccess 
-}: OpenAgencyModalProps) {
+}: AgencyListingCRUDModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialUserId, setInitialUserId] = useState<string | null>(null);
-  const [cities, setCities] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
 
-  const [openData, setOpenData] = useState<Partial<OpenAgencyData>>({
+  const [openData, setOpenData] = useState<Partial<AgencyListing>>({
     name: "",
     address: "",
-    city: "Istanbul",
+    province: "Istanbul",
     country: "Turkey",
     phone: "",
     email: "",
@@ -45,7 +44,7 @@ export default function OpenAgencyModal({
     reviewCount: 0,
     googlePlaceId: "",
     googleReviewsEmbedUrl: "",
-    personalAgencyDataId: ""
+    userId: ""
   });
 
   useEffect(() => {
@@ -67,12 +66,12 @@ export default function OpenAgencyModal({
           googlePlaceId: openDataRecord.googlePlaceId || "",
           googleReviewsEmbedUrl: openDataRecord.googleReviewsEmbedUrl || ""
         });
-        setInitialUserId(openDataRecord.personalAgencyDataId || null);
+        setInitialUserId(openDataRecord.userId || null);
       } else {
         setOpenData({
           name: "",
           address: "",
-          city: "Istanbul",
+          province: "Istanbul",
           country: "Turkey",
           phone: "",
           email: "",
@@ -86,7 +85,7 @@ export default function OpenAgencyModal({
           reviewCount: 0,
           googlePlaceId: "",
           googleReviewsEmbedUrl: "",
-          personalAgencyDataId: undefined
+          userId: undefined
         });
         setInitialUserId("");
       }
@@ -97,13 +96,13 @@ export default function OpenAgencyModal({
     if (openData.country) {
       const country = COUNTRIES.find(c => c.name === openData.country);
       if (country) {
-        const countryCities = City.getCitiesOfCountry(country.isoCode);
-        setCities(countryCities || []);
+        const countryProvinces = State.getStatesOfCountry(country.isoCode);
+        setProvinces(countryProvinces || []);
       } else {
-        setCities([]);
+        setProvinces([]);
       }
     } else {
-      setCities([]);
+      setProvinces([]);
     }
   }, [openData.country]);
 
@@ -118,7 +117,7 @@ export default function OpenAgencyModal({
     setError(null);
     try {
       const slug = openData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const currentUserId = openData.personalAgencyDataId;
+      const currentUserId = openData.userId;
 
       const payload = {
         ...openData,
@@ -127,33 +126,45 @@ export default function OpenAgencyModal({
         ...(!openData.id && mode === 'create' ? { createdAt: serverTimestamp() } : {})
       };
 
+      // Remove undefined userId to prevent Firestore error
+      if (payload.userId === undefined || payload.userId === '') {
+        delete payload.userId;
+      }
+
       const { id, ...dataToSave } = payload;
       let savedId = openData.id;
 
       if (mode === 'edit' && openData.id) {
-        await updateDoc(doc(db, "open_agency_data", openData.id), dataToSave);
+        await updateDoc(doc(db, "agency_listings", openData.id), dataToSave);
       } else {
-        const docRef = await addDoc(collection(db, "open_agency_data"), dataToSave);
+        const docRef = await addDoc(collection(db, "agency_listings"), dataToSave);
         savedId = docRef.id;
       }
 
       // 2. Handle Two-Way Link Sync (Repair & Sync)
+      console.log("🔗 [LINK] Processing two-way link for listing:", savedId, "to user:", currentUserId);
       if (currentUserId && savedId) {
         try {
           // Always ensure the user doc knows about this listing
           await updateDoc(doc(db, "users", currentUserId), {
-            "personalAgencyData.openAgencyDataId": savedId
+            "agencyAccountData.listingId": savedId
           });
-        } catch (e) { console.error("Could not link user:", e); }
+          console.log("✅ [LINK] Synced user document:", currentUserId);
+        } catch (e) { 
+          console.error("🚫 [LINK] Could not link user:", e); 
+        }
       }
 
       // If we switched away from an old user, unlink them
       if (initialUserId && initialUserId !== currentUserId) {
         try {
           await updateDoc(doc(db, "users", initialUserId), {
-            "personalAgencyData.openAgencyDataId": null
+            "agencyAccountData.listingId": null
           });
-        } catch (e) { console.error("Could not unlink old user:", e); }
+          console.log("✅ [LINK] Unlinked old user:", initialUserId);
+        } catch (e) { 
+          console.error("⚠️ [LINK] Could not unlink old user:", e); 
+        }
       }
 
       onSuccess();
@@ -169,7 +180,7 @@ export default function OpenAgencyModal({
     if (!openData.id || !confirm("Are you sure you want to delete this public agency listing?")) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "open_agency_data", openData.id));
+      await deleteDoc(doc(db, "agency_listings", openData.id));
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -184,30 +195,13 @@ export default function OpenAgencyModal({
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
           <h2 className="text-xl font-bold text-white">
-            {mode === 'create' ? 'Add Public Agency' : `Edit Public Agency: ${openData.name}`}
+            {mode === 'create' ? 'Add Public Agency Listing' : `Edit Agency Listing: ${openData.name}`}
           </h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white">✕</button>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
-
-          {/* User Link Field */}
-          <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-800 mb-2">
-            <label className="block text-[10px] font-bold text-orange-500 uppercase mb-1 flex items-center gap-1">
-              <span>👤</span> Link to Private User Account (UID)
-            </label>
-            <input 
-              type="text" 
-              placeholder="Paste User UID (e.g. abc123def456)"
-              value={openData.personalAgencyDataId || ""} 
-              onChange={(e) => setOpenData({...openData, personalAgencyDataId: e.target.value || undefined})} 
-              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-orange-500 text-sm" 
-            />
-            <p className="mt-2 text-[10px] text-zinc-500">
-              When linked, this listing will automatically appear in the user&apos;s private profile dashboard.
-            </p>
-          </div>
 
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Agency Name</label>
@@ -224,7 +218,7 @@ export default function OpenAgencyModal({
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
               <select 
                 value={openData.country || ""} 
-                onChange={(e) => setOpenData({...openData, country: e.target.value, city: ""})} 
+                onChange={(e) => setOpenData({...openData, country: e.target.value, province: ""})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
               >
                 <option value="">Select Country</option>
@@ -232,15 +226,15 @@ export default function OpenAgencyModal({
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Province/State</label>
               <select 
-                value={openData.city || ""} 
-                onChange={(e) => setOpenData({...openData, city: e.target.value})} 
+                value={openData.province || ""} 
+                onChange={(e) => setOpenData({...openData, province: e.target.value})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-orange-500"
                 disabled={!openData.country}
               >
-                <option value="">{openData.country ? "Select City" : "Select Country First"}</option>
-                {cities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                <option value="">{openData.country ? "Select Province/State" : "Select Country First"}</option>
+                {provinces.map((province, idx) => <option key={`${province.name}-${idx}`} value={province.name}>{province.name}</option>)}
               </select>
             </div>
           </div>
@@ -313,6 +307,23 @@ export default function OpenAgencyModal({
                 placeholder="UK, Germany, USA..." 
               />
             </div>
+          </div>
+
+          {/* User Link Field - At Bottom */}
+          <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-800 mt-4">
+            <label className="block text-[10px] font-bold text-orange-500 uppercase mb-1 flex items-center gap-1">
+              <span>👤</span> Link to Private User Account (UID)
+            </label>
+            <input 
+              type="text" 
+              placeholder="Paste User UID (e.g. abc123def456)"
+              value={openData.userId || ""} 
+              onChange={(e) => setOpenData({...openData, userId: e.target.value.trim() || undefined})} 
+              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-orange-500 text-sm" 
+            />
+            <p className="mt-2 text-[10px] text-zinc-500">
+              When linked, this listing will automatically appear in the user&apos;s private profile dashboard.
+            </p>
           </div>
         </div>
 

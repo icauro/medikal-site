@@ -35,7 +35,7 @@ The platform maintains a strict separation between account ownership (Personal D
 - **Nature**: Public-facing record that represents the entity on the website.
 - **Primary Field**: `slug` (used for the entity's dedicated URL).
 - **Independence**: Open Data records **can exist without a linked user**. This allows admins to populate the directory with hospitals or doctors who haven't registered an account yet.
-- **Collections**: `open_healthcare_personnel_data`, `open_medical_facility_data`, `open_agency_data`.
+- **Collections**: `healthcare_personnel_listings`, `medical_facility_listings`, `agency_listings`.
 
 ### Personal Data (The Account)
 - **Nature**: Private user-owned data required for authentication and onboarding.
@@ -77,7 +77,7 @@ The platform maintains a strict separation between account ownership (Personal D
 **Capabilities**:
 - ✅ All patient capabilities
 - ✅ Respond to reviews on their profile
-- ✅ Edit their personalHealthcarePersonnelData (name, photo, bio, personnelType, etc.)
+- ✅ Edit their healthcarePersonnelAccountData (name, photo, bio, personnelType, etc.)
 - ✅ Post links and images on their profile
 - ✅ Claim connection to medical facilities
 - ✅ Request to moderate medical facility pages (requires admin approval)
@@ -86,15 +86,15 @@ The platform maintains a strict separation between account ownership (Personal D
 
 **Restrictions**:
 - ❌ Cannot access admin pages
-- ❌ Cannot edit openHealthcarePersonnelData (name, specialty - admin only)
-- ❌ Cannot link/unlink their openHealthcarePersonnelData (admin only)
+- ❌ Cannot edit their public listing (name, specialty - admin only)
+- ❌ Cannot link/unlink their public listing (admin only)
 - ❌ Cannot moderate other professionals or delete reviews
 
 **Account Status**: 
 - `pending_personal_data` → after role selection
 - `active` → after submitting personal personnel data
 
-**Verification**: Professionals are active upon submission of their personal data. Admin can manually link personalHealthcarePersonnelData to openHealthcarePersonnelData for public visibility.
+**Verification**: Professionals are active upon submission of their personal data. Admin can manually link their personal data to a public listing for public visibility.
 
 ---
 
@@ -106,8 +106,8 @@ The platform maintains a strict separation between account ownership (Personal D
 - ✅ All patient and healthcare personnel capabilities
 - ✅ Access admin dashboard (`/admin`)
 - ✅ View and manage healthcare personnel profiles
-- ✅ Manually link personalHealthcarePersonnelData ↔ openHealthcarePersonnelData
-- ✅ Create and edit openHealthcarePersonnelData records
+- ✅ Manually link private user data ↔ public listings
+- ✅ Create and edit public listing records
 - ✅ Manage support tickets from all users
 - ✅ Moderate conversations and reviews
 - ✅ Suspend/activate user accounts

@@ -10,11 +10,11 @@ interface MedicalFacility {
   slug: string;
   name: string;
   type: string;
-  city?: string;
+  province?: string;
   country?: string;
   image?: string;
   rating?: number;
-  personalMedicalFacilityDataId?: string;
+  userId?: string;
 }
 
 export default function MedicalFacilitiesPage() {
@@ -24,7 +24,7 @@ export default function MedicalFacilitiesPage() {
   useEffect(() => {
     async function fetchFacilities() {
       try {
-        const facilitiesCollection = collection(db, "open_medical_facility_data");
+        const facilitiesCollection = collection(db, "medical_facility_listings");
         const facilitiesSnapshot = await getDocs(facilitiesCollection);
 
         const facilitiesList: MedicalFacility[] = [];
@@ -56,11 +56,11 @@ export default function MedicalFacilitiesPage() {
             slug: data.slug || "",
             name: data.name || "",
             type: data.type || "",
-            city: data.city || undefined,
+            province: data.province || undefined,
             country: data.country || undefined,
             image: data.image || undefined,
             rating: averageRating,
-            personalMedicalFacilityDataId: data.personalMedicalFacilityDataId,
+            userId: data.userId,
           });
         }
 
@@ -105,7 +105,7 @@ export default function MedicalFacilitiesPage() {
               >
                 <div className="mb-4">
                   <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                    {facility.image && facility.personalMedicalFacilityDataId ? (
+                    {facility.image && facility.userId ? (
                       <img 
                         src={facility.image} 
                         alt={facility.name} 
@@ -114,7 +114,7 @@ export default function MedicalFacilitiesPage() {
                     ) : (
                       <div className="flex flex-col items-center">
                         <span className="text-6xl opacity-20">🏥</span>
-                        {!facility.personalMedicalFacilityDataId && (
+                        {!facility.userId && (
                           <span className="text-[10px] uppercase font-bold text-zinc-600 mt-2 tracking-widest">Listing Only</span>
                         )}
                       </div>
@@ -125,8 +125,8 @@ export default function MedicalFacilitiesPage() {
                   {facility.name}
                 </h2>
                 <p className="text-zinc-400 mb-2">{facility.type}</p>
-                {facility.city && (
-                  <p className="text-zinc-500 text-sm mb-2">{facility.city}, {facility.country}</p>
+                {facility.province && (
+                  <p className="text-zinc-500 text-sm mb-2">{facility.province}, {facility.country}</p>
                 )}
                 {facility.rating !== undefined && (
                   <p className="text-yellow-400">★ {facility.rating.toFixed(1)}</p>

@@ -23,20 +23,20 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().role == role;
     }
 
-    // Open Healthcare Personnel Data collection - public read, admin-only write
-    match /open_healthcare_personnel_data/{openDataId} {
+    // Healthcare Personnel Listings collection - public read, admin-only write
+    match /healthcare_personnel_listings/{listingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Open Medical Facility Data collection - public read, admin-only write
-    match /open_medical_facility_data/{openDataId} {
+    // Medical Facility Listings collection - public read, admin-only write
+    match /medical_facility_listings/{listingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Open Agency Data collection - public read, admin-only write
-    match /open_agency_data/{openDataId} {
+    // Agency Listings collection - public read, admin-only write
+    match /agency_listings/{listingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -51,17 +51,17 @@ service cloud.firestore {
          (resource.data.role == null && request.resource.data.role in ['patient', 'healthcare_personnel', 'medical_facility', 'agency']) ||
          isAdmin()) &&
         // Protect admin-controlled IDs
-        (!request.resource.data.keys().hasAny(['personalHealthcarePersonnelData']) ||
-         !request.resource.data.personalHealthcarePersonnelData.keys().hasAny(['openHealthcarePersonnelDataId']) ||
-         request.resource.data.personalHealthcarePersonnelData.openHealthcarePersonnelDataId == resource.data.get('personalHealthcarePersonnelData', {}).get('openHealthcarePersonnelDataId', null) ||
+        (!request.resource.data.keys().hasAny(['healthcarePersonnelAccountData']) ||
+         !request.resource.data.healthcarePersonnelAccountData.keys().hasAny(['listingId']) ||
+         request.resource.data.healthcarePersonnelAccountData.listingId == resource.data.get('healthcarePersonnelAccountData', {}).get('listingId', null) ||
          isAdmin()) &&
-        (!request.resource.data.keys().hasAny(['personalMedicalFacilityData']) ||
-         !request.resource.data.personalMedicalFacilityData.keys().hasAny(['openMedicalFacilityDataId']) ||
-         request.resource.data.personalMedicalFacilityData.openMedicalFacilityDataId == resource.data.get('personalMedicalFacilityData', {}).get('openMedicalFacilityDataId', null) ||
+        (!request.resource.data.keys().hasAny(['medicalFacilityAccountData']) ||
+         !request.resource.data.medicalFacilityAccountData.keys().hasAny(['listingId']) ||
+         request.resource.data.medicalFacilityAccountData.listingId == resource.data.get('medicalFacilityAccountData', {}).get('listingId', null) ||
          isAdmin()) &&
-        (!request.resource.data.keys().hasAny(['personalAgencyData']) ||
-         !request.resource.data.personalAgencyData.keys().hasAny(['openAgencyDataId']) ||
-         request.resource.data.personalAgencyData.openAgencyDataId == resource.data.get('personalAgencyData', {}).get('openAgencyDataId', null) ||
+        (!request.resource.data.keys().hasAny(['agencyAccountData']) ||
+         !request.resource.data.agencyAccountData.keys().hasAny(['listingId']) ||
+         request.resource.data.agencyAccountData.listingId == resource.data.get('agencyAccountData', {}).get('listingId', null) ||
          isAdmin());
       allow delete: if isOwner(userId) || isAdmin();
     }
@@ -90,7 +90,7 @@ service cloud.firestore {
     match /treatment_plans/{planId} {
       function personnelHasMatchingTags() {
         let userDoc = getUserData();
-        let personnelTags = userDoc.personalHealthcarePersonnelData.get('procedureTags', []);
+        let personnelTags = userDoc.healthcarePersonnelAccountData.get('procedureTags', []);
         let planTags = resource.data.procedureTags;
         return personnelTags.hasAny(planTags);
       }

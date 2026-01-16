@@ -9,7 +9,7 @@ interface Agency {
   id: string;
   slug: string;
   name: string;
-  city?: string;
+  province?: string;
   country?: string;
   image?: string;
   rating?: number;
@@ -23,7 +23,7 @@ export default function AgenciesPage() {
   useEffect(() => {
     async function fetchAgencies() {
       try {
-        const agenciesCollection = collection(db, "open_agency_data");
+        const agenciesCollection = collection(db, "agency_listings");
         const agenciesSnapshot = await getDocs(agenciesCollection);
 
         const agenciesList: Agency[] = [];
@@ -54,7 +54,7 @@ export default function AgenciesPage() {
             id: doc.id,
             slug: data.slug || "",
             name: data.name || "",
-            city: data.city || undefined,
+            province: data.province || undefined,
             country: data.country || undefined,
             image: data.image || undefined,
             rating: averageRating,
@@ -122,8 +122,8 @@ export default function AgenciesPage() {
                 <h2 className="text-xl font-semibold mb-2 text-white line-clamp-1">
                   {agency.name}
                 </h2>
-                {agency.city && (
-                  <p className="text-zinc-500 text-sm mb-2">{agency.city}, {agency.country}</p>
+                {agency.province && (
+                  <p className="text-zinc-500 text-sm mb-2">{agency.province}, {agency.country}</p>
                 )}
                 {agency.rating !== undefined && (
                   <p className="text-yellow-400">★ {agency.rating.toFixed(1)}</p>

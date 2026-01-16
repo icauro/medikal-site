@@ -18,7 +18,7 @@ export default function MedicalFacilityProfilePage() {
     async function fetchFacility() {
       try {
         const q = query(
-          collection(db, "open_medical_facility_data"),
+          collection(db, "medical_facility_listings"),
           where("slug", "==", slug),
           limit(1)
         );
@@ -90,10 +90,10 @@ export default function MedicalFacilityProfilePage() {
             <h1 className="text-5xl font-bold mb-6 tracking-tight">{facility.name}</h1>
             
             <div className="flex flex-wrap gap-6 mb-8 text-zinc-400">
-               {facility.city && (
+               {facility.province && (
                  <div className="flex items-center gap-2">
                    <span className="text-xl">📍</span>
-                   <span>{facility.city}, {facility.country}</span>
+                   <span>{facility.province}, {facility.country}</span>
                  </div>
                )}
             </div>

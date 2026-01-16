@@ -3,35 +3,34 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { MedicalSpecialization, MEDICAL_SPECIALIZATIONS, OpenHealthcarePersonnelData, PersonnelType } from "@/lib/types";
-import { Country, City } from "country-state-city";
+import { MedicalSpecialization, MEDICAL_SPECIALIZATIONS, HealthcarePersonnelListing, PersonnelType } from "@/lib/types";
+import { COUNTRIES } from "@/lib/constants";
+import { Country, State } from "country-state-city";
 
-const COUNTRIES = Country.getAllCountries();
-
-interface OpenHealthcarePersonnelModalProps {
+interface HealthcarePersonnelListingCRUDModalProps {
   isOpen: boolean;
   onClose: () => void;
-  openDataRecord?: OpenHealthcarePersonnelData | null;
+  openDataRecord?: HealthcarePersonnelListing | null;
   mode: 'create' | 'edit';
   onSuccess: () => void;
 }
 
-export default function OpenHealthcarePersonnelModal({ 
+export default function HealthcarePersonnelListingCRUDModal({ 
   isOpen, 
   onClose, 
   openDataRecord,
   mode, 
   onSuccess 
-}: OpenHealthcarePersonnelModalProps) {
+}: HealthcarePersonnelListingCRUDModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [openData, setOpenData] = useState<Partial<OpenHealthcarePersonnelData>>({
+  const [openData, setOpenData] = useState<Partial<HealthcarePersonnelListing>>({
     name: "",
     personnelType: "Doctor",
     specialization: "Plastic, Reconstructive and Aesthetic Surgery",
     bio: "",
-    city: "Istanbul",
+    province: "Istanbul",
     country: "Turkey",
     rating: 0,
     reviewCount: 0,
@@ -39,9 +38,9 @@ export default function OpenHealthcarePersonnelModal({
     googleReviewsEmbedUrl: "",
     image: "",
     links: [],
-    personalHealthcarePersonnelDataId: ""
+    userId: ""
   });
-  const [cities, setCities] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
   const [initialUserId, setInitialUserId] = useState("");
 
   useEffect(() => {
@@ -57,14 +56,14 @@ export default function OpenHealthcarePersonnelModal({
           links: openDataRecord.links || [],
           specialization: openDataRecord.specialization || "Plastic, Reconstructive and Aesthetic Surgery"
         });
-        setInitialUserId(openDataRecord.personalHealthcarePersonnelDataId || "");
+        setInitialUserId(openDataRecord.userId || "");
       } else {
         setOpenData({
           name: "",
           personnelType: "Doctor",
           specialization: "Plastic, Reconstructive and Aesthetic Surgery",
           bio: "",
-          city: "Istanbul",
+          province: "Istanbul",
           country: "Turkey",
           rating: 0,
           reviewCount: 0,
@@ -72,7 +71,7 @@ export default function OpenHealthcarePersonnelModal({
           googleReviewsEmbedUrl: "",
           image: "",
           links: [],
-          personalHealthcarePersonnelDataId: ""
+          userId: ""
         });
         setInitialUserId("");
       }
@@ -83,13 +82,13 @@ export default function OpenHealthcarePersonnelModal({
     if (openData.country) {
       const country = COUNTRIES.find(c => c.name === openData.country);
       if (country) {
-        const countryCities = City.getCitiesOfCountry(country.isoCode);
-        setCities(countryCities || []);
+        const countryProvinces = State.getStatesOfCountry(country.isoCode);
+        setProvinces(countryProvinces || []);
       } else {
-        setCities([]);
+        setProvinces([]);
       }
     } else {
-      setCities([]);
+      setProvinces([]);
     }
   }, [openData.country]);
 
@@ -104,7 +103,7 @@ export default function OpenHealthcarePersonnelModal({
     setError(null);
     try {
       const slug = openData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const currentUserId = openData.personalHealthcarePersonnelDataId;
+      const currentUserId = openData.userId;
       
       const payload = {
         ...openData,
@@ -113,35 +112,47 @@ export default function OpenHealthcarePersonnelModal({
         ...(!openData.id && mode === 'create' ? { createdAt: serverTimestamp() } : {})
       };
 
+      // Remove undefined userId to prevent Firestore error
+      if (payload.userId === undefined || payload.userId === '') {
+        delete payload.userId;
+      }
+
       // Remove ID from payload before saving to Firestore
       const { id, ...dataToSave } = payload;
 
       let savedId = openData.id;
 
       if (mode === 'edit' && openData.id) {
-        await updateDoc(doc(db, "open_healthcare_personnel_data", openData.id), dataToSave);
+        await updateDoc(doc(db, "healthcare_personnel_listings", openData.id), dataToSave);
       } else {
-        const docRef = await addDoc(collection(db, "open_healthcare_personnel_data"), dataToSave);
+        const docRef = await addDoc(collection(db, "healthcare_personnel_listings"), dataToSave);
         savedId = docRef.id;
       }
 
       // 2. Handle Two-Way Link Sync (Repair & Sync)
+      console.log("🔗 [LINK] Processing two-way link for listing:", savedId, "to user:", currentUserId);
       if (currentUserId && savedId) {
         try {
           // Always ensure the user doc knows about this listing
           await updateDoc(doc(db, "users", currentUserId), {
-            "personalHealthcarePersonnelData.openHealthcarePersonnelDataId": savedId
+            "healthcarePersonnelAccountData.listingId": savedId
           });
-        } catch (e) { console.error("Could not link user:", e); }
+          console.log("✅ [LINK] Synced user document:", currentUserId);
+        } catch (e) { 
+          console.error("🚫 [LINK] Could not link user:", e); 
+        }
       }
 
       // If we switched away from an old user, unlink them
       if (initialUserId && initialUserId !== currentUserId) {
         try {
           await updateDoc(doc(db, "users", initialUserId), {
-            "personalHealthcarePersonnelData.openHealthcarePersonnelDataId": null
+            "healthcarePersonnelAccountData.listingId": null
           });
-        } catch (e) { console.error("Could not unlink old user:", e); }
+          console.log("✅ [LINK] Unlinked old user:", initialUserId);
+        } catch (e) { 
+          console.error("⚠️ [LINK] Could not unlink old user:", e); 
+        }
       }
 
       onSuccess();
@@ -157,7 +168,7 @@ export default function OpenHealthcarePersonnelModal({
     if (!openData.id || !confirm("Are you sure you want to delete this public listing? This will not delete the user account.")) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "open_healthcare_personnel_data", openData.id));
+      await deleteDoc(doc(db, "healthcare_personnel_listings", openData.id));
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -170,14 +181,14 @@ export default function OpenHealthcarePersonnelModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+        <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
           <h2 className="text-xl font-bold text-white">
-            {mode === 'create' ? 'Add Public Personnel Listing' : `Edit Public Listing: ${openData.name}`}
+            {mode === 'create' ? 'Add Public Personnel Listing' : `Edit Personnel Listing: ${openData.name}`}
           </h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white">✕</button>
         </div>
 
-        <div className="p-6 space-y-4 overflow-y-auto">
+        <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
 
           <div className="grid grid-cols-2 gap-4">
@@ -208,7 +219,7 @@ export default function OpenHealthcarePersonnelModal({
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
               <select 
                 value={openData.country || ""} 
-                onChange={(e) => setOpenData({...openData, country: e.target.value, city: ""})} 
+                onChange={(e) => setOpenData({...openData, country: e.target.value, province: ""})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
               >
                 <option value="">Select Country</option>
@@ -216,15 +227,15 @@ export default function OpenHealthcarePersonnelModal({
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Province/State</label>
               <select 
-                value={openData.city || ""} 
-                onChange={(e) => setOpenData({...openData, city: e.target.value})} 
+                value={openData.province || ""} 
+                onChange={(e) => setOpenData({...openData, province: e.target.value})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-blue-500"
                 disabled={!openData.country}
               >
-                <option value="">{openData.country ? "Select City" : "Select Country First"}</option>
-                {cities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                <option value="">{openData.country ? "Select Province/State" : "Select Country First"}</option>
+                {provinces.map((province, idx) => <option key={`${province.name}-${idx}`} value={province.name}>{province.name}</option>)}
               </select>
             </div>
           </div>
@@ -273,16 +284,21 @@ export default function OpenHealthcarePersonnelModal({
             <textarea value={openData.bio || ""} onChange={(e) => setOpenData({...openData, bio: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-32 text-sm" placeholder="Professional biography..." />
           </div>
 
-          <div className="p-4 bg-zinc-800/20 border border-zinc-800 rounded mt-4">
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-2">Link to Private User Account</label>
+          {/* User Link Field - At Bottom */}
+          <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-800 mt-4">
+            <label className="block text-[10px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">
+              <span>👤</span> Link to Private User Account (UID)
+            </label>
             <input 
               type="text" 
-              placeholder="Paste User UID (e.g. from Users tab)" 
-              value={openData.personalHealthcarePersonnelDataId || ""} 
-              onChange={(e) => setOpenData({...openData, personalHealthcarePersonnelDataId: e.target.value})}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white text-xs outline-none focus:border-blue-500" 
+              placeholder="Paste User UID (e.g. abc123def456)"
+              value={openData.userId || ""} 
+              onChange={(e) => setOpenData({...openData, userId: e.target.value.trim() || undefined})} 
+              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-blue-500 text-sm" 
             />
-            <p className="text-[10px] text-zinc-500 mt-2 italic">Linking syncs status & shared data between public and private views.</p>
+            <p className="mt-2 text-[10px] text-zinc-500">
+              When linked, this listing will automatically appear in the user&apos;s private profile dashboard.
+            </p>
           </div>
         </div>
 

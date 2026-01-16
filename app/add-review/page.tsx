@@ -80,7 +80,7 @@ export default function AddReviewPage() {
   useEffect(() => {
     const fetchPersonnel = async () => {
       try {
-        const personnelRef = collection(db, "open_healthcare_personnel_data");
+        const personnelRef = collection(db, "healthcare_personnel_listings");
         const snapshot = await getDocs(personnelRef);
         const personnelData = snapshot.docs.map((doc) => ({
           id: doc.id,

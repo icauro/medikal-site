@@ -15,7 +15,7 @@ interface HealthcarePersonnel {
   image?: string;
   medicalFacility?: string;
   rating?: number;
-  personalHealthcarePersonnelDataId?: string;
+  userId?: string;
 }
 
 export default function DoctorsPage() {
@@ -37,7 +37,7 @@ export default function DoctorsPage() {
   useEffect(() => {
     async function fetchDoctors() {
       try {
-        const personnelCollection = collection(db, "open_healthcare_personnel_data");
+        const personnelCollection = collection(db, "healthcare_personnel_listings");
         // Only fetch personnel of type 'Doctor' for this page
         const doctorsQuery = query(personnelCollection, where("personnelType", "==", "Doctor"));
         const doctorsSnapshot = await getDocs(doctorsQuery);
@@ -77,7 +77,7 @@ export default function DoctorsPage() {
             image: data.image || undefined,
             medicalFacility: data.medicalFacility || undefined,
             rating: averageRating,
-            personalHealthcarePersonnelDataId: data.personalHealthcarePersonnelDataId,
+            userId: data.userId,
           });
         }
 
@@ -122,7 +122,7 @@ export default function DoctorsPage() {
             >
               <div className="mb-4">
                 <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                  {doctor.image && doctor.personalHealthcarePersonnelDataId ? (
+                  {doctor.image && doctor.userId ? (
                     <img 
                       src={doctor.image} 
                       alt={doctor.name} 
@@ -131,7 +131,7 @@ export default function DoctorsPage() {
                   ) : (
                     <div className="flex flex-col items-center">
                       <span className="text-6xl opacity-20">👤</span>
-                      {!doctor.personalHealthcarePersonnelDataId && (
+                      {!doctor.userId && (
                         <span className="text-[10px] uppercase font-bold text-zinc-600 mt-2 tracking-widest">Listing Only</span>
                       )}
                     </div>

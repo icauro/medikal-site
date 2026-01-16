@@ -3,34 +3,33 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { MEDICAL_FACILITY_TYPES, OpenMedicalFacilityData, MedicalFacilityType, MedicalSpecialization } from "@/lib/types";
-import { Country, City } from "country-state-city";
+import { MEDICAL_FACILITY_TYPES, MedicalFacilityListing, MedicalFacilityType, MedicalSpecialization } from "@/lib/types";
+import { COUNTRIES } from "@/lib/constants";
+import { Country, State } from "country-state-city";
 
-const COUNTRIES = Country.getAllCountries();
-
-interface OpenMedicalFacilityModalProps {
+interface MedicalFacilityListingCRUDModalProps {
   isOpen: boolean;
   onClose: () => void;
-  openDataRecord?: OpenMedicalFacilityData | null;
+  openDataRecord?: MedicalFacilityListing | null;
   mode: 'create' | 'edit';
   onSuccess: () => void;
 }
 
-export default function OpenMedicalFacilityModal({ 
+export default function MedicalFacilityListingCRUDModal({ 
   isOpen, 
   onClose, 
   openDataRecord,
   mode, 
   onSuccess 
-}: OpenMedicalFacilityModalProps) {
+}: MedicalFacilityListingCRUDModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [openData, setOpenData] = useState<Partial<OpenMedicalFacilityData>>({
+  const [openData, setOpenData] = useState<Partial<MedicalFacilityListing>>({
     name: "",
     facilityType: "Hospital",
     address: "",
-    city: "Istanbul",
+    province: "Istanbul",
     country: "Turkey",
     phone: "",
     email: "",
@@ -44,10 +43,10 @@ export default function OpenMedicalFacilityModal({
     images: [],
     services: [],
     specializations: [],
-    personalMedicalFacilityDataId: ""
+    userId: ""
   });
   const [initialUserId, setInitialUserId] = useState("");
-  const [cities, setCities] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -68,15 +67,15 @@ export default function OpenMedicalFacilityModal({
           images: openDataRecord.images || [],
           services: openDataRecord.services || [],
           specializations: openDataRecord.specializations || [],
-          personalMedicalFacilityDataId: openDataRecord.personalMedicalFacilityDataId || ""
+          userId: openDataRecord.userId || ""
         });
-        setInitialUserId(openDataRecord.personalMedicalFacilityDataId || "");
+        setInitialUserId(openDataRecord.userId || "");
       } else {
         setOpenData({
           name: "",
           facilityType: "Hospital",
           address: "",
-          city: "Istanbul",
+          province: "Istanbul",
           country: "Turkey",
           phone: "",
           email: "",
@@ -90,7 +89,7 @@ export default function OpenMedicalFacilityModal({
           images: [],
           services: [],
           specializations: [],
-          personalMedicalFacilityDataId: ""
+          userId: ""
         });
         setInitialUserId("");
       }
@@ -101,13 +100,13 @@ export default function OpenMedicalFacilityModal({
     if (openData.country) {
       const country = COUNTRIES.find(c => c.name === openData.country);
       if (country) {
-        const countryCities = City.getCitiesOfCountry(country.isoCode);
-        setCities(countryCities || []);
+        const countryProvinces = State.getStatesOfCountry(country.isoCode);
+        setProvinces(countryProvinces || []);
       } else {
-        setCities([]);
+        setProvinces([]);
       }
     } else {
-      setCities([]);
+      setProvinces([]);
     }
   }, [openData.country]);
 
@@ -122,7 +121,7 @@ export default function OpenMedicalFacilityModal({
     setError(null);
     try {
       const slug = openData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const currentUserId = openData.personalMedicalFacilityDataId;
+      const currentUserId = openData.userId;
 
       const payload = {
         ...openData,
@@ -131,33 +130,45 @@ export default function OpenMedicalFacilityModal({
         ...(!openData.id && mode === 'create' ? { createdAt: serverTimestamp() } : {})
       };
 
+      // Remove undefined userId to prevent Firestore error
+      if (payload.userId === undefined || payload.userId === '') {
+        delete payload.userId;
+      }
+
       const { id, ...dataToSave } = payload;
       let savedId = openData.id;
 
       if (mode === 'edit' && openData.id) {
-        await updateDoc(doc(db, "open_medical_facility_data", openData.id), dataToSave);
+        await updateDoc(doc(db, "medical_facility_listings", openData.id), dataToSave);
       } else {
-        const docRef = await addDoc(collection(db, "open_medical_facility_data"), dataToSave);
+        const docRef = await addDoc(collection(db, "medical_facility_listings"), dataToSave);
         savedId = docRef.id;
       }
 
       // 2. Handle Two-Way Link Sync (Repair & Sync)
+      console.log("🔗 [LINK] Processing two-way link for listing:", savedId, "to user:", currentUserId);
       if (currentUserId && savedId) {
         try {
           // Always ensure the user doc knows about this listing
           await updateDoc(doc(db, "users", currentUserId), {
-            "personalMedicalFacilityData.openMedicalFacilityDataId": savedId
+            "medicalFacilityAccountData.listingId": savedId
           });
-        } catch (e) { console.error("Could not link user:", e); }
+          console.log("✅ [LINK] Synced user document:", currentUserId);
+        } catch (e) { 
+          console.error("🚫 [LINK] Could not link user:", e); 
+        }
       }
 
       // If we switched away from an old user, unlink them
       if (initialUserId && initialUserId !== currentUserId) {
         try {
           await updateDoc(doc(db, "users", initialUserId), {
-            "personalMedicalFacilityData.openMedicalFacilityDataId": null
+            "medicalFacilityAccountData.listingId": null
           });
-        } catch (e) { console.error("Could not unlink old user:", e); }
+          console.log("✅ [LINK] Unlinked old user:", initialUserId);
+        } catch (e) { 
+          console.error("⚠️ [LINK] Could not unlink old user:", e); 
+        }
       }
 
       onSuccess();
@@ -173,7 +184,7 @@ export default function OpenMedicalFacilityModal({
     if (!openData.id || !confirm("Are you sure you want to delete this public listing?")) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "open_medical_facility_data", openData.id));
+      await deleteDoc(doc(db, "medical_facility_listings", openData.id));
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -188,30 +199,13 @@ export default function OpenMedicalFacilityModal({
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
           <h2 className="text-xl font-bold text-white">
-            {mode === 'create' ? 'Add Public Facility' : `Edit Public Facility: ${openData.name}`}
+            {mode === 'create' ? 'Add Public Facility Listing' : `Edit Facility Listing: ${openData.name}`}
           </h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white">✕</button>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
-
-          {/* User Link Field */}
-          <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-800 mb-2">
-            <label className="block text-[10px] font-bold text-emerald-500 uppercase mb-1 flex items-center gap-1">
-              <span>👤</span> Link to Private User Account (UID)
-            </label>
-            <input 
-              type="text" 
-              placeholder="Paste User UID (e.g. abc123def456)"
-              value={openData.personalMedicalFacilityDataId || ""} 
-              onChange={(e) => setOpenData({...openData, personalMedicalFacilityDataId: e.target.value || undefined})} 
-              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500 text-sm" 
-            />
-            <p className="mt-2 text-[10px] text-zinc-500">
-              When linked, this listing will automatically appear in the user&apos;s private profile dashboard.
-            </p>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -236,7 +230,7 @@ export default function OpenMedicalFacilityModal({
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
               <select 
                 value={openData.country || ""} 
-                onChange={(e) => setOpenData({...openData, country: e.target.value, city: ""})} 
+                onChange={(e) => setOpenData({...openData, country: e.target.value, province: ""})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
               >
                 <option value="">Select Country</option>
@@ -244,15 +238,15 @@ export default function OpenMedicalFacilityModal({
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Province/State</label>
               <select 
-                value={openData.city || ""} 
-                onChange={(e) => setOpenData({...openData, city: e.target.value})} 
+                value={openData.province || ""} 
+                onChange={(e) => setOpenData({...openData, province: e.target.value})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500"
                 disabled={!openData.country}
               >
-                <option value="">{openData.country ? "Select City" : "Select Country First"}</option>
-                {cities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                <option value="">{openData.country ? "Select Province" : "Select Country First"}</option>
+                {provinces.map((province, idx) => <option key={`${province.name}-${idx}`} value={province.name}>{province.name}</option>)}
               </select>
             </div>
           </div>
@@ -325,6 +319,23 @@ export default function OpenMedicalFacilityModal({
                 placeholder="Rhinoplasty, Dental, Hair Transplant..." 
               />
             </div>
+          </div>
+
+          {/* User Link Field - At Bottom */}
+          <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-800 mt-4">
+            <label className="block text-[10px] font-bold text-emerald-500 uppercase mb-1 flex items-center gap-1">
+              <span>👤</span> Link to Private User Account (UID)
+            </label>
+            <input 
+              type="text" 
+              placeholder="Paste User UID (e.g. abc123def456)"
+              value={openData.userId || ""} 
+              onChange={(e) => setOpenData({...openData, userId: e.target.value.trim() || undefined})} 
+              className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500 text-sm" 
+            />
+            <p className="mt-2 text-[10px] text-zinc-500">
+              When linked, this listing will automatically appear in the user&apos;s private profile dashboard.
+            </p>
           </div>
         </div>
 
