@@ -154,16 +154,13 @@ export interface HealthcarePersonnelListing {
   specialization: MedicalSpecialization;
   userId?: string; // Link to user account (admin-controlled)
   slug?: string;
-  bio?: string;
   image?: string;
   country: string;   // Required field
-  province: string;  // Required field - state/province based on country
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
   googleReviewsEmbedUrl?: string;
   links?: string[];
-  images?: string[];
   medicalFacilityIds?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -219,15 +216,11 @@ export interface MedicalFacilityListing {
   phone?: string;
   email?: string;
   website?: string;
-  description?: string;
   specializations?: MedicalSpecialization[];
-  image?: string;
-  images?: string[];
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
   googleReviewsEmbedUrl?: string;
-  services?: string[];
   userId?: string; // Link to user account (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
@@ -280,11 +273,6 @@ export interface AgencyListing {
   phone?: string;
   email?: string;
   website?: string;
-  description?: string;
-  servicesOffered?: string[];
-  focusCountries?: string[];
-  image?: string;
-  images?: string[];
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;

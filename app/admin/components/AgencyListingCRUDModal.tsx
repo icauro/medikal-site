@@ -35,11 +35,6 @@ export default function AgencyListingCRUDModal({
     phone: "",
     email: "",
     website: "",
-    description: "",
-    servicesOffered: [],
-    focusCountries: [],
-    image: "",
-    images: [],
     rating: 0,
     reviewCount: 0,
     googlePlaceId: "",
@@ -56,11 +51,6 @@ export default function AgencyListingCRUDModal({
           phone: openDataRecord.phone || "",
           email: openDataRecord.email || "",
           website: openDataRecord.website || "",
-          description: openDataRecord.description || "",
-          servicesOffered: openDataRecord.servicesOffered || [],
-          focusCountries: openDataRecord.focusCountries || [],
-          image: openDataRecord.image || "",
-          images: openDataRecord.images || [],
           rating: openDataRecord.rating || 0,
           reviewCount: openDataRecord.reviewCount || 0,
           googlePlaceId: openDataRecord.googlePlaceId || "",
@@ -76,11 +66,6 @@ export default function AgencyListingCRUDModal({
           phone: "",
           email: "",
           website: "",
-          description: "",
-          servicesOffered: [],
-          focusCountries: [],
-          image: "",
-          images: [],
           rating: 0,
           reviewCount: 0,
           googlePlaceId: "",
@@ -208,11 +193,6 @@ export default function AgencyListingCRUDModal({
             <input type="text" value={openData.name || ""} onChange={(e) => setOpenData({...openData, name: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-orange-500" />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Public Description</label>
-            <textarea value={openData.description || ""} onChange={(e) => setOpenData({...openData, description: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-24 text-sm" placeholder="Tell the world about this agency..." />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
@@ -281,31 +261,6 @@ export default function AgencyListingCRUDModal({
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Reviews</label>
                 <input type="number" value={openData.reviewCount || 0} onChange={(e) => setOpenData({...openData, reviewCount: parseInt(e.target.value)})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
               </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Main Image URL</label>
-              <input type="text" value={openData.image || ""} onChange={(e) => setOpenData({...openData, image: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="https://..." />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Services (Comma Separated)</label>
-              <textarea 
-                value={openData.servicesOffered?.join(', ') || ""} 
-                onChange={(e) => setOpenData({...openData, servicesOffered: e.target.value.split(',').map(s => s.trim()).filter(s => s !== "")})} 
-                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-20 text-xs" 
-                placeholder="Hotel Booking, Translation, VIP Transport..." 
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Focus Countries (Comma Separated)</label>
-              <textarea 
-                value={openData.focusCountries?.join(', ') || ""} 
-                onChange={(e) => setOpenData({...openData, focusCountries: e.target.value.split(',').map(s => s.trim()).filter(s => s !== "")})} 
-                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-20 text-xs" 
-                placeholder="UK, Germany, USA..." 
-              />
             </div>
           </div>
 

@@ -34,14 +34,10 @@ export default function MedicalFacilityListingCRUDModal({
     phone: "",
     email: "",
     website: "",
-    description: "",
     rating: 0,
     reviewCount: 0,
     googlePlaceId: "",
     googleReviewsEmbedUrl: "",
-    image: "",
-    images: [],
-    services: [],
     specializations: [],
     userId: ""
   });
@@ -58,14 +54,10 @@ export default function MedicalFacilityListingCRUDModal({
           phone: openDataRecord.phone || "",
           email: openDataRecord.email || "",
           website: openDataRecord.website || "",
-          description: openDataRecord.description || "",
           rating: openDataRecord.rating || 0,
           reviewCount: openDataRecord.reviewCount || 0,
           googlePlaceId: openDataRecord.googlePlaceId || "",
           googleReviewsEmbedUrl: openDataRecord.googleReviewsEmbedUrl || "",
-          image: openDataRecord.image || "",
-          images: openDataRecord.images || [],
-          services: openDataRecord.services || [],
           specializations: openDataRecord.specializations || [],
           userId: openDataRecord.userId || ""
         });
@@ -80,14 +72,10 @@ export default function MedicalFacilityListingCRUDModal({
           phone: "",
           email: "",
           website: "",
-          description: "",
           rating: 0,
           reviewCount: 0,
           googlePlaceId: "",
           googleReviewsEmbedUrl: "",
-          image: "",
-          images: [],
-          services: [],
           specializations: [],
           userId: ""
         });
@@ -220,11 +208,6 @@ export default function MedicalFacilityListingCRUDModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-emerald-500">Public Description</label>
-            <textarea value={openData.description || ""} onChange={(e) => setOpenData({...openData, description: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-24 text-sm" placeholder="Tell the world about this facility..." />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
@@ -293,22 +276,6 @@ export default function MedicalFacilityListingCRUDModal({
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Reviews</label>
                 <input type="number" value={openData.reviewCount || 0} onChange={(e) => setOpenData({...openData, reviewCount: parseInt(e.target.value)})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
               </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-emerald-500">Main Image URL</label>
-              <input type="text" value={openData.image || ""} onChange={(e) => setOpenData({...openData, image: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="https://..." />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-emerald-500">Services (Comma Separated)</label>
-              <textarea 
-                value={openData.services?.join(', ') || ""} 
-                onChange={(e) => setOpenData({...openData, services: e.target.value.split(',').map(s => s.trim()).filter(s => s !== "")})} 
-                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-20 text-xs" 
-                placeholder="WiFi, Translation, VIP Transport..." 
-              />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-emerald-500">Specializations (Comma Separated)</label>

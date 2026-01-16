@@ -525,7 +525,7 @@ export default function AdminDashboard() {
                     {item.personnelType || 'N/A'}
                   </td>
                   <td className="p-4 text-sm">{item.specialization || 'N/A'}</td>
-                  <td className="p-4 text-sm">{item.province}, {item.country}</td>
+                  <td className="p-4 text-sm">{item.country}</td>
                   <td className="p-4 text-xs font-mono text-zinc-500">
                     {item.userId || 'Unlinked'}
                   </td>

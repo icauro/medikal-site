@@ -29,8 +29,6 @@ export default function HealthcarePersonnelListingCRUDModal({
     name: "",
     personnelType: "Doctor",
     specialization: "Plastic, Reconstructive and Aesthetic Surgery",
-    bio: "",
-    province: "Istanbul",
     country: "Turkey",
     rating: 0,
     reviewCount: 0,
@@ -62,8 +60,6 @@ export default function HealthcarePersonnelListingCRUDModal({
           name: "",
           personnelType: "Doctor",
           specialization: "Plastic, Reconstructive and Aesthetic Surgery",
-          bio: "",
-          province: "Istanbul",
           country: "Turkey",
           rating: 0,
           reviewCount: 0,
@@ -212,30 +208,15 @@ export default function HealthcarePersonnelListingCRUDModal({
                 {MEDICAL_SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Country</label>
               <select 
                 value={openData.country || ""} 
-                onChange={(e) => setOpenData({...openData, country: e.target.value, province: ""})} 
+                onChange={(e) => setOpenData({...openData, country: e.target.value})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
               >
                 <option value="">Select Country</option>
                 {COUNTRIES.map(c => <option key={c.isoCode} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Province/State</label>
-              <select 
-                value={openData.province || ""} 
-                onChange={(e) => setOpenData({...openData, province: e.target.value})} 
-                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-blue-500"
-                disabled={!openData.country}
-              >
-                <option value="">{openData.country ? "Select Province/State" : "Select Country First"}</option>
-                {provinces.map((province, idx) => <option key={`${province.name}-${idx}`} value={province.name}>{province.name}</option>)}
               </select>
             </div>
           </div>
@@ -277,11 +258,6 @@ export default function HealthcarePersonnelListingCRUDModal({
                 placeholder="website.com, linkedin.com..." 
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-blue-500">Bio / Description (Public)</label>
-            <textarea value={openData.bio || ""} onChange={(e) => setOpenData({...openData, bio: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none h-32 text-sm" placeholder="Professional biography..." />
           </div>
 
           {/* User Link Field - At Bottom */}
