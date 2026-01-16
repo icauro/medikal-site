@@ -9,7 +9,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-white">Medikal</span>
+            <span className="text-xl font-bold text-white">MedikaNexus</span>
           </Link>
 
           {/* Navigation Links */}
@@ -49,6 +49,12 @@ export default function Navbar() {
               className="text-zinc-400 transition-colors hover:text-white"
             >
               Agencies
+            </Link>
+            <Link
+              href="/healthcare-database"
+              className="text-zinc-400 transition-colors hover:text-white"
+            >
+              Healthcare Database
             </Link>
             <Link
               href="/support"

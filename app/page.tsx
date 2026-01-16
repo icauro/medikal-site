@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
@@ -46,15 +45,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-8 py-16">
         {/* Header */}
         <div className="text-center mb-16">
-          <Image
-            className="mx-auto mb-8 dark:invert"
-            src="/next.svg"
-            alt="Next.js logo"
-            width={120}
-            height={25}
-            priority
-          />
-          <h1 className="text-4xl font-bold mb-4">🏥 Medikal Site</h1>
+          <h1 className="text-4xl font-bold mb-4">🏥 MedikaNexus</h1>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
             {user && userProfile
               ? `Welcome back, ${userProfile.displayName}! Access your personalized medical services.`

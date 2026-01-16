@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Medikal Site - Healthcare Directory",
+  title: "MedikaNexus - Healthcare Directory",
   description: "Plastic Surgery & Dermatology specialist directory with medical facilities and agencies.",
 };
 
