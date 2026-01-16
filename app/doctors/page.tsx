@@ -15,6 +15,7 @@ interface Doctor {
   image?: string;
   medicalFacility?: string;
   rating?: number;
+  personalHealthcarePersonnelDataId?: string;
 }
 
 export default function DoctorsPage() {
@@ -76,6 +77,7 @@ export default function DoctorsPage() {
             image: data.image || undefined,
             medicalFacility: data.medicalFacility || undefined,
             rating: averageRating,
+            personalHealthcarePersonnelDataId: data.personalHealthcarePersonnelDataId,
           });
         }
 
@@ -116,11 +118,24 @@ export default function DoctorsPage() {
             <Link
               key={doctor.id}
               href={`/doctors/${doctor.slug}`}
-              className="bg-zinc-900 rounded-lg p-6 hover:bg-zinc-800 transition-colors block"
+              className="bg-zinc-900 rounded-lg p-6 hover:bg-zinc-800 transition-colors block border border-zinc-800"
             >
               <div className="mb-4">
-                <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center">
-                  <span className="text-zinc-600">Image</span>
+                <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
+                  {doctor.image && doctor.personalHealthcarePersonnelDataId ? (
+                    <img 
+                      src={doctor.image} 
+                      alt={doctor.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <span className="text-6xl opacity-20">👤</span>
+                      {!doctor.personalHealthcarePersonnelDataId && (
+                        <span className="text-[10px] uppercase font-bold text-zinc-600 mt-2 tracking-widest">Listing Only</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <h2 className="text-xl font-semibold mb-2 text-white">

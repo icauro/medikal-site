@@ -27,6 +27,24 @@ The platform supports the following user roles:
 
 ---
 
+## Data Architecture: Personal vs. Open Data
+
+The platform maintains a strict separation between account ownership (Personal Data) and directory visibility (Open Data).
+
+### Open Data (The Listing)
+- **Nature**: Public-facing record that represents the entity on the website.
+- **Primary Field**: `slug` (used for the entity's dedicated URL).
+- **Independence**: Open Data records **can exist without a linked user**. This allows admins to populate the directory with hospitals or doctors who haven't registered an account yet.
+- **Collections**: `open_healthcare_personnel_data`, `open_medical_facility_data`, `open_agency_data`.
+
+### Personal Data (The Account)
+- **Nature**: Private user-owned data required for authentication and onboarding.
+- **Constraint**: **Personal Data cannot exist without a corresponding Open Data record.** 
+- **Linking**: Every user with a professional role must be linked to an Open Data record. During account creation, if no link exists, a new Open Data record is generated.
+- **Collections**: `users/{uid}`.
+
+---
+
 ## Role Definitions
 
 ### Patient Role

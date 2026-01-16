@@ -46,6 +46,7 @@ interface DoctorRecord {
   experience?: number | null;
   procedureTags?: string[];
   googlePlaceId?: string | null;
+  personalHealthcarePersonnelDataId?: string | null;
 }
 
 export default function DoctorProfilePage() {
@@ -113,6 +114,7 @@ export default function DoctorProfilePage() {
             ? matchData.procedureTags
             : [],
           googleReviewsEmbedUrl: matchData.googleReviewsEmbedUrl ?? null,
+          personalHealthcarePersonnelDataId: matchData.personalHealthcarePersonnelDataId ?? null,
         });
       } catch (err) {
         console.error("Error loading doctor profile", err);
@@ -244,17 +246,20 @@ export default function DoctorProfilePage() {
         <section className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 md:p-10">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-72 flex justify-center lg:justify-start">
-              {doctor.image ? (
+              {doctor.image && doctor.personalHealthcarePersonnelDataId ? (
                 <Image
                   src={doctor.image}
                   alt={displayName}
                   width={288}
                   height={288}
-                  className="rounded-2xl border border-zinc-800 object-cover"
+                  className="rounded-2xl border border-zinc-800 object-cover w-72 h-72 shadow-2xl"
                 />
               ) : (
-                <div className="w-48 h-48 lg:w-56 lg:h-56 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-5xl font-semibold">
-                  {nameInitial}
+                <div className="w-72 h-72 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-800 flex flex-col items-center justify-center">
+                  <span className="text-9xl opacity-10">👤</span>
+                  {!doctor.personalHealthcarePersonnelDataId && (
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 mt-4 tracking-[0.2em]">Listing Only</span>
+                  )}
                 </div>
               )}
             </div>

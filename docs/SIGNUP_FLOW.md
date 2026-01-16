@@ -95,7 +95,11 @@ Beautiful dual-option selection interface:
 
 
 ### 4. **Personal Doctor Data Entry** (replaces Doctor Application Form)
-Doctors fill out their personal doctor data after selecting the doctor role. This data is private and only visible to the doctor and admins until verified. The form collects:
+Doctors fill out their personal doctor data after selecting the doctor role. This data is private and only visible to the doctor and admins until verified. 
+
+**Dependency Rule**: Upon submission of personal data, the system automatically generates an associated **Open Data** record if one does not already exist. Personal accounts must always be linked to an Open Data record to maintain data integrity.
+
+The form collects:
 - **Personal Info**: Name, DOB, phone
 - **Professional Info**: License number, issuing authority, expiration, specialization, experience
 - **Education**: Medical school, graduation year

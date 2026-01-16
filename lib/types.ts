@@ -1,4 +1,6 @@
 // Shared types for the application
+import { COUNTRIES } from './countries';
+
 export type DoctorSpecialty = 
   | 'Plastic, Reconstructive and Aesthetic Surgery'
   | 'Dermatology';
@@ -91,23 +93,16 @@ export interface UserProfile {
   };
 
   // Role-specific fields
-  personnelInfo?: PersonnelInfo; // @deprecated - use personalHealthcarePersonnelData instead
-  personalHealthcarePersonnelData?: PersonalHealthcarePersonnelData;
-  patientInfo?: PatientInfo;
   adminInfo?: AdminInfo;
+  patientInfo?: PatientInfo;
+  personalHealthcarePersonnelData?: PersonalHealthcarePersonnelData;
   personalMedicalFacilityData?: PersonalMedicalFacilityData;
   personalAgencyData?: PersonalAgencyData;
 }
 
-export interface PersonnelInfo {
-  personnelType: PersonnelType;
-  specialization: string;
-  medicalFacilityId?: string;
-  licenseNumber: string;
-  verified: boolean;
-  bio?: string;
-  experience?: number;
-  procedureTags?: MedicalProcedureType[]; // Medical procedures this personnel can perform
+export interface AdminInfo {
+  permissions: string[];
+  lastLogin: Date;
 }
 
 export interface PatientInfo {
@@ -119,41 +114,32 @@ export interface PatientInfo {
   };
 }
 
-export interface AdminInfo {
-  permissions: string[];
-  lastLogin: Date;
-}
-
 // Personal Healthcare Personnel Data (private, personnel-managed)
 export interface PersonalHealthcarePersonnelData {
-  // Personnel Type
   personnelType: PersonnelType;
-
-  // Personal Information
-  name: string;
+  
+  // Private Credentials & Identity
   dateOfBirth: string;
   phoneNumber: string;
-  photoUrl?: string;
+  nationalIdNumber?: string;
 
-  // Professional Information
+  // Professional Credentials (Private)
   licenseNumber: string;
   licenseIssuingAuthority: string;
   licenseExpirationDate: string;
-  specialization: DoctorSpecialty;
   yearsOfExperience: number;
 
-  // Education
+  // Education (Private)
   medicalSchool: string;
   graduationYear: number;
   certifications?: string[];
 
-  // Employment
+  // Employment (Private)
   currentMedicalFacility?: string;
   medicalFacilityAddress?: string;
   position: string;
 
-  // Additional Information
-  bio?: string;
+  // Private Notes
   motivation?: string;
   procedureTags?: MedicalProcedureType[];
 
@@ -175,6 +161,8 @@ export interface OpenHealthcarePersonnelData {
   slug?: string;
   bio?: string;
   image?: string;
+  city?: string;
+  country?: string;
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
@@ -188,30 +176,16 @@ export interface OpenHealthcarePersonnelData {
 
 // Medical Facility Information (previously Clinic)
 export interface PersonalMedicalFacilityData {
-  // Basic Information
-  name: string;
-  type: MedicalFacilityType;
+  // Private Business Information
   contactPerson: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  country: string;
-
-  // Business Information
+  ownerName?: string;
+  taxIdNumber?: string;
   registrationNumber?: string;
   establishedYear?: number;
-  website?: string;
-  description?: string;
-  specialties?: DoctorSpecialty[];
-  
-  // Media
-  logoUrl?: string;
-  images?: string[];
 
-  // Staff & Services
+  // Internal Management
   numberOfDoctors?: number;
-  services?: string[];
+  internalNotes?: string;
   
   // Verification & Linking (set by admin only)
   verified: boolean;
@@ -231,12 +205,17 @@ export interface OpenMedicalFacilityData {
   type: MedicalFacilityType;
   address: string;
   city?: string;
-  country?: string;
+  country: string;
   phone?: string;
   email?: string;
   website?: string;
   description?: string;
   specialties?: DoctorSpecialty[];
+  image?: string;
+  images?: string[];
+  rating?: number;
+  reviewCount?: number;
+  services?: string[];
   personalMedicalFacilityDataId?: string; // Link to user's personalMedicalFacilityData (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
@@ -245,42 +224,18 @@ export interface OpenMedicalFacilityData {
   createdBy?: string; // Admin UID
 }
 
-// Agency Information (deprecated - use PersonalAgencyData)
-export interface AgencyInfo {
-  name: string;
-  contactPerson: string;
-  phone: string;
-  email?: string;
-  website?: string;
-  description?: string;
-  verified: boolean;
-}
-
 // Personal Agency Data (private, agency-managed)
 export interface PersonalAgencyData {
-  // Basic Information
-  name: string;
+  // Private Business Information
   contactPerson: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  country: string;
-
-  // Business Information
+  ownerName?: string;
+  taxIdNumber?: string;
   registrationNumber?: string;
   establishedYear?: number;
-  website?: string;
-  description?: string;
-  servicesOffered?: string[];
   
-  // Media
-  logoUrl?: string;
-  images?: string[];
-
-  // Specialization
-  focusCountries?: string[];
+  // Internal Management
   languages?: string[];
+  internalNotes?: string;
   
   // Verification & Linking (set by admin only)
   verified: boolean;
@@ -303,6 +258,10 @@ export interface OpenAgencyData {
   description?: string;
   servicesOffered?: string[];
   focusCountries?: string[];
+  image?: string;
+  images?: string[];
+  rating?: number;
+  reviewCount?: number;
   personalAgencyDataId?: string; // Link to user's personalAgencyData (admin-controlled)
   slug?: string;
   createdAt: Date;

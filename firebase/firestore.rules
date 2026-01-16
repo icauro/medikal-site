@@ -24,28 +24,38 @@ service cloud.firestore {
     
     // Users collection - users can access their own data, but links are admin-controlled
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
       
       // Users can create their own profile during signup
       allow create: if request.auth != null && request.auth.uid == userId;
       
-      // Users can update their own profile
-      allow update: if request.auth != null && request.auth.uid == userId &&
-        // Allow changing role from null to a valid role during signup, or keep role unchanged
+      // Users can update their own profile or admins can update any profile
+      allow update: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      ) &&
+        // Allow changing role from null to a valid role during signup, or keep role unchanged (unless admin)
         (request.resource.data.role == resource.data.role || 
-         (resource.data.role == null && request.resource.data.role in ['patient', 'healthcare_personnel', 'medical_facility', 'agency'])) &&
-        // Healthcare personnel cannot edit their openHealthcarePersonnelDataId link (admin-only)
+         (resource.data.role == null && request.resource.data.role in ['patient', 'healthcare_personnel', 'medical_facility', 'agency']) ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') &&
+        // Healthcare personnel cannot edit their openHealthcarePersonnelDataId link (unless admin)
         (!request.resource.data.keys().hasAny(['personalHealthcarePersonnelData']) ||
          !request.resource.data.personalHealthcarePersonnelData.keys().hasAny(['openHealthcarePersonnelDataId']) ||
-         request.resource.data.personalHealthcarePersonnelData.openHealthcarePersonnelDataId == resource.data.get('personalHealthcarePersonnelData', {}).get('openHealthcarePersonnelDataId', null)) &&
-        // Medical facilities cannot edit their openMedicalFacilityDataId link (admin-only)
+         request.resource.data.personalHealthcarePersonnelData.openHealthcarePersonnelDataId == resource.data.get('personalHealthcarePersonnelData', {}).get('openHealthcarePersonnelDataId', null) ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') &&
+        // Medical facilities cannot edit their openMedicalFacilityDataId link (unless admin)
         (!request.resource.data.keys().hasAny(['personalMedicalFacilityData']) ||
          !request.resource.data.personalMedicalFacilityData.keys().hasAny(['openMedicalFacilityDataId']) ||
-         request.resource.data.personalMedicalFacilityData.openMedicalFacilityDataId == resource.data.get('personalMedicalFacilityData', {}).get('openMedicalFacilityDataId', null)) &&
-        // Agencies cannot edit their openAgencyDataId link (admin-only)
+         request.resource.data.personalMedicalFacilityData.openMedicalFacilityDataId == resource.data.get('personalMedicalFacilityData', {}).get('openMedicalFacilityDataId', null) ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') &&
+        // Agencies cannot edit their openAgencyDataId link (unless admin)
         (!request.resource.data.keys().hasAny(['personalAgencyData']) ||
          !request.resource.data.personalAgencyData.keys().hasAny(['openAgencyDataId']) ||
-         request.resource.data.personalAgencyData.openAgencyDataId == resource.data.get('personalAgencyData', {}).get('openAgencyDataId', null));
+         request.resource.data.personalAgencyData.openAgencyDataId == resource.data.get('personalAgencyData', {}).get('openAgencyDataId', null) ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
     // Reviews collection - public read, authenticated write
