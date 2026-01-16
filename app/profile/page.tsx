@@ -104,9 +104,10 @@ export default function ProfilePage() {
       await deleteAccount();
       console.log('✅ [PROFILE] Account deleted successfully, redirecting to home');
       router.push('/');
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ [PROFILE] Account deletion failed:', error);
-      setDeleteError(error.message || 'Failed to delete account. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete account. Please try again.';
+      setDeleteError(errorMessage);
       setIsDeleting(false);
     }
   };
@@ -364,6 +365,11 @@ export default function ProfilePage() {
 
                 <div className="bg-red-950/10 border border-red-900/20 rounded-lg p-4">
                   <h3 className="text-sm font-bold uppercase tracking-widest text-red-900/70 mb-2">Danger Zone</h3>
+                  {deleteError && (
+                    <div className="mb-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-400">
+                      {deleteError}
+                    </div>
+                  )}
                   {!showDeleteConfirm ? (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
@@ -377,20 +383,38 @@ export default function ProfilePage() {
                       <input
                         type="text"
                         id="deleteConfirmText"
-                        className="w-full px-2 py-1 bg-black border border-red-900/50 rounded text-xs text-white"
+                        disabled={isDeleting}
+                        className="w-full px-2 py-1 bg-black border border-red-900/50 rounded text-xs text-white disabled:opacity-50"
                         placeholder="Type DELETE"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            const input = e.currentTarget;
+                            if (input.value === 'DELETE') handleDeleteAccount();
+                            else setDeleteError('Type DELETE');
+                          }
+                        }}
                       />
                       <div className="flex gap-2">
-                        <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-1 bg-zinc-800 rounded text-[10px]">Cancel</button>
+                        <button 
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            setDeleteError('');
+                          }} 
+                          disabled={isDeleting}
+                          className="flex-1 py-1 bg-zinc-800 rounded text-[10px] disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
                         <button 
                           onClick={() => {
                             const input = document.getElementById('deleteConfirmText') as HTMLInputElement;
                             if (input?.value === 'DELETE') handleDeleteAccount();
                             else setDeleteError('Type DELETE');
                           }}
-                          className="flex-1 py-1 bg-red-600 rounded text-[10px] font-bold"
+                          disabled={isDeleting}
+                          className="flex-1 py-1 bg-red-600 hover:bg-red-700 rounded text-[10px] font-bold transition-colors disabled:opacity-50"
                         >
-                          DELETE
+                          {isDeleting ? 'DELETING...' : 'DELETE'}
                         </button>
                       </div>
                     </div>
