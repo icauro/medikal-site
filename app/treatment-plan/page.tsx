@@ -84,7 +84,7 @@ export default function TreatmentPlanPage() {
         );
         
         const querySnapshot = await getDocs(plansQuery);
-        const personnelTags = userProfile.healthcarePersonnelInfo?.procedureTags || [];
+        const personnelTags = userProfile.personalHealthcarePersonnelData?.procedureTags || [];
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
@@ -209,7 +209,7 @@ export default function TreatmentPlanPage() {
         doctorId: user.uid,
         doctorName: userProfile.displayName,
         doctorEmail: userProfile.email,
-        doctorSpecialty: userProfile.healthcarePersonnelInfo?.specialty,
+        doctorSpecialty: userProfile.personalHealthcarePersonnelData?.specialization,
         response: responseText,
         createdAt: new Date(),
       };

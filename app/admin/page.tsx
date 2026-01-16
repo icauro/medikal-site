@@ -287,7 +287,7 @@ export default function AdminDashboard() {
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                  {user.personalMedicalFacilityData?.type || 'N/A'}
+                  {user.personalMedicalFacilityData?.facilityType || 'N/A'}
                 </td>
                 <td className="p-4 text-xs text-zinc-500">
                   {user.personalMedicalFacilityData?.city || 'N/A'}
@@ -690,7 +690,7 @@ export default function AdminDashboard() {
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
                         ticket.status === 'open' ? 'bg-green-500/10 text-green-500' :
-                        ticket.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
+                        ticket.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-500' :
                         'bg-zinc-500/10 text-zinc-400'
                       }`}>
                         {ticket.status}

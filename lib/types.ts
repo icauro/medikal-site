@@ -117,11 +117,17 @@ export interface PatientInfo {
 // Personal Healthcare Personnel Data (private, personnel-managed)
 export interface PersonalHealthcarePersonnelData {
   personnelType: PersonnelType;
+  name: string;
+  specialization: DoctorSpecialty;
   
   // Private Credentials & Identity
   dateOfBirth: string;
   phoneNumber: string;
   nationalIdNumber?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
+  photoUrl?: string;
 
   // Professional Credentials (Private)
   licenseNumber: string;
@@ -166,6 +172,7 @@ export interface OpenHealthcarePersonnelData {
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
+  googleReviewsEmbedUrl?: string;
   links?: string[];
   images?: string[];
   medicalFacilityIds?: string[];
@@ -176,6 +183,20 @@ export interface OpenHealthcarePersonnelData {
 
 // Medical Facility Information (previously Clinic)
 export interface PersonalMedicalFacilityData {
+  // Publicly Visible basic info
+  name: string;
+  facilityType: MedicalFacilityType;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  email: string;
+  website?: string;
+  description?: string;
+  logoUrl?: string;
+  specialties?: DoctorSpecialty[];
+  services?: string[];
+
   // Private Business Information
   contactPerson: string;
   ownerName?: string;
@@ -226,6 +247,19 @@ export interface OpenMedicalFacilityData {
 
 // Personal Agency Data (private, agency-managed)
 export interface PersonalAgencyData {
+  // Publicly Visible basic info
+  name: string;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  email: string;
+  website?: string;
+  description?: string;
+  logoUrl?: string;
+  servicesOffered?: string[];
+  focusCountries?: string[];
+
   // Private Business Information
   contactPerson: string;
   ownerName?: string;

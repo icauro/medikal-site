@@ -302,7 +302,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
                       <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Name</label>
-                      <p className="text-white text-sm">{userProfile.personalMedicalFacilityData.facilityName}</p>
+                      <p className="text-white text-sm">{userProfile.personalMedicalFacilityData.name}</p>
                     </div>
                     <div>
                       <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Type</label>

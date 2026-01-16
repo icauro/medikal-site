@@ -46,6 +46,7 @@ interface DoctorRecord {
   experience?: number | null;
   procedureTags?: string[];
   googlePlaceId?: string | null;
+  googleReviewsEmbedUrl?: string | null;
   personalHealthcarePersonnelDataId?: string | null;
 }
 

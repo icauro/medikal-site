@@ -65,7 +65,7 @@ export default function AddReviewPage() {
   });
 
   // Form validation state
-  const [errors, setErrors] = useState<Partial<ReviewFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof ReviewFormData, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof ReviewFormData, boolean>>>({});
 
   // Redirect if not authenticated
@@ -117,7 +117,7 @@ export default function AddReviewPage() {
 
   // Form validation
   const validateForm = () => {
-    const newErrors: Partial<ReviewFormData> = {};
+    const newErrors: Partial<Record<keyof ReviewFormData, string>> = {};
 
     if (!formData.doctorId) {
       newErrors.doctorId = "Please select a doctor";
