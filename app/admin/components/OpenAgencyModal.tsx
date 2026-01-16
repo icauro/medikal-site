@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { listCountries } from "countries-ts";
+import { Country, City } from "country-state-city";
 import { OpenAgencyData } from "@/lib/types";
 
-const COUNTRIES = listCountries();
+const COUNTRIES = Country.getAllCountries();
 
 interface OpenAgencyModalProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ export default function OpenAgencyModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialUserId, setInitialUserId] = useState<string | null>(null);
+  const [cities, setCities] = useState<any[]>([]);
 
   const [openData, setOpenData] = useState<Partial<OpenAgencyData>>({
     name: "",
@@ -91,6 +92,20 @@ export default function OpenAgencyModal({
       }
     }
   }, [isOpen, mode, openDataRecord]);
+
+  useEffect(() => {
+    if (openData.country) {
+      const country = COUNTRIES.find(c => c.name === openData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setCities(countryCities || []);
+      } else {
+        setCities([]);
+      }
+    } else {
+      setCities([]);
+    }
+  }, [openData.country]);
 
   if (!isOpen) return null;
 
@@ -213,19 +228,20 @@ export default function OpenAgencyModal({
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
               >
                 <option value="">Select Country</option>
-                {COUNTRIES.map(c => <option key={c.code} value={c.label}>{c.label}</option>)}
+                {COUNTRIES.map(c => <option key={c.isoCode} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
-              <input 
-                type="text"
-                value={openData.city || ""}
-                onChange={(e) => setOpenData({...openData, city: e.target.value})}
+              <select 
+                value={openData.city || ""} 
+                onChange={(e) => setOpenData({...openData, city: e.target.value})} 
                 className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-orange-500"
-                placeholder={openData.country ? "Enter City" : "Select Country First"}
                 disabled={!openData.country}
-              />
+              >
+                <option value="">{openData.country ? "Select City" : "Select Country First"}</option>
+                {cities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+              </select>
             </div>
           </div>
 

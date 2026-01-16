@@ -95,6 +95,8 @@ export interface AdminInfo {
 export interface PatientInfo {
   medicalHistory?: string[];
   preferredLanguage: string;
+  city?: string;      // Optional - patient may not want to share location
+  country?: string;   // Optional - patient may not want to share location
   emergencyContact?: {
     name: string;
     phone: string;
@@ -111,8 +113,8 @@ export interface PersonalHealthcarePersonnelData {
   dateOfBirth: string;
   phoneNumber: string;
   nationalIdNumber?: string;
-  city?: string;
-  country?: string;
+  city: string;     // Required field - matches country-state-city library
+  country: string;  // Required field - matches country-state-city library
   bio?: string;
   photoUrl?: string;
 
@@ -154,8 +156,8 @@ export interface OpenHealthcarePersonnelData {
   slug?: string;
   bio?: string;
   image?: string;
-  city?: string;
-  country?: string;
+  city: string;      // Required field - from country-state-city library
+  country: string;   // Required field - from country-state-city library
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
@@ -173,7 +175,7 @@ export interface PersonalMedicalFacilityData {
   // Publicly Visible basic info
   name: string;
   facilityType: MedicalFacilityType;
-  address: string;
+  address?: string;  // Optional - not required for locating facility
   city: string;
   country: string;
   phone: string;
@@ -211,9 +213,9 @@ export interface OpenMedicalFacilityData {
   id: string;
   name: string;
   facilityType: MedicalFacilityType;
-  address: string;
-  city?: string;
-  country: string;
+  address: string;   // Required for public listing
+  city: string;       // Required field - matches country-state-city library
+  country: string;    // Required field
   phone?: string;
   email?: string;
   website?: string;
@@ -238,7 +240,7 @@ export interface OpenMedicalFacilityData {
 export interface PersonalAgencyData {
   // Publicly Visible basic info
   name: string;
-  address: string;
+  address?: string;  // Optional - not required for locating agency
   city: string;
   country: string;
   phone: string;
@@ -272,9 +274,9 @@ export interface PersonalAgencyData {
 export interface OpenAgencyData {
   id: string;
   name: string;
-  country: string;
-  city?: string;
-  address?: string;
+  country: string;    // Required field
+  city: string;       // Required field - matches country-state-city library
+  address: string;    // Required for public listing
   phone?: string;
   email?: string;
   website?: string;

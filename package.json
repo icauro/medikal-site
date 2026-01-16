@@ -9,12 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "countries-ts": "^2.1.0",
+    "country-state-city": "^3.2.1",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "next": "^16.1.1",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "slugify": "^1.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, query, collection, where, getDocs, limit } from "firebase/firestore";
 import { UserProfile, UserRole, MedicalSpecialization, MEDICAL_SPECIALIZATIONS, PersonalHealthcarePersonnelData, OpenHealthcarePersonnelData, PersonnelType } from "@/lib/types";
-import { listCountries } from "countries-ts";
+import { Country, City } from "country-state-city";
 
-const COUNTRIES = listCountries();
+const COUNTRIES = Country.getAllCountries();
 
 interface HealthcarePersonnelUserModalProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export default function HealthcarePersonnelUserModal({ isOpen, onClose, user, on
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<OpenHealthcarePersonnelData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [cities, setCities] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -37,6 +38,20 @@ export default function HealthcarePersonnelUserModal({ isOpen, onClose, user, on
       setInitialOpenDataId(data.openHealthcarePersonnelDataId || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (personalData.country) {
+      const country = COUNTRIES.find(c => c.name === personalData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setCities(countryCities || []);
+      } else {
+        setCities([]);
+      }
+    } else {
+      setCities([]);
+    }
+  }, [personalData.country]);
 
   useEffect(() => {
     const searchOpenData = async () => {
@@ -201,19 +216,20 @@ export default function HealthcarePersonnelUserModal({ isOpen, onClose, user, on
                       className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-blue-500"
                     >
                       <option value="">Select Country</option>
-                      {COUNTRIES.map(c => <option key={c.code} value={c.label}>{c.label}</option>)}
+                      {COUNTRIES.map(c => <option key={c.isoCode} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
-                    <input 
-                      type="text"
-                      value={personalData.city || ""}
-                      onChange={(e) => setPersonalData({...personalData, city: e.target.value})}
+                    <select 
+                      value={personalData.city || ""} 
+                      onChange={(e) => setPersonalData({...personalData, city: e.target.value})} 
                       className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-blue-500"
-                      placeholder={personalData.country ? "Enter City" : "Select Country First"}
                       disabled={!personalData.country}
-                    />
+                    >
+                      <option value="">{personalData.country ? "Select City" : "Select Country First"}</option>
+                          {cities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                    </select>
                   </div>
                 </div>
               </div>

@@ -17,9 +17,9 @@ import {
   MedicalProcedureType,
   MEDICAL_PROCEDURES
 } from '@/lib/types';
-import { listCountries } from "countries-ts";
+import { Country, City } from "country-state-city";
 
-const COUNTRIES = listCountries();
+const COUNTRIES = Country.getAllCountries();
 
 export default function ProfilePage() {
   const { user, userProfile, loading, logout, deleteAccount, refreshUserProfile } = useAuth();
@@ -79,6 +79,10 @@ export default function ProfilePage() {
     emergencyContact: { name: '', phone: '' }
   });
 
+  const [personnelCities, setPersonnelCities] = useState<any[]>([]);
+  const [facilityCities, setFacilityCities] = useState<any[]>([]);
+  const [agencyCities, setAgencyCities] = useState<any[]>([]);
+
   useEffect(() => {
     if (userProfile) {
       if (userProfile.personalHealthcarePersonnelData) {
@@ -132,6 +136,48 @@ export default function ProfilePage() {
       }
     }
   }, [userProfile]);
+
+  useEffect(() => {
+    if (personnelData.country) {
+      const country = COUNTRIES.find(c => c.name === personnelData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setPersonnelCities(countryCities || []);
+      } else {
+        setPersonnelCities([]);
+      }
+    } else {
+      setPersonnelCities([]);
+    }
+  }, [personnelData.country]);
+
+  useEffect(() => {
+    if (facilityData.country) {
+      const country = COUNTRIES.find(c => c.name === facilityData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setFacilityCities(countryCities || []);
+      } else {
+        setFacilityCities([]);
+      }
+    } else {
+      setFacilityCities([]);
+    }
+  }, [facilityData.country]);
+
+  useEffect(() => {
+    if (agencyData.country) {
+      const country = COUNTRIES.find(c => c.name === agencyData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setAgencyCities(countryCities || []);
+      } else {
+        setAgencyCities([]);
+      }
+    } else {
+      setAgencyCities([]);
+    }
+  }, [agencyData.country]);
 
   useEffect(() => {
     if (userProfile?.displayName) {
@@ -525,20 +571,21 @@ export default function ProfilePage() {
                         >
                           <option value="">Select Country</option>
                           {COUNTRIES.map(c => (
-                            <option key={c.code} value={c.label}>{c.label}</option>
+                            <option key={c.isoCode} value={c.name}>{c.name}</option>
                           ))}
                         </select>
                       </div>
                       <div className="space-y-1">
                         <label className="text-zinc-500 text-[10px] uppercase tracking-wider">City</label>
-                        <input 
-                          type="text"
+                        <select 
                           value={personnelData.city || ''}
                           onChange={(e) => setPersonnelData({...personnelData, city: e.target.value})}
                           className="w-full bg-black border border-zinc-700 rounded p-2 text-sm focus:border-blue-500 outline-none h-10"
-                          placeholder={personnelData.country ? "Enter City" : "Select Country First"}
                           disabled={!personnelData.country}
-                        />
+                        >
+                          <option value="">{personnelData.country ? "Select City" : "Select Country First"}</option>
+                          {personnelCities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                        </select>
                       </div>
                       <div className="col-span-full space-y-1">
                         <label className="text-zinc-500 text-[10px] uppercase tracking-wider">Professional Bio</label>
@@ -748,20 +795,21 @@ export default function ProfilePage() {
                         >
                           <option value="">Select Country</option>
                           {COUNTRIES.map(c => (
-                            <option key={c.code} value={c.label}>{c.label}</option>
+                            <option key={c.isoCode} value={c.name}>{c.name}</option>
                           ))}
                         </select>
                       </div>
                       <div className="space-y-1">
                         <label className="text-zinc-500 text-[10px] uppercase tracking-wider">City</label>
-                        <input 
-                          type="text"
+                        <select 
                           value={facilityData.city || ''}
                           onChange={(e) => setFacilityData({...facilityData, city: e.target.value})}
                           className="w-full bg-black border border-zinc-700 rounded p-2 text-sm focus:border-emerald-500 outline-none h-10"
-                          placeholder={facilityData.country ? "Enter City" : "Select Country First"}
                           disabled={!facilityData.country}
-                        />
+                        >
+                          <option value="">{facilityData.country ? "Select City" : "Select Country First"}</option>
+                          {facilityCities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                        </select>
                       </div>
                       <div className="col-span-full space-y-1">
                         <label className="text-zinc-500 text-[10px] uppercase tracking-wider">Address</label>
@@ -854,20 +902,21 @@ export default function ProfilePage() {
                         >
                           <option value="">Select Country</option>
                           {COUNTRIES.map(c => (
-                            <option key={c.code} value={c.label}>{c.label}</option>
+                            <option key={c.isoCode} value={c.name}>{c.name}</option>
                           ))}
                         </select>
                       </div>
                       <div className="space-y-1">
                         <label className="text-zinc-500 text-[10px] uppercase tracking-wider">City</label>
-                        <input 
-                          type="text"
+                        <select 
                           value={agencyData.city || ''}
                           onChange={(e) => setAgencyData({...agencyData, city: e.target.value})}
                           className="w-full bg-black border border-zinc-700 rounded p-2 text-sm focus:border-purple-500 outline-none h-10"
-                          placeholder={agencyData.country ? "Enter City" : "Select Country First"}
                           disabled={!agencyData.country}
-                        />
+                        >
+                          <option value="">{agencyData.country ? "Select City" : "Select Country First"}</option>
+                          {agencyCities.map((city, idx) => <option key={`${city.name}-${idx}`} value={city.name}>{city.name}</option>)}
+                        </select>
                       </div>
                     </div>
                   )}

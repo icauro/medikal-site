@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
-import { listCountries } from "countries-ts";
+import { Country, City } from "country-state-city";
 
-const COUNTRIES = listCountries();
+const COUNTRIES = Country.getAllCountries();
 
 interface AgencyModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
   // Open Data Listing
   const [openData, setOpenData] = useState<any>({});
   const [existingOpenDataId, setExistingOpenDataId] = useState("");
+  const [cities, setCities] = useState<any[]>([]);
 
   // Search for linking
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,6 +84,20 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
       }
     }
   }, [isOpen, mode, user, openDataRecord]);
+
+  useEffect(() => {
+    if (openData.country) {
+      const country = COUNTRIES.find(c => c.name === openData.country);
+      if (country) {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        setCities(countryCities || []);
+      } else {
+        setCities([]);
+      }
+    } else {
+      setCities([]);
+    }
+  }, [openData.country]);
 
   if (!isOpen) return null;
 
@@ -223,19 +238,20 @@ export default function AgencyModal({ isOpen, onClose, user, openDataRecord, mod
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
                   >
                     <option value="">Select Country</option>
-                    {COUNTRIES.map(c => <option key={c.code} value={c.label}>{c.label}</option>)}
+                    {COUNTRIES.map(c => <option key={c.isoCode} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
-                  <input 
-                    type="text"
-                    value={openData.city || ""}
-                    onChange={(e) => setOpenData({...openData, city: e.target.value})}
+                  <select 
+                    value={openData.city || ""} 
+                    onChange={(e) => setOpenData({...openData, city: e.target.value})} 
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none"
-                    placeholder={openData.country ? "Enter City" : "Select Country First"}
                     disabled={!openData.country}
-                  />
+                  >
+                    <option value="">{openData.country ? "Select City" : "Select Country First"}</option>
+                    {cities.map(city => <option key={city.name} value={city.name}>{city.name}</option>)}
+                  </select>
                 </div>
               </div>
               <button onClick={() => handleUpdate('open')} className="w-full p-3 bg-orange-600 font-bold">Save Listing</button>
