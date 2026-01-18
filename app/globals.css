@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Comment thread line - L-shaped connector with 90 degree turn */
+.comment-thread-line {
+  position: relative;
+  padding-left: 16px;
+}
+
+/* Vertical line down from parent */
+.comment-thread-line::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  height: 12px;
+  width: 2px;
+  background-color: rgb(113, 113, 122); /* zinc-600 */
+}
+
+/* Horizontal line turning right to child */
+.comment-thread-line::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 12px;
+  width: 10px;
+  height: 2px;
+  background-color: rgb(113, 113, 122); /* zinc-600 */
+}

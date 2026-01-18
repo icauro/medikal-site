@@ -103,6 +103,10 @@ export default function UserCommentsSection({
 
       setComments(loadedComments);
 
+      // Expand all comments by default
+      const allCommentIds = new Set(loadedComments.map((c) => c.id));
+      setExpandedReplies(allCommentIds);
+
       // Load user's votes
       if (user) {
         const votes = new Map<string, "upvote" | "downvote">();
@@ -410,6 +414,10 @@ function CommentThread({
   const [replyContent, setReplyContent] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
   const [expandedNestedReplies, setExpandedNestedReplies] = useState<Set<string>>(new Set());
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+  const [replyVotes, setReplyVotes] = useState<Map<string, "upvote" | "downvote">>(new Map());
 
   // Get subcollection path based on entity type
   const getCollectionPath = () => {
@@ -448,6 +456,23 @@ function CommentThread({
         
         console.log(`📋 [COMMENTS] Loaded ${loadedReplies.length} replies (after filtering deleted)`);
         setReplies(loadedReplies);
+
+        // Expand all nested replies by default
+        const allReplyIds = new Set(loadedReplies.map((r) => r.id));
+        setExpandedNestedReplies(allReplyIds);
+
+        // Track user's votes on nested replies
+        if (user) {
+          const votes = new Map<string, "upvote" | "downvote">();
+          loadedReplies.forEach((reply) => {
+            if (reply.upvotes?.includes(user.uid)) {
+              votes.set(reply.id, "upvote");
+            } else if (reply.downvotes?.includes(user.uid)) {
+              votes.set(reply.id, "downvote");
+            }
+          });
+          setReplyVotes(votes);
+        }
       } catch (error) {
         console.error("📋 [COMMENTS] Error loading replies:", error);
       } finally {
@@ -471,6 +496,79 @@ function CommentThread({
       newExpanded.add(replyId);
     }
     setExpandedNestedReplies(newExpanded);
+  };
+
+  const handleVoteLocal = async (voteType: "upvote" | "downvote") => {
+    if (!user) {
+      console.log("🔐 [COMMENTS] User not authenticated");
+      return;
+    }
+
+    const currentVote = userVote;
+    const listingPath = getCollectionPath();
+    const commentPaths = [...pathSegments, comment.id];
+    const commentRef = doc(db, listingPath, entityId, ...commentPaths);
+
+    try {
+      let newUpvotes = [...(comment.upvotes || [])];
+      let newDownvotes = [...(comment.downvotes || [])];
+
+      newUpvotes = newUpvotes.filter((userId) => userId !== user.uid);
+      newDownvotes = newDownvotes.filter((userId) => userId !== user.uid);
+
+      if (currentVote !== voteType) {
+        if (voteType === "upvote") {
+          newUpvotes.push(user.uid);
+        } else {
+          newDownvotes.push(user.uid);
+        }
+      }
+
+      const newScore = newUpvotes.length - newDownvotes.length;
+
+      await updateDoc(commentRef, {
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+        score: newScore,
+      });
+
+      console.log(`✅ [COMMENTS] Voted on comment at path: ${[...pathSegments, comment.id].join("/")}`);
+      if (onCommentUpdated) {
+        onCommentUpdated();
+      }
+    } catch (error) {
+      console.error("📋 [COMMENTS] Error voting on comment:", error);
+    }
+  };
+
+  const submitEdit = async () => {
+    if (!user || !editContent.trim()) return;
+
+    setSubmittingEdit(true);
+    try {
+      const listingPath = getCollectionPath();
+      const commentPaths = [...pathSegments, comment.id];
+      const commentRef = doc(db, listingPath, entityId, ...commentPaths);
+      
+      await updateDoc(commentRef, {
+        content: editContent,
+        isEdited: true,
+        updatedAt: serverTimestamp(),
+      });
+      
+      console.log(`✅ [COMMENTS] Edited comment ${comment.id}`);
+      setIsEditing(false);
+      
+      if (onCommentUpdated) {
+        onCommentUpdated();
+      } else {
+        await loadReplies();
+      }
+    } catch (error) {
+      console.error("📋 [COMMENTS] Error editing comment:", error);
+    } finally {
+      setSubmittingEdit(false);
+    }
   };
 
   const submitReply = async () => {
@@ -540,9 +638,21 @@ function CommentThread({
 
   return (
     <div className="space-y-3">
-      <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg p-4 hover:bg-zinc-900/50 transition-colors">
-        {/* Comment Header */}
-        <div className="flex items-start gap-3">
+      <div className="relative">
+        {/* Expand Button - Left Border */}
+        {comment.replyCount > 0 && (
+          <button
+            onClick={onToggleReplies}
+            className="absolute -left-6 top-4 text-lg text-zinc-400 hover:text-blue-300 transition-colors flex items-center justify-center w-5 h-5"
+            title={`${expanded ? 'Collapse' : 'Expand'} ${comment.replyCount} ${comment.replyCount === 1 ? 'reply' : 'replies'}`}
+          >
+            {expanded ? '⊖' : '⊕'}
+          </button>
+        )}
+
+        <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg px-4 pt-2 pb-1 hover:bg-zinc-900/50 transition-colors">
+          {/* Comment Header */}
+          <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
             {comment.userDisplayName.charAt(0).toUpperCase()}
           </div>
@@ -573,21 +683,10 @@ function CommentThread({
 
             {/* Comment Footer - Actions */}
             <div className="flex items-center gap-4 mt-3">
-              {/* Expand Replies Button - Most Left */}
-              {comment.replyCount > 0 && (
-                <button
-                  onClick={onToggleReplies}
-                  className="text-base text-zinc-400 hover:text-blue-300 transition-colors flex items-center gap-1 -ml-8 mr-2"
-                  title={`${expanded ? 'Collapse' : 'Expand'} ${comment.replyCount} ${comment.replyCount === 1 ? 'reply' : 'replies'}`}
-                >
-                  {expanded ? '⊖' : '⊕'} {comment.replyCount}
-                </button>
-              )}
-
               {/* Vote Buttons */}
               <div className="flex items-center">
                 <button
-                  onClick={() => onVote(comment.id, "upvote")}
+                  onClick={() => handleVoteLocal("upvote")}
                   className={`-mr-1 hover:text-green-400 transition-colors ${
                     userVote === "upvote" ? "text-green-400" : "text-zinc-500"
                   }`}
@@ -599,7 +698,7 @@ function CommentThread({
                   {comment.score > 0 ? "+" : ""}{comment.score}
                 </span>
                 <button
-                  onClick={() => onVote(comment.id, "downvote")}
+                  onClick={() => handleVoteLocal("downvote")}
                   className={`-ml-1 hover:text-red-400 transition-colors ${
                     userVote === "downvote" ? "text-red-400" : "text-zinc-500"
                   }`}
@@ -621,16 +720,61 @@ function CommentThread({
 
               {/* Delete Button */}
               {user && (user.uid === comment.userId || userProfile?.role === 'admin') && (
-                <button
-                  onClick={() => onDelete(comment.id)}
-                  className="text-xs text-zinc-400 hover:text-red-400 transition-colors"
-                >
-                  🗑️ Delete
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="text-xs text-zinc-400 hover:text-yellow-400 transition-colors"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(comment.id)}
+                    className="text-xs text-zinc-400 hover:text-red-400 transition-colors"
+                  >
+                    🗑️ Delete
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Edit Form */}
+      {isEditing && user && user.uid === comment.userId && (
+        <div className="bg-zinc-900/20 border border-zinc-800 rounded-lg p-3">
+          <div className="flex gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+              {user.displayName?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              placeholder="Edit your comment..."
+              className="flex-1 bg-zinc-800/50 border border-zinc-700 rounded p-2 text-white text-sm placeholder-zinc-500 resize-none focus:outline-none focus:border-blue-500 transition-colors"
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-end gap-2 ml-10">
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setEditContent(comment.content);
+              }}
+              className="px-3 py-1 text-xs border border-zinc-700 text-zinc-400 rounded hover:text-white hover:border-zinc-600 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submitEdit}
+              disabled={!editContent.trim() || submittingEdit}
+              className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 transition-colors"
+            >
+              {submittingEdit ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Reply Form */}
@@ -671,7 +815,7 @@ function CommentThread({
 
       {/* Replies Thread */}
       {comment.replyCount > 0 && expanded && (
-        <div className="ml-6">
+        <div className="ml-6 comment-thread-line">
           <div className="mt-1 space-y-2 ml-4">
             {loadingReplies ? (
               <div className="text-xs text-zinc-400">Loading replies...</div>
@@ -681,6 +825,7 @@ function CommentThread({
                   key={reply.id}
                   comment={reply}
                   user={user}
+                  userVote={replyVotes.get(reply.id)}
                   onVote={onVote}
                   onDelete={onDelete}
                   onReply={() => {}}
@@ -689,6 +834,7 @@ function CommentThread({
                   expanded={expandedNestedReplies.has(reply.id)}
                   onToggleReplies={() => toggleNestedReplies(reply.id)}
                   pathSegments={[...pathSegments, comment.id, "replies"]}
+                  onCommentUpdated={onCommentUpdated}
                 />
               ))
             )}
