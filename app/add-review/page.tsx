@@ -22,8 +22,17 @@ interface HealthcarePersonnel {
   slug: string;
 }
 
+interface MedicalFacility {
+  id: string;
+  name: string;
+  facilityType: string;
+  province: string;
+  slug: string;
+}
+
 interface ReviewFormData {
   doctorId: string;
+  medicalFacilityId: string;
   categories: string[];
   rating: number;
   experienceText: string;
@@ -56,9 +65,16 @@ export default function AddReviewPage() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
 
+  // Medical facility search
+  const [facilities, setFacilities] = useState<MedicalFacility[]>([]);
+  const [facilitySearch, setFacilitySearch] = useState("");
+  const [showFacilityDropdown, setShowFacilityDropdown] = useState(false);
+  const [facilityLoading, setFacilityLoading] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState<ReviewFormData>({
     doctorId: "",
+    medicalFacilityId: "",
     categories: [],
     rating: 0,
     experienceText: "",
@@ -115,12 +131,61 @@ export default function AddReviewPage() {
   // Get selected doctor
   const selectedDoctor = doctors.find((doc) => doc.id === formData.doctorId);
 
+  // Search medical facilities
+  const searchFacilities = useMemo(() => {
+    if (!facilitySearch.trim()) return [];
+    const searchLower = facilitySearch.toLowerCase();
+
+    // Debounce search to avoid too many queries
+    const timer = setTimeout(async () => {
+      if (facilitySearch.length >= 2) {
+        setFacilityLoading(true);
+        try {
+          const facilitiesRef = collection(db, "medical_facility_listings");
+          const q = query(
+            facilitiesRef,
+            where("name", ">=", facilitySearch),
+            where("name", "<=", facilitySearch + "\uf8ff"),
+            limit(20)
+          );
+          const snapshot = await getDocs(q);
+          const facilitiesData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name || "",
+            facilityType: doc.data().facilityType || "",
+            province: doc.data().province || "",
+            slug: doc.data().slug || "",
+          }));
+          setFacilities(facilitiesData);
+        } catch (error) {
+          console.error("Error searching facilities:", error);
+        } finally {
+          setFacilityLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [facilitySearch, db]);
+
+  // Trigger facility search
+  useEffect(() => {
+    searchFacilities();
+  }, [searchFacilities]);
+
+  // Get selected facility
+  const selectedFacility = facilities.find((fac) => fac.id === formData.medicalFacilityId);
+
   // Form validation
   const validateForm = () => {
     const newErrors: Partial<Record<keyof ReviewFormData, string>> = {};
 
     if (!formData.doctorId) {
       newErrors.doctorId = "Please select a doctor";
+    }
+
+    if (!formData.medicalFacilityId) {
+      newErrors.medicalFacilityId = "Please select a medical facility";
     }
 
     if (formData.categories.length === 0) {
@@ -149,6 +214,7 @@ export default function AddReviewPage() {
       // Mark all fields as touched to show validation errors
       setTouched({
         doctorId: true,
+        medicalFacilityId: true,
         categories: true,
         rating: true,
         experienceText: true,
@@ -156,7 +222,7 @@ export default function AddReviewPage() {
       return;
     }
 
-    if (!user || !userProfile || !selectedDoctor) return;
+    if (!user || !userProfile || !selectedDoctor || !selectedFacility) return;
 
     setSubmitting(true);
 
@@ -175,6 +241,13 @@ export default function AddReviewPage() {
         doctorName: selectedDoctor.name,
         doctorSpecialization: selectedDoctor.specialization,
         doctorSlug: selectedDoctor.slug,
+
+        // Medical facility information
+        medicalFacilityId: formData.medicalFacilityId,
+        medicalFacilityName: selectedFacility?.name || "",
+        medicalFacilityType: selectedFacility?.facilityType || "",
+        medicalFacilityProvince: selectedFacility?.province || "",
+        medicalFacilitySlug: selectedFacility?.slug || "",
 
         // Review content
         categories: formData.categories,
@@ -324,6 +397,64 @@ export default function AddReviewPage() {
             {selectedDoctor && (
               <p className="text-green-400 text-sm">
                 Selected: {selectedDoctor.name} - {selectedDoctor.specialization}
+              </p>
+            )}
+          </div>
+
+          {/* Medical Facility Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-white">
+              Select Medical Facility <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for a medical facility..."
+                value={facilitySearch}
+                onChange={(e) => {
+                  setFacilitySearch(e.target.value);
+                  setShowFacilityDropdown(true);
+                }}
+                onFocus={() => setShowFacilityDropdown(true)}
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {facilityLoading && (
+                <div className="absolute right-3 top-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+              {showFacilityDropdown && facilities.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {facilities.map((facility) => (
+                    <button
+                      key={facility.id}
+                      type="button"
+                      onClick={() => {
+                        handleFieldChange("medicalFacilityId", facility.id);
+                        setFacilitySearch(`${facility.name} - ${facility.facilityType}`);
+                        setShowFacilityDropdown(false);
+                        handleFieldBlur("medicalFacilityId");
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-b-0"
+                    >
+                      <div className="font-medium text-white">{facility.name}</div>
+                      <div className="text-sm text-zinc-400">{facility.facilityType} • {facility.province}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showFacilityDropdown && facilitySearch.length >= 2 && facilities.length === 0 && !facilityLoading && (
+                <div className="absolute z-10 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg p-4 text-center">
+                  <div className="text-zinc-400">No facilities found matching "{facilitySearch}"</div>
+                </div>
+              )}
+            </div>
+            {touched.medicalFacilityId && errors.medicalFacilityId && (
+              <p className="text-red-400 text-sm">{errors.medicalFacilityId}</p>
+            )}
+            {selectedFacility && (
+              <p className="text-green-400 text-sm">
+                Selected: {selectedFacility.name} - {selectedFacility.facilityType} ({selectedFacility.province})
               </p>
             )}
           </div>

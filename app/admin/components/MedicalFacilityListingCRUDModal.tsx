@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { MEDICAL_FACILITY_TYPES, MedicalFacilityListing, MedicalFacilityType, MedicalSpecialization } from "@/lib/types";
@@ -25,6 +25,12 @@ export default function MedicalFacilityListingCRUDModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Facility search and data
+  const [facilitySearchTerm, setFacilitySearchTerm] = useState("");
+  const [showFacilityDropdown, setShowFacilityDropdown] = useState(false);
+  const [allFacilities, setAllFacilities] = useState<any[]>([]);
+  const [facilityLoading, setFacilityLoading] = useState(false);
+
   const [openData, setOpenData] = useState<Partial<MedicalFacilityListing>>({
     name: "",
     facilityType: "Hospital",
@@ -43,6 +49,76 @@ export default function MedicalFacilityListingCRUDModal({
   });
   const [initialUserId, setInitialUserId] = useState("");
   const [provinces, setProvinces] = useState<any[]>([]);
+
+  // Load facility data from JSON
+  useEffect(() => {
+    const loadFacilityData = async () => {
+      try {
+        setFacilityLoading(true);
+        // Load from the merged facilities JSON file
+        const response = await fetch('/merged_medical_facilities.json');
+        if (response.ok) {
+          const facilities = await response.json();
+          setAllFacilities(facilities);
+        } else {
+          console.warn('Could not load facility data from JSON file');
+          setAllFacilities([]);
+        }
+      } catch (error) {
+        console.error('Error loading facility data:', error);
+        setAllFacilities([]);
+      } finally {
+        setFacilityLoading(false);
+      }
+    };
+
+    loadFacilityData();
+  }, []);
+
+  // Fuzzy search for facilities
+  const fuzzySearch = (query: string, text: string): boolean => {
+    if (!query || !text) return false;
+
+    const queryLower = query.toLowerCase();
+    const textLower = text.toLowerCase();
+
+    // Exact match
+    if (textLower.includes(queryLower)) return true;
+
+    // Fuzzy match - check if all query words are in the text
+    const queryWords = queryLower.split(/\s+/);
+    return queryWords.every(word =>
+      textLower.includes(word) ||
+      // Allow for common prefixes to be ignored
+      textLower.replace(/^(özel|devlet|t\.c\.|vakıf|üniversite|şehir|dr\.?|prof\.?|doç\.?|uzm\.?)\s+/gi, '').includes(word)
+    );
+  };
+
+  // Filtered facilities based on search
+  const filteredFacilities = useMemo(() => {
+    if (!facilitySearchTerm.trim() || facilitySearchTerm.length < 2) return [];
+
+    return allFacilities
+      .filter(facility =>
+        fuzzySearch(facilitySearchTerm, facility.name)
+      )
+      .slice(0, 20); // Limit to 20 results
+  }, [facilitySearchTerm, allFacilities]);
+
+  // Auto-fill facility data when selected
+  const handleFacilitySelect = (facility: any) => {
+    setOpenData({
+      ...openData,
+      name: facility.name,
+      facilityType: facility.facilityType,
+      address: facility.address,
+      province: facility.province,
+      country: facility.country,
+      phone: facility.phone || "",
+    });
+    setFacilitySearchTerm(facility.name);
+    setShowFacilityDropdown(false);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -195,17 +271,58 @@ export default function MedicalFacilityListingCRUDModal({
         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Facility Name</label>
-              <input type="text" value={openData.name || ""} onChange={(e) => setOpenData({...openData, name: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500" />
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Facility Name</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search existing facilities..."
+                value={facilitySearchTerm}
+                onChange={(e) => {
+                  setFacilitySearchTerm(e.target.value);
+                  setShowFacilityDropdown(true);
+                  // Also update the name field
+                  setOpenData({...openData, name: e.target.value});
+                }}
+                onFocus={() => setShowFacilityDropdown(true)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500"
+              />
+              {facilityLoading && (
+                <div className="absolute right-3 top-3">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
+                </div>
+              )}
+              {showFacilityDropdown && filteredFacilities.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredFacilities.map((facility, index) => (
+                    <button
+                      key={`${facility.name}-${index}`}
+                      type="button"
+                      onClick={() => handleFacilitySelect(facility)}
+                      className="w-full px-4 py-3 text-left hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-b-0"
+                    >
+                      <div className="font-medium text-white">{facility.name}</div>
+                      <div className="text-sm text-zinc-400">{facility.facilityType} • {facility.province}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showFacilityDropdown && facilitySearchTerm.length >= 2 && filteredFacilities.length === 0 && !facilityLoading && (
+                <div className="absolute z-10 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg p-4 text-center">
+                  <div className="text-zinc-400">No facilities found matching "{facilitySearchTerm}"</div>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Facility Type</label>
-              <select value={openData.facilityType || "Hospital"} onChange={(e) => setOpenData({...openData, facilityType: e.target.value as MedicalFacilityType})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none">
-                {MEDICAL_FACILITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
+            {facilitySearchTerm && !showFacilityDropdown && (
+              <p className="text-xs text-zinc-500">Or type a custom facility name</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Facility Type</label>
+            <select value={openData.facilityType || "Hospital"} onChange={(e) => setOpenData({...openData, facilityType: e.target.value as MedicalFacilityType})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none">
+              {MEDICAL_FACILITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
