@@ -43,6 +43,9 @@ export const TICKET_CATEGORIES = [
 export const TREATMENT_PLAN_STATUSES = ['pending', 'reviewed', 'approved', 'rejected', 'completed'] as const;
 export const TREATMENT_PLAN_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 
+// Comment sorting
+export const COMMENT_SORT_TYPES = ['top', 'newest', 'oldest'] as const;
+
 // Medical procedures (from types.ts)
 export const MEDICAL_PROCEDURES = [
   'Rhinoplasty (Nose Job)',

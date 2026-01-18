@@ -89,7 +89,7 @@ export default function UserMenu() {
 
   const formatRole = (role: UserRole | null | undefined): string => {
     if (!role) return 'pending role';
-    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return role.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   const getRoleColor = (role: UserRole | null | undefined) => {

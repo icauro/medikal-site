@@ -262,14 +262,13 @@ export default function HealthcareDatabase() {
                   </span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredFacilities.map((facility) => (
+                  {filteredFacilities.filter(f => f.slug).map((facility) => (
                     <ListingCard
                       key={facility.id}
                       id={facility.id}
-                      slug={facility.slug}
+                      slug={facility.slug!}
                       name={facility.name}
                       href={`/medical-facilities/${facility.slug}`}
-                      image={facility.image}
                       hasUser={!!facility.userId}
                       emoji="🏥"
                       primaryInfo={facility.specializations?.join(", ") || "General"}
@@ -291,11 +290,11 @@ export default function HealthcareDatabase() {
                   </span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredPersonnel.map((person) => (
+                  {filteredPersonnel.filter(p => p.slug).map((person) => (
                     <ListingCard
                       key={person.id}
                       id={person.id}
-                      slug={person.slug}
+                      slug={person.slug!}
                       name={person.name}
                       href={`/healthcare-personnel/${person.slug}`}
                       image={person.image}
@@ -319,15 +318,14 @@ export default function HealthcareDatabase() {
                   </span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAgencies.map((agency) => (
+                  {filteredAgencies.filter(a => a.slug).map((agency) => (
                     <ListingCard
                       key={agency.id}
                       id={agency.id}
-                      slug={agency.slug}
+                      slug={agency.slug!}
                       name={agency.name}
                       href={`/agencies/${agency.slug}`}
-                      image={agency.image}
-                      hasData={!!agency.personalAgencyDataId}
+                      hasUser={!!agency.userId}
                       emoji="🏢"
                       primaryInfo=""
                       secondaryInfo={agency.province ? `${agency.province}, ${agency.country}` : undefined}

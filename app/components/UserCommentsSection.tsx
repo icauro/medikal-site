@@ -94,12 +94,19 @@ export default function UserCommentsSection({
       const snapshot = await getDocs(q);
       const loadedComments = snapshot.docs
         .filter((doc) => !doc.data().isDeleted) // Filter out soft-deleted comments
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
-        } as UserComment));
+        .map((doc) => {
+          const data = doc.data();
+          const convertTimestamp = (ts: any) => {
+            if (ts instanceof Date) return ts;
+            return ts?.toDate?.() || new Date();
+          };
+          return {
+            ...data,
+            id: doc.id,
+            createdAt: convertTimestamp(data.createdAt),
+            updatedAt: convertTimestamp(data.updatedAt),
+          } as UserComment;
+        });
 
       setComments(loadedComments);
 
@@ -354,6 +361,7 @@ export default function UserCommentsSection({
               key={comment.id}
               comment={comment}
               user={user}
+              userProfile={userProfile}
               userVote={userVotes.get(comment.id)}
               onVote={handleVote}
               onDelete={handleDeleteComment}
@@ -382,6 +390,7 @@ export default function UserCommentsSection({
 interface CommentThreadProps {
   comment: UserComment;
   user: any;
+  userProfile: any;
   userVote?: "upvote" | "downvote";
   onVote: (commentId: string, voteType: "upvote" | "downvote") => void;
   onDelete: (commentId: string) => void;
@@ -397,6 +406,7 @@ interface CommentThreadProps {
 function CommentThread({
   comment,
   user,
+  userProfile,
   userVote,
   onVote,
   onDelete,
@@ -447,12 +457,19 @@ function CommentThread({
         
         const loadedReplies = snapshot.docs
           .filter((doc) => !doc.data().isDeleted)
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-            updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
-          } as UserComment));
+          .map((doc) => {
+            const data = doc.data();
+            const convertTimestamp = (ts: any) => {
+              if (ts instanceof Date) return ts;
+              return ts?.toDate?.() || new Date();
+            };
+            return {
+              ...data,
+              id: doc.id,
+              createdAt: convertTimestamp(data.createdAt),
+              updatedAt: convertTimestamp(data.updatedAt),
+            } as UserComment;
+          });
         
         console.log(`📋 [COMMENTS] Loaded ${loadedReplies.length} replies (after filtering deleted)`);
         setReplies(loadedReplies);
@@ -825,6 +842,7 @@ function CommentThread({
                   key={reply.id}
                   comment={reply}
                   user={user}
+                  userProfile={userProfile}
                   userVote={replyVotes.get(reply.id)}
                   onVote={onVote}
                   onDelete={onDelete}

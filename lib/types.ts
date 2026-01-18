@@ -14,6 +14,22 @@ import {
   COMMENT_SORT_TYPES
 } from './constants';
 
+// Re-export constants for convenience
+export { 
+  MEDICAL_SPECIALIZATIONS, 
+  MEDICAL_PROCEDURES, 
+  MEDICAL_FACILITY_TYPES,
+  USER_ROLES,
+  ACCOUNT_STATUSES,
+  PERSONNEL_TYPES,
+  TICKET_STATUSES,
+  TICKET_PRIORITIES,
+  TICKET_CATEGORIES,
+  TREATMENT_PLAN_STATUSES,
+  TREATMENT_PLAN_PRIORITIES,
+  COMMENT_SORT_TYPES
+} from './constants';
+
 // Type derivation from constants
 export type MedicalSpecialization = typeof MEDICAL_SPECIALIZATIONS[number];
 export type MedicalProcedureType = typeof MEDICAL_PROCEDURES[number];
