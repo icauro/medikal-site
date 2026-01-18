@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import ListingCard from "@/app/components/ListingCard";
 
 interface MedicalFacility {
   id: string;
@@ -98,40 +98,19 @@ export default function MedicalFacilitiesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {facilities.length > 0 ? (
             facilities.map((facility) => (
-              <Link
+              <ListingCard
                 key={facility.id}
+                id={facility.id}
+                slug={facility.slug}
+                name={facility.name}
                 href={`/medical-facilities/${facility.slug}`}
-                className="bg-zinc-900 rounded-lg p-6 hover:bg-zinc-800 transition-colors block border border-zinc-800"
-              >
-                <div className="mb-4">
-                  <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                    {facility.image && facility.userId ? (
-                      <img 
-                        src={facility.image} 
-                        alt={facility.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <span className="text-6xl opacity-20">🏥</span>
-                        {!facility.userId && (
-                          <span className="text-[10px] uppercase font-bold text-zinc-600 mt-2 tracking-widest">Listing Only</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <h2 className="text-xl font-semibold mb-2 text-white line-clamp-1">
-                  {facility.name}
-                </h2>
-                <p className="text-zinc-400 mb-2">{facility.type}</p>
-                {facility.province && (
-                  <p className="text-zinc-500 text-sm mb-2">{facility.province}, {facility.country}</p>
-                )}
-                {facility.rating !== undefined && (
-                  <p className="text-yellow-400">★ {facility.rating.toFixed(1)}</p>
-                )}
-              </Link>
+                image={facility.image}
+                hasUser={!!facility.userId}
+                emoji="🏥"
+                primaryInfo={facility.type}
+                secondaryInfo={facility.province ? `${facility.province}, ${facility.country}` : undefined}
+                rating={facility.rating}
+              />
             ))
           ) : (
             <div className="col-span-full py-12 text-center">

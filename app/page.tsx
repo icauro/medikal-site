@@ -9,7 +9,7 @@ export default function Home() {
   const publicPages = [
     { name: "About", href: "/about", description: "About our medical site" },
     { name: "Blogs", href: "/blogs", description: "Medical articles & tips" },
-    { name: "Doctors", href: "/doctors", description: "Browse doctors directory" },
+    { name: "Healthcare Personnel", href: "/healthcare-personnel", description: "Browse healthcare personnel directory" },
     { name: "Medical Facilities", href: "/medical-facilities", description: "Browse medical facilities" },
     { name: "Agencies", href: "/agencies", description: "Browse agencies" },
   ];

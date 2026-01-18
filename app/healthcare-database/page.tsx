@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Link from "next/link";
 import {
   HealthcarePersonnelListing,
   MedicalFacilityListing,
   AgencyListing,
 } from "@/lib/types";
+import ListingCard from "@/app/components/ListingCard";
 
 type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
@@ -26,11 +26,6 @@ export default function HealthcareDatabase() {
   // Countries list for filter
   const countries = [
     "Turkey",
-    "United States",
-    "Germany",
-    "United Kingdom",
-    "Canada",
-    "Australia",
   ];
 
   // Fetch data from Firestore
@@ -257,41 +252,6 @@ export default function HealthcareDatabase() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Healthcare Personnel Results */}
-            {filteredPersonnel.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                  <span className="text-cyan-400">👨‍⚕️</span> Healthcare Personnel
-                  <span className="text-sm bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full ml-auto">
-                    {filteredPersonnel.length}
-                  </span>
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredPersonnel.map((person) => (
-                    <Link
-                      key={person.id}
-                      href={`/doctors/${person.id}`}
-                      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500 transition-all group"
-                    >
-                      <h3 className="font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                        {person.name}
-                      </h3>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        {person.specialization}
-                      </p>
-                      <p className="text-sm text-zinc-500 mt-2">{person.country}</p>
-                      <div className="mt-3 flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-sm text-zinc-300">
-                          {person.rating || "N/A"} ({person.reviewCount || 0} reviews)
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Medical Facilities Results */}
             {filteredFacilities.length > 0 && (
               <div>
@@ -301,29 +261,49 @@ export default function HealthcareDatabase() {
                     {filteredFacilities.length}
                   </span>
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredFacilities.map((facility) => (
-                    <Link
+                    <ListingCard
                       key={facility.id}
-                      href={`/medical-facilities/${facility.id}`}
-                      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500 transition-all group"
-                    >
-                      <h3 className="font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                        {facility.name}
-                      </h3>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        {facility.specializations?.join(", ") || "General"}
-                      </p>
-                      <p className="text-sm text-zinc-500 mt-2">
-                        {facility.address}, {facility.country}
-                      </p>
-                      <div className="mt-3 flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-sm text-zinc-300">
-                          {facility.rating || "N/A"} ({facility.reviewCount || 0} reviews)
-                        </span>
-                      </div>
-                    </Link>
+                      id={facility.id}
+                      slug={facility.slug}
+                      name={facility.name}
+                      href={`/medical-facilities/${facility.slug}`}
+                      image={facility.image}
+                      hasUser={!!facility.userId}
+                      emoji="🏥"
+                      primaryInfo={facility.specializations?.join(", ") || "General"}
+                      secondaryInfo={facility.province ? `${facility.province}, ${facility.country}` : undefined}
+                      rating={facility.rating}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Healthcare Personnel Results */}
+            {filteredPersonnel.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="text-cyan-400">👨‍⚕️</span> Healthcare Personnel
+                  <span className="text-sm bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full ml-auto">
+                    {filteredPersonnel.length}
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPersonnel.map((person) => (
+                    <ListingCard
+                      key={person.id}
+                      id={person.id}
+                      slug={person.slug}
+                      name={person.name}
+                      href={`/healthcare-personnel/${person.slug}`}
+                      image={person.image}
+                      hasUser={!!person.userId}
+                      emoji="👤"
+                      primaryInfo={person.specialization}
+                      rating={person.rating}
+                    />
                   ))}
                 </div>
               </div>
@@ -338,32 +318,21 @@ export default function HealthcareDatabase() {
                     {filteredAgencies.length}
                   </span>
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredAgencies.map((agency) => (
-                    <Link
+                    <ListingCard
                       key={agency.id}
-                      href={`/agencies/${agency.id}`}
-                      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500 transition-all group"
-                    >
-                      <h3 className="font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                        {agency.name}
-                      </h3>
-                      <p className="text-sm text-zinc-500 mt-2">
-                        {agency.address}, {agency.country}
-                      </p>
-                      {agency.phone && (
-                        <p className="text-sm text-zinc-500">📞 {agency.phone}</p>
-                      )}
-                      {agency.email && (
-                        <p className="text-sm text-zinc-500">📧 {agency.email}</p>
-                      )}
-                      <div className="mt-3 flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-sm text-zinc-300">
-                          {agency.rating || "N/A"} ({agency.reviewCount || 0} reviews)
-                        </span>
-                      </div>
-                    </Link>
+                      id={agency.id}
+                      slug={agency.slug}
+                      name={agency.name}
+                      href={`/agencies/${agency.slug}`}
+                      image={agency.image}
+                      hasData={!!agency.personalAgencyDataId}
+                      emoji="🏢"
+                      primaryInfo=""
+                      secondaryInfo={agency.province ? `${agency.province}, ${agency.country}` : undefined}
+                      rating={agency.rating}
+                    />
                   ))}
                 </div>
               </div>

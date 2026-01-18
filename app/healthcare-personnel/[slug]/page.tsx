@@ -192,7 +192,7 @@ export default function DoctorProfilePage() {
             The doctor you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link
-            href="/doctors"
+            href="/healthcare-personnel"
             className="bg-white text-black px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors inline-block"
           >
             Back to Doctors
@@ -211,7 +211,7 @@ export default function DoctorProfilePage() {
             We couldn&apos;t load this doctor profile. Please try again later.
           </p>
           <Link
-            href="/doctors"
+            href="/healthcare-personnel"
             className="bg-white text-black px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors inline-block"
           >
             Back to Doctors
@@ -240,7 +240,10 @@ export default function DoctorProfilePage() {
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center gap-2 text-sm text-zinc-400">
-          <Link href="/doctors" className="hover:text-white transition-colors">
+          <Link
+            href="/healthcare-personnel"
+            className="bg-white text-black px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors inline-block"
+          >
             ← Back to Doctors
           </Link>
         </div>

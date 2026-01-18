@@ -33,7 +33,7 @@ export default function Navbar() {
               Blogs
             </Link>
             <Link
-              href="/doctors"
+              href="/healthcare-personnel"
               className="text-zinc-400 transition-colors hover:text-white"
             >
               Doctors

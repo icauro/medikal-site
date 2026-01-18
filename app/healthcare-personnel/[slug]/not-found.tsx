@@ -9,7 +9,7 @@ export default function NotFound() {
           The doctor you&apos;re looking for doesn&apos;t exist.
         </p>
         <Link
-          href="/doctors"
+          href="/healthcare-personnel"
           className="bg-white text-black px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors inline-block"
         >
           Back to Doctors

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import ListingCard from "@/app/components/ListingCard";
 
 // Type definition for Healthcare Personnel
 interface HealthcarePersonnel {
@@ -98,7 +98,7 @@ export default function DoctorsPage() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8">Doctors</h1>
           <div className="text-center py-12">
-            <p className="text-zinc-400 text-lg">Loading doctors...</p>
+            <p className="text-zinc-400 text-lg">Loading healthcare personnel...</p>
           </div>
         </div>
       </div>
@@ -109,49 +109,30 @@ export default function DoctorsPage() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold">Doctors</h1>
+          <h1 className="text-4xl font-bold">Healthcare Personnel</h1>
         </div>
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (
-            <Link
+            <ListingCard
               key={doctor.id}
-              href={`/doctors/${doctor.slug}`}
-              className="bg-zinc-900 rounded-lg p-6 hover:bg-zinc-800 transition-colors block border border-zinc-800"
-            >
-              <div className="mb-4">
-                <div className="w-full h-48 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                  {doctor.image && doctor.userId ? (
-                    <img 
-                      src={doctor.image} 
-                      alt={doctor.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <span className="text-6xl opacity-20">👤</span>
-                      {!doctor.userId && (
-                        <span className="text-[10px] uppercase font-bold text-zinc-600 mt-2 tracking-widest">Listing Only</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <h2 className="text-xl font-semibold mb-2 text-white">
-                {doctor.name}
-              </h2>
-              <p className="text-zinc-400 mb-2">{doctor.specialization}</p>
-              {doctor.rating !== undefined && (
-                <p className="text-yellow-400">★ {doctor.rating.toFixed(1)}</p>
-              )}
-            </Link>
+              id={doctor.id}
+              slug={doctor.slug}
+              name={doctor.name}
+              href={`/healthcare-personnel/${doctor.slug}`}
+              image={doctor.image}
+              hasUser={!!doctor.userId}
+              emoji="👤"
+              primaryInfo={doctor.specialization}
+              rating={doctor.rating}
+            />
           ))}
         </div>
 
         {doctors.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-zinc-400 text-lg">No doctors found</p>
+            <p className="text-zinc-400 text-lg">No healthcare personnel found</p>
           </div>
         )}
       </div>
