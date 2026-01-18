@@ -380,6 +380,55 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log(`✅ [DELETE] Deleted ${snapshot.docs.length} ${collectionName}`);
       }
 
+      // 2. Soft-delete user's comments and replies in all listing collections
+      console.log('🗑️ [DELETE] Soft-deleting user comments...');
+      const listingCollections = [
+        'healthcare_personnel_listings',
+        'medical_facility_listings',
+        'agency_listings',
+      ];
+
+      let totalDeletedComments = 0;
+      for (const listingCollection of listingCollections) {
+        // Query all documents in the listing collection
+        const listingsSnapshot = await getDocs(collection(db, listingCollection));
+        
+        for (const listingDoc of listingsSnapshot.docs) {
+          // Query all comments for this listing
+          const commentsRef = collection(db, listingCollection, listingDoc.id, 'comments');
+          const commentsSnapshot = await getDocs(commentsRef);
+          
+          for (const commentDoc of commentsSnapshot.docs) {
+            // Check if this comment belongs to the user being deleted
+            if (commentDoc.data().userId === user.uid) {
+              // Soft-delete the comment
+              await updateDoc(commentDoc.ref, {
+                isDeleted: true,
+                updatedAt: Timestamp.now(),
+              });
+              totalDeletedComments++;
+              
+              // Soft-delete all replies to this comment
+              const repliesRef = collection(db, listingCollection, listingDoc.id, 'comments', commentDoc.id, 'replies');
+              const repliesSnapshot = await getDocs(repliesRef);
+              
+              const deleteRepliesPromises = repliesSnapshot.docs
+                .filter(replyDoc => replyDoc.data().userId === user.uid)
+                .map(replyDoc => 
+                  updateDoc(replyDoc.ref, {
+                    isDeleted: true,
+                    updatedAt: Timestamp.now(),
+                  })
+                );
+              
+              await Promise.all(deleteRepliesPromises);
+              totalDeletedComments += deleteRepliesPromises.length;
+            }
+          }
+        }
+      }
+      console.log(`✅ [DELETE] Soft-deleted ${totalDeletedComments} comments and replies`);
+
       // 3. Delete user profile from Firestore
       console.log('🗑️ [DELETE] Deleting user profile from Firestore...');
       const userRef = doc(db, 'users', user.uid);

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import Link from "next/link";
+import UserCommentsSection from "@/app/components/UserCommentsSection";
 
 export default function MedicalFacilityProfilePage() {
   const params = useParams<{ slug: string }>();
@@ -166,6 +167,16 @@ export default function MedicalFacilityProfilePage() {
             {/* Future placeholder for doctors list */}
             <div className="bg-zinc-900/30 p-8 rounded-2xl border border-zinc-800 border-dashed text-center">
               <p className="text-zinc-500">Reviews and linked medical staff will appear here soon.</p>
+            </div>
+
+            {/* Community Discussion Section */}
+            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+              <h2 className="text-xl font-bold mb-6">Community Discussion</h2>
+              <UserCommentsSection
+                entityId={facility.id}
+                entityType="medical_facility"
+                entityName={facility.name}
+              />
             </div>
           </div>
         </div>

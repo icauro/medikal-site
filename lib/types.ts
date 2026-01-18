@@ -1,66 +1,32 @@
 // Shared types for the application
+import { 
+  MEDICAL_SPECIALIZATIONS, 
+  MEDICAL_PROCEDURES, 
+  MEDICAL_FACILITY_TYPES,
+  USER_ROLES,
+  ACCOUNT_STATUSES,
+  PERSONNEL_TYPES,
+  TICKET_STATUSES,
+  TICKET_PRIORITIES,
+  TICKET_CATEGORIES,
+  TREATMENT_PLAN_STATUSES,
+  TREATMENT_PLAN_PRIORITIES,
+  COMMENT_SORT_TYPES
+} from './constants';
 
-export type MedicalSpecialization = 
-  | 'Plastic, Reconstructive and Aesthetic Surgery'
-  | 'Dermatology';
-
-export const MEDICAL_SPECIALIZATIONS: MedicalSpecialization[] = [
-  'Plastic, Reconstructive and Aesthetic Surgery',
-  'Dermatology',
-];
-
-export const MEDICAL_PROCEDURES = [
-  'Rhinoplasty (Nose Job)',
-  'Blepharoplasty (Eyelid Surgery)',
-  'Rhytidectomy (Face Lift)',
-  'Mentoplasty (Chin Surgery)',
-  'Sliding Genioplasty (Osseous Chin Surgery)',
-  'Otoplasty (Ear Surgery)',
-  'Brow Lift (Forehead Lift)',
-  'Cheek Augmentation (Malar Augmentation)',
-  'Mammoplasty (Breast Surgery)',
-  'Breast Augmentation (Breast Implants)',
-  'Breast Reduction (Reduction Mammoplasty)',
-  'Breast Lift (Mastopexy)',
-  'Gynecomastia Surgery (Male Breast Reduction)',
-  'Abdominoplasty (Tummy Tuck)',
-  'Liposuction (Fat Removal)',
-  'Brachioplasty (Arm Lift)',
-  'Thighplasty (Thigh Lift)',
-  'Brazilian Butt Lift (Fat Transfer)',
-  'Body Lift (Body Contouring)',
-  'Labiaplasty (Labia Minora Reduction)',
-  'Hair Transplant (Hair Restoration)',
-  'Scar Revision Surgery',
-  'Fat Transfer (Fat Grafting)',
-
-  // Non-surgical aesthetic procedures
-  'Botox Injections (Botulinum Toxin)',
-  'Dermal Fillers (Soft Tissue Fillers)',
-  'Chemical Peel (Chemexfoliation)',
-  'Laser Skin Resurfacing',
-  'Microdermabrasion',
-  'Lip Augmentation (Lip Fillers)',
-  'Non-Surgical Nose Job (Liquid Rhinoplasty)',
-] as const;
-
+// Type derivation from constants
+export type MedicalSpecialization = typeof MEDICAL_SPECIALIZATIONS[number];
 export type MedicalProcedureType = typeof MEDICAL_PROCEDURES[number];
-
-export type MedicalFacilityType = 'Solo Practice' | 'Polyclinic' | 'Clinic' | 'Health Center' | 'Hospital';
-
-export const MEDICAL_FACILITY_TYPES: MedicalFacilityType[] = [
-  'Solo Practice',
-  'Polyclinic',
-  'Clinic',
-  'Health Center',
-  'Hospital'
-];
-
-// Authentication Types
-export type UserRole = 'patient' | 'healthcare_personnel' | 'admin' | 'medical_facility' | 'agency';
-export type AccountStatus = 'pending_gdpr' | 'pending_role' | 'pending_personal_data' | 'active' | 'suspended';
-
-export type PersonnelType = 'Doctor' | 'Patient Coordinator';
+export type MedicalFacilityType = typeof MEDICAL_FACILITY_TYPES[number];
+export type UserRole = typeof USER_ROLES[number];
+export type AccountStatus = typeof ACCOUNT_STATUSES[number];
+export type PersonnelType = typeof PERSONNEL_TYPES[number];
+export type TicketStatus = typeof TICKET_STATUSES[number];
+export type TicketPriority = typeof TICKET_PRIORITIES[number];
+export type TicketCategory = typeof TICKET_CATEGORIES[number];
+export type TreatmentPlanStatus = typeof TREATMENT_PLAN_STATUSES[number];
+export type TreatmentPlanPriority = typeof TREATMENT_PLAN_PRIORITIES[number];
+export type CommentSortType = typeof COMMENT_SORT_TYPES[number];
 
 export interface UserProfile {
   uid: string;
@@ -298,14 +264,6 @@ export interface MedicalFacilityPersonnelLink {
 }
 
 // Support Ticket System
-export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
-export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TicketCategory = 
-  | 'account'
-  | 'billing'
-  | 'technical'
-  | 'general'
-  | 'medical_question';
 
 export interface TicketMessage {
   id: string;
@@ -350,9 +308,36 @@ export interface SupportTicket {
   closedAt?: Date;
 }
 
+// Reddit-Style Comments System
+export interface UserComment {
+  id: string;
+  // Note: entityId and entityType are implicit in subcollection path
+  // Note: nested replies are stored in comments/{commentId}/replies subcollection
+  
+  // User info
+  userId: string;
+  userDisplayName: string;
+  userPhotoUrl?: string;
+  
+  // Comment content
+  content: string;
+  
+  // Voting system
+  upvotes: string[]; // Array of user IDs who upvoted
+  downvotes: string[]; // Array of user IDs who downvoted
+  score: number; // Calculated as upvotes.length - downvotes.length
+  
+  // Metadata
+  replyCount: number; // Number of direct replies to this comment
+  isEdited: boolean;
+  isDeleted: boolean;
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Treatment Plan System
-export type TreatmentPlanStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | 'completed';
-export type TreatmentPlanPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface DoctorResponse {
   id: string;

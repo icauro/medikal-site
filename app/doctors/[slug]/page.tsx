@@ -14,6 +14,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import UserCommentsSection from "@/app/components/UserCommentsSection";
 
 type TabKey = "info" | "reviews";
 type ReviewTabKey = "site-reviews" | "google-reviews";
@@ -565,6 +566,16 @@ export default function DoctorProfilePage() {
               </div>
             )}
           </div>
+        </section>
+
+        {/* Community Discussion Section */}
+        <section className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 md:p-8">
+          <h2 className="text-2xl font-bold mb-6">Community Discussion</h2>
+          <UserCommentsSection
+            entityId={doctor.id}
+            entityType="healthcare_personnel"
+            entityName={displayName}
+          />
         </section>
       </div>
     </div>
