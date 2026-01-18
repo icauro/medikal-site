@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    turbo: {
+      rules: {
+        // Disable Turbopack for now due to panic error
+      }
+    }
+  },
   images: {
     remotePatterns: [
       {

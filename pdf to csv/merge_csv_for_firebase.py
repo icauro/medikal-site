@@ -7,14 +7,14 @@ import json
 # Facility type mapping from Turkish to English enum values
 FACILITY_TYPE_MAPPING = {
     'Muayenehane': 'Solo Practice',
-    'Özel Tıp Merkezi': 'Clinic',
+    'Özel Tıp Merkezi': 'Medical Center',
     'Özel Hastane': 'Hospital',
     'Vakıf Üniversitesi Hastanesi': 'Hospital',
     'Kamu Hastanesi': 'Hospital',
     'Kamu Üniversitesi Hastanesi': 'Hospital',
-    'Özel Ağız ve Diş Sağlığı Polikliniği': 'Polyclinic',
-    'Özel Ağız ve Diş Sağlığı Merkezi': 'Polyclinic',
-    'Özel Ağız ve Diş Sağlığı Hastanesi': 'Hospital',
+    'Özel Ağız ve Diş Sağlığı Polikliniği': 'Private Oral and Dental Health Polyclinic',
+    'Özel Ağız ve Diş Sağlığı Merkezi': 'Private Oral and Dental Health Center',
+    'Özel Ağız ve Diş Sağlığı Hastanesi': 'Private Oral and Dental Health Hospital',
     'Kamu Ağız ve Diş Sağlığı Hastanesi': 'Hospital',
     'Kamu Ağız ve Diş Sağlığı Merkezi': 'Polyclinic',
     'Konaklamalı Fizik Tedavi ve Rehabilitasyon Merkezi': 'Clinic',
@@ -135,9 +135,7 @@ def process_csv_file(file_path: str) -> List[Dict]:
                     'province': province,
                     'country': 'Turkey',
                     'phone': phone,
-                    'slug': slug,
-                    'sourceFile': os.path.basename(file_path),
-                    'originalType': facility_type_turkish
+                    'slug': slug
                 }
 
                 facilities.append(facility)

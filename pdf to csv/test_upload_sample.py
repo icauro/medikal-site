@@ -3,8 +3,9 @@ import os
 import sys
 import requests
 import time
+from collections import defaultdict
 
-# Firebase project configuration - you need to replace these with your actual values
+# Firebase project configuration
 FIREBASE_API_KEY = "AIza-REDACTED-BY-HISTORY-REWRITE"
 FIREBASE_AUTH_DOMAIN = "mpturkey-ccd57.firebaseapp.com"
 UPLOAD_API_URL = "http://localhost:3000/api/upload-facilities"
@@ -60,28 +61,63 @@ def upload_batch(token: str, facilities: list, batch_index: int) -> dict:
                 print(f"Response: {e.response.text}")
         raise
 
-def main():
-    """Main upload function."""
-    print("Direct Medical Facilities Upload")
-    print("=" * 40)
-
-    # Check if JSON file exists
+def create_test_sample():
+    """Create a test sample with 3 facilities from each type."""
+    # Load the full JSON file
     json_file = 'merged_medical_facilities.json'
     if not os.path.exists(json_file):
         print(f"ERROR: {json_file} not found!")
         sys.exit(1)
 
-    # Load facilities data
-    print(f"Loading facilities from {json_file}...")
-    try:
-        with open(json_file, 'r', encoding='utf-8') as f:
-            facilities = json.load(f)
-        print(f"Loaded {len(facilities)} facilities")
-    except Exception as e:
-        print(f"ERROR: Failed to load JSON file: {e}")
-        sys.exit(1)
+    with open(json_file, 'r', encoding='utf-8') as f:
+        all_facilities = json.load(f)
 
-    # Get admin credentials from user input
+    # Group facilities by type
+    facilities_by_type = defaultdict(list)
+    for facility in all_facilities:
+        facility_type = facility['facilityType']
+        facilities_by_type[facility_type].append(facility)
+
+    # Select 3 facilities from each type
+    test_facilities = []
+    print("Creating test sample with 3 facilities from each type:")
+    print("=" * 60)
+
+    for facility_type, facilities in sorted(facilities_by_type.items()):
+        available = len(facilities)
+        selected_count = min(3, available)
+
+        # Take first 3 facilities (or all if less than 3)
+        selected = facilities[:selected_count]
+        test_facilities.extend(selected)
+
+        print(f"{facility_type}: {selected_count} selected (from {available} available)")
+        for facility in selected:
+            print(f"  - {facility['name']}")
+
+    print(f"\nTotal test facilities: {len(test_facilities)}")
+
+    # Save test sample
+    test_file = 'test_sample_facilities.json'
+    with open(test_file, 'w', encoding='utf-8') as f:
+        json.dump(test_facilities, f, ensure_ascii=False, indent=2)
+
+    print(f"Test sample saved to: {test_file}")
+    return test_facilities
+
+def main():
+    """Main upload function for test sample."""
+    print("Medical Facilities Test Upload")
+    print("=" * 40)
+
+    # Create test sample
+    test_facilities = create_test_sample()
+
+    if not test_facilities:
+        print("No facilities found for testing!")
+        return
+
+    # Get admin credentials
     print("\nAdmin Authentication Required")
     print("Please enter your admin account credentials:")
     email = input("Email: ").strip()
@@ -113,27 +149,27 @@ def main():
         sys.exit(1)
 
     # Confirm upload
-    print(f"\nReady to upload {len(facilities)} facilities")
-    print("WARNING: This will add new facilities to your database.")
-    response = input("Proceed with upload? (yes/no): ").lower().strip()
+    print(f"\nReady to upload {len(test_facilities)} test facilities")
+    print("WARNING: This will add test data to your database.")
+    response = input("Proceed with test upload? (yes/no): ").lower().strip()
     if response not in ['yes', 'y']:
         print("Upload cancelled.")
         return
 
     # Upload in batches
-    batch_size = 50  # Smaller batches for API
+    batch_size = 10  # Smaller batches for testing
     total_uploaded = 0
     total_errors = 0
     total_skipped = 0
 
     start_time = time.time()
 
-    for i in range(0, len(facilities), batch_size):
-        batch = facilities[i:i + batch_size]
+    for i in range(0, len(test_facilities), batch_size):
+        batch = test_facilities[i:i + batch_size]
         batch_num = (i // batch_size) + 1
-        total_batches = (len(facilities) + batch_size - 1) // batch_size
+        total_batches = (len(test_facilities) + batch_size - 1) // batch_size
 
-        print(f"\nUploading batch {batch_num}/{total_batches} ({len(batch)} facilities)...")
+        print(f"\nUploading test batch {batch_num}/{total_batches} ({len(batch)} facilities)...")
 
         try:
             result = upload_batch(token, batch, batch_num - 1)
@@ -160,7 +196,7 @@ def main():
             print(f"  FAILED: {e}")
             total_errors += len(batch)
 
-        # Small delay between batches to avoid overwhelming the server
+        # Small delay between batches
         time.sleep(0.5)
 
     # Final summary
@@ -168,18 +204,18 @@ def main():
     duration = end_time - start_time
 
     print("\n" + "=" * 40)
-    print("FINAL UPLOAD SUMMARY")
+    print("TEST UPLOAD SUMMARY")
     print("=" * 40)
-    print(f"Total facilities processed: {len(facilities)}")
+    print(f"Test facilities processed: {len(test_facilities)}")
     print(f"Successfully uploaded: {total_uploaded}")
     print(f"Errors: {total_errors}")
     print(f"Skipped (already exist): {total_skipped}")
     print(f"Duration: {duration:.1f} seconds")
-    print("\nUpload completed!")
+    print("\nTest upload completed!")
 
     if total_uploaded > 0:
-        print("You can now check the new facilities in your admin panel.")
-        print("New facilities are marked as 'unverified' and need admin approval.")
+        print("You can now check the test facilities in your admin panel.")
+        print("Test facilities are marked as 'unverified' and need admin approval.")
 
 if __name__ == "__main__":
     main()

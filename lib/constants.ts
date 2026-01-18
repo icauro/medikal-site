@@ -16,7 +16,11 @@ export const MEDICAL_FACILITY_TYPES = [
   'Polyclinic',
   'Clinic',
   'Health Center',
-  'Hospital'
+  'Hospital',
+  'Medical Center',
+  'Private Oral and Dental Health Center',
+  'Private Oral and Dental Health Polyclinic',
+  'Private Oral and Dental Health Hospital'
 ] as const;
 
 // User roles

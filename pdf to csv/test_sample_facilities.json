@@ -1,0 +1,200 @@
+[
+  {
+    "name": "Özel Korel FTR Dal Merkezi",
+    "facilityType": "Clinic",
+    "address": "Kütahya Karayolu 13. Km Merkez/Afyonkarahisar",
+    "province": "Afyonkarahisar",
+    "country": "Turkey",
+    "phone": "0 272 252 22 32",
+    "slug": "özel-korel-ftr-dal-merkezi-afyonkarahisar"
+  },
+  {
+    "name": "Bb Tüp Bebek Yardımcı Üreme Teknikleri Merkezi",
+    "facilityType": "Clinic",
+    "address": "Mustafa Kemal Mah. 2124. Sok. No:4 Çankaya/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 532 343 96 86",
+    "slug": "bb-tüp-bebek-yardımcı-üreme-teknikleri-merkezi-ankara"
+  },
+  {
+    "name": "Bilge Hayatlar Huzurevi ve Yaşlı Bakım Merkezi Konaklamalı Fizik Tedavi ve Rehabilitasyon Merkezi",
+    "facilityType": "Clinic",
+    "address": "Yaşamkent Mah.3166. Sok. No: 14 Çankaya/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 505 421 07 97",
+    "slug": "bilge-hayatlar-huzurevi-ve-yaşlı-bakım-merkezi-konaklamalı-fizik-tedavi-ve-rehabilitasyon-merkezi-an"
+  },
+  {
+    "name": "Başkent Üniversitesi Adana Dr. Turgut Noyan Uygulama ve Araştırma Merkezi",
+    "facilityType": "Hospital",
+    "address": "Dadaloğlu Mahallesi 2591 Sokak No:4/A 01250 Yüreğir/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "444 9 901",
+    "slug": "başkent-üniversitesi-adana-dr-turgut-noyan-uygulama-ve-araştırma-merkezi-adana"
+  },
+  {
+    "name": "Özel Acıbadem Adana Hastanesi",
+    "facilityType": "Hospital",
+    "address": "Döşeme Mahallesi Cumhuriyet Caddesi No:66 01130 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 322 455 44 44",
+    "slug": "özel-acıbadem-adana-hastanesi-adana"
+  },
+  {
+    "name": "Özel Acıbadem Ortopedia Hastanesi",
+    "facilityType": "Hospital",
+    "address": "Döşeme Mahallesi ( Çifte Minare Civarı) Cumhuriyet Caddesi No:64 Seyhan / Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 322 432 77 77",
+    "slug": "özel-acıbadem-ortopedia-hastanesi-adana"
+  },
+  {
+    "name": "Özel Dünya Göz Tıp Merkezi",
+    "facilityType": "Medical Center",
+    "address": "Çınarlı Mahallesi Sahilyolu No:18, 34140 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "444 44 69",
+    "slug": "özel-dünya-göz-tıp-merkezi-adana"
+  },
+  {
+    "name": "Özel Sevgi Göz Tıp Merkezi",
+    "facilityType": "Medical Center",
+    "address": "Gazipaşa Mah. Mustafa Kemal Paşa Blv. No:25/1 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "444 11 74",
+    "slug": "özel-sevgi-göz-tıp-merkezi-adana"
+  },
+  {
+    "name": "Özel Ankara Cerrahi Tıp Merkezi",
+    "facilityType": "Medical Center",
+    "address": "Aşağı Öveçler Mahallesi 1332. Cadde No:15 Çankaya/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 312 473 88 55",
+    "slug": "özel-ankara-cerrahi-tıp-merkezi-ankara"
+  },
+  {
+    "name": "Özel Bütünsel Sağlık Polikliniği",
+    "facilityType": "Polyclinic",
+    "address": "Kavaklıdere Mah. Arjantin Cad. No:17/8 Çankaya/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 530 340 34 06",
+    "slug": "özel-bütünsel-sağlık-polikliniği-ankara"
+  },
+  {
+    "name": "Özel Doğal Hayat Polikliniği",
+    "facilityType": "Polyclinic",
+    "address": "Ceyhun Atuf Kansu Cad. 1370 Sok. No: 12 Balgat- Çankaya / Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 312 460 00 10",
+    "slug": "özel-doğal-hayat-polikliniği-ankara"
+  },
+  {
+    "name": "Özel Dr. Buket Yıldırım Polikliniği",
+    "facilityType": "Polyclinic",
+    "address": "Kızılırmak Mahallesi Ufuk Üniversitesi Cad. No:4 İç Kapı No:37 Çankaya/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 312 285 75 08",
+    "slug": "özel-dr-buket-yıldırım-polikliniği-ankara"
+  },
+  {
+    "name": "Özel Dentacenter Ağız ve Diş Sağlığı Merkezi Keçiören",
+    "facilityType": "Private Oral and Dental Health Center",
+    "address": "Güçlükaya Mahallesi Kızlarpınarı Caddesi No:35/1 Keçiören/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 312 376 11 93",
+    "slug": "özel-dentacenter-ağız-ve-diş-sağlığı-merkezi-keçiören-ankara"
+  },
+  {
+    "name": "Özel Zenith Ağız ve Diş Sağlığı Merkezi",
+    "facilityType": "Private Oral and Dental Health Center",
+    "address": "Neorama İş Merkezi Beştepe Mahallesi Yaşam Caddesi 13 B İç Kapı No:5 Söğütözü Yenimahalle/Ankara",
+    "province": "Ankara",
+    "country": "Turkey",
+    "phone": "0 312 284 15 16",
+    "slug": "özel-zenith-ağız-ve-diş-sağlığı-merkezi-ankara"
+  },
+  {
+    "name": "Özel Attelia Ağız ve Diş Sağlığı Merkezi",
+    "facilityType": "Private Oral and Dental Health Center",
+    "address": "Kızıltoprak Mahallesi Aspendos Bulvarı Çam Plaza No:19/B Muratpaşa/Antalya",
+    "province": "Antalya",
+    "country": "Turkey",
+    "phone": "0 242 312 50 24",
+    "slug": "özel-attelia-ağız-ve-diş-sağlığı-merkezi-antalya"
+  },
+  {
+    "name": "Özel Dentistanbul Diş Hastanesi",
+    "facilityType": "Private Oral and Dental Health Hospital",
+    "address": "Yıldız Mahallesi Yıldız Caddesi No:71 34353 Beşiktaş/İstanbul",
+    "province": "İstanbul",
+    "country": "Turkey",
+    "phone": "0 212 310 56 00",
+    "slug": "özel-dentistanbul-diş-hastanesi-istanbul"
+  },
+  {
+    "name": "Özel A Dent Ağız ve Diş Sağlığı Polikliniği",
+    "facilityType": "Private Oral and Dental Health Polyclinic",
+    "address": "Çınarlı Mahallesi Atatürk Caddesi Kemal Özülkü İş Merkezi Asma Kat:2 No:23/17 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 322 458 29 18",
+    "slug": "özel-a-dent-ağız-ve-diş-sağlığı-polikliniği-adana"
+  },
+  {
+    "name": "Özel Art Ağız ve Diş Sağlığı Polikliniği",
+    "facilityType": "Private Oral and Dental Health Polyclinic",
+    "address": "Cemalpaşa Mah. Ethem Ekin Sok. No:5/1 Gökçe Rezidans K:1 D:1 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 322 232 50 50",
+    "slug": "özel-art-ağız-ve-diş-sağlığı-polikliniği-adana"
+  },
+  {
+    "name": "Özel Beyaz Koza Ağız ve Diş Sağlığı Polikliniği",
+    "facilityType": "Private Oral and Dental Health Polyclinic",
+    "address": "Yeşiltepe Mah. Kozan Blv. No:125/A Sarıçam/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 531 781 22 34",
+    "slug": "özel-beyaz-koza-ağız-ve-diş-sağlığı-polikliniği-adana"
+  },
+  {
+    "name": "Doç. Dr. Aslı Korur Muayenehanesi",
+    "facilityType": "Solo Practice",
+    "address": "Kurtuluş Mah. Ziyapaşa Blv. Gezerşen İş Merkezi K:2 No:36/4 Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 546 148 78 78",
+    "slug": "doç-dr-aslı-korur-muayenehanesi-adana"
+  },
+  {
+    "name": "Doç. Dr. Emine Alyamaç Sukgen Muayenehanesi",
+    "facilityType": "Solo Practice",
+    "address": "Çınarlı Mah. 61027 Sok. Sunar Nuri Çomu İş Merkezi A Blok No:18/A Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 533 404 86 01",
+    "slug": "doç-dr-emine-alyamaç-sukgen-muayenehanesi-adana"
+  },
+  {
+    "name": "Doç. Dr. Gökmen Sukgen Muayenehanesi",
+    "facilityType": "Solo Practice",
+    "address": "Reşatbey Mah. Fuzuli Cad. Gülek Sitesi No:69/A Seyhan/Adana",
+    "province": "Adana",
+    "country": "Turkey",
+    "phone": "0 533 404 86 01",
+    "slug": "doç-dr-gökmen-sukgen-muayenehanesi-adana"
+  }
+]
