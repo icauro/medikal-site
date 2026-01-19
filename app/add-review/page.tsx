@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   query,
   where,
+  limit,
 } from "firebase/firestore";
 import Link from "next/link";
 
@@ -132,9 +133,11 @@ export default function AddReviewPage() {
   const selectedDoctor = doctors.find((doc) => doc.id === formData.doctorId);
 
   // Search medical facilities
-  const searchFacilities = useMemo(() => {
-    if (!facilitySearch.trim()) return [];
-    const searchLower = facilitySearch.toLowerCase();
+  useEffect(() => {
+    if (!facilitySearch.trim()) {
+      setFacilities([]);
+      return;
+    }
 
     // Debounce search to avoid too many queries
     const timer = setTimeout(async () => {
@@ -166,12 +169,7 @@ export default function AddReviewPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [facilitySearch, db]);
-
-  // Trigger facility search
-  useEffect(() => {
-    searchFacilities();
-  }, [searchFacilities]);
+  }, [facilitySearch]);
 
   // Get selected facility
   const selectedFacility = facilities.find((fac) => fac.id === formData.medicalFacilityId);

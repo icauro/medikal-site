@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 
 interface FacilityData {
   name: string;
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
           googleReviewsEmbedUrl: null,
           userId: null, // No associated user account yet
           verifiedDoctorIds: [],
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           createdBy: decodedToken.uid,
           verified: false, // New facilities start as unverified
         };
