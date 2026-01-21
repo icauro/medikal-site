@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import ListingCard from "@/app/components/ListingCard";
 
 interface MedicalFacility {
@@ -24,45 +23,23 @@ export default function MedicalFacilitiesPage() {
   useEffect(() => {
     async function fetchFacilities() {
       try {
-        const facilitiesCollection = collection(db, "medical_facility_listings");
-        const facilitiesSnapshot = await getDocs(facilitiesCollection);
+        const { data, error } = await supabase
+          .from('medical_facility_listings')
+          .select('*');
 
-        const facilitiesList: MedicalFacility[] = [];
+        if (error) throw error;
 
-        for (const doc of facilitiesSnapshot.docs) {
-          const data = doc.data();
-
-          // Fetch reviews for this facility to calculate average rating
-          let averageRating: number | undefined = undefined;
-          try {
-            const reviewsQuery = query(
-              collection(db, "reviews"),
-              where("medicalFacilityId", "==", doc.id),
-              where("status", "==", "published")
-            );
-            const reviewsSnapshot = await getDocs(reviewsQuery);
-
-            if (!reviewsSnapshot.empty) {
-              const reviews = reviewsSnapshot.docs.map(reviewDoc => reviewDoc.data());
-              const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-              averageRating = totalRating / reviews.length;
-            }
-          } catch (error) {
-            console.warn(`Error fetching reviews for facility ${doc.id}:`, error);
-          }
-
-          facilitiesList.push({
-            id: doc.id,
-            slug: data.slug || "",
-            name: data.name || "",
-            type: data.type || "",
-            province: data.province || undefined,
-            country: data.country || undefined,
-            image: data.image || undefined,
-            rating: averageRating,
-            userId: data.userId,
-          });
-        }
+        const facilitiesList = (data || []).map((facility: any) => convertDatabaseRow({
+          id: facility.id,
+          slug: facility.slug,
+          name: facility.name,
+          type: facility.facility_type,
+          province: facility.province,
+          country: facility.country,
+          image: facility.image,
+          rating: facility.average_rating,
+          userId: facility.user_id
+        }));
 
         setFacilities(facilitiesList);
       } catch (error) {

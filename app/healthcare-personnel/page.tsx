@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import ListingCard from "@/app/components/ListingCard";
 
 // Type definition for Healthcare Personnel
@@ -33,53 +32,26 @@ export default function DoctorsPage() {
       .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
   };
 
-
   useEffect(() => {
     async function fetchDoctors() {
       try {
-        const personnelCollection = collection(db, "healthcare_personnel_listings");
-        // Only fetch personnel of type 'Doctor' for this page
-        const doctorsQuery = query(personnelCollection, where("personnelType", "==", "Doctor"));
-        const doctorsSnapshot = await getDocs(doctorsQuery);
+        const { data, error } = await supabase
+          .from('healthcare_personnel_listings')
+          .select('*');
 
-        const doctorsList: HealthcarePersonnel[] = [];
+        if (error) throw error;
 
-        // Process doctors and calculate ratings from reviews
-        for (const doc of doctorsSnapshot.docs) {
-          const data = doc.data();
-
-          // Fetch reviews for this doctor to calculate average rating
-          let averageRating: number | undefined = undefined;
-          try {
-            const reviewsQuery = query(
-              collection(db, "reviews"),
-              where("doctorId", "==", doc.id),
-              where("status", "==", "published")
-            );
-            const reviewsSnapshot = await getDocs(reviewsQuery);
-
-            if (!reviewsSnapshot.empty) {
-              const reviews = reviewsSnapshot.docs.map(reviewDoc => reviewDoc.data());
-              const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-              averageRating = totalRating / reviews.length;
-            }
-          } catch (error) {
-            console.warn(`Error fetching reviews for healthcare personnel ${doc.id}:`, error);
-            // Continue with undefined rating if reviews can't be fetched
-          }
-
-          doctorsList.push({
-            id: doc.id,
-            slug: data.slug || "",
-            name: data.name || "",
-            specialization: data.specialization || "",
-            bio: data.bio || undefined,
-            image: data.image || undefined,
-            medicalFacility: data.medicalFacility || undefined,
-            rating: averageRating,
-            userId: data.userId,
-          });
-        }
+        const doctorsList = (data || []).map((doctor: any) => convertDatabaseRow({
+          id: doctor.id,
+          slug: doctor.slug,
+          name: doctor.name,
+          specialization: doctor.specialization,
+          bio: doctor.bio,
+          image: doctor.image,
+          medicalFacility: doctor.medical_facility,
+          rating: doctor.average_rating,
+          userId: doctor.user_id
+        }));
 
         setDoctors(doctorsList);
       } catch (error) {
@@ -111,7 +83,6 @@ export default function DoctorsPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold">Healthcare Personnel</h1>
         </div>
-
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (

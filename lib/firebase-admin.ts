@@ -1,56 +1,25 @@
-import { initializeApp, getApps, cert, App } from "firebase-admin/app";
-import { getFirestore, Firestore } from "firebase-admin/firestore";
-import * as fs from 'fs';
-import * as path from 'path';
+/*
+ * DEPRECATED: Firebase Admin SDK
+ * Migration: Converted to Supabase
+ * This file is no longer used. Server-side database operations
+ * should use lib/supabase.ts via API routes.
+ * 
+ * Timeline: 2026-01-21
+ */
 
-// Initialize Firebase Admin
-let app: App | null = null;
-let adminDbInstance: Firestore | null = null;
+// Firebase Admin has been deprecated in favor of Supabase
+const app: any = null;
+const adminDbInstance: any = null;
 
-function initializeFirebaseAdmin(): App {
-  if (getApps().length === 0) {
-    // Try to load service account key from environment variable or default path
-    const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH ||
-                              path.join(process.cwd(), 'mpturkey-ccd57-firebase-adminsdk-fbsvc-898f0c2615.json');
-
-    try {
-      if (fs.existsSync(serviceAccountPath)) {
-        console.log('🔑 Loading Firebase service account key from:', serviceAccountPath);
-        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-
-        app = initializeApp({
-          credential: cert(serviceAccount),
-          projectId: "mpturkey-ccd57",
-        });
-        console.log('✅ Firebase Admin initialized with service account key');
-      } else {
-        throw new Error(`Service account key not found at: ${serviceAccountPath}`);
-      }
-    } catch (error) {
-      console.error('❌ Failed to initialize Firebase Admin:', error);
-      throw error;
-    }
-  } else {
-    app = getApps()[0];
-  }
-  return app;
-}
-
-// Lazy getter for adminDb
-export const getAdminDb = (): Firestore => {
-  if (!adminDbInstance) {
-    const app = initializeFirebaseAdmin();
-    adminDbInstance = getFirestore(app);
-  }
-  return adminDbInstance;
+// Stub implementation - all operations should use Supabase
+export const getAdminDb = (): any => {
+  throw new Error('Firebase Admin SDK is deprecated. Use Supabase client via API routes instead.');
 };
 
-// For backwards compatibility
-export const adminDb: Firestore = new Proxy({} as Firestore, {
+// For backwards compatibility - throws error
+export const adminDb: any = new Proxy({} as any, {
   get: (target, prop) => {
-    const db = getAdminDb();
-    const value = (db as any)[prop];
-    return typeof value === 'function' ? value.bind(db) : value;
+    throw new Error(`Firebase Admin method '${String(prop)}' is deprecated. Use Supabase instead.`);
   }
 });
 

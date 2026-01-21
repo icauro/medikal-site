@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
 
 export default function RoleSelectionPage() {
@@ -26,42 +25,33 @@ export default function RoleSelectionPage() {
     try {
       console.log('🎭 [ROLE] Starting role update...', {
         selectedRole,
-        userId: user.uid,
+        userId: user.id,
         currentProfile: userProfile
       });
       
-      const userRef = doc(db, 'users', user.uid);
-      
+      // Update user role in Supabase
+      const updates: any = {
+        role: selectedRole,
+        updated_at: new Date().toISOString()
+      };
+
       if (selectedRole === 'patient') {
-        // Complete patient signup - set to active immediately
-        console.log('🎭 [ROLE] Updating Firestore for patient...');
-        await updateDoc(userRef, {
-          role: 'patient',
-          accountStatus: 'active',
-          patientAccountData: {
-            preferredLanguage: 'en',
-          },
-          updatedAt: new Date(),
-        });
-
-        console.log('✅ [ROLE] Patient account activated, refreshing profile...');
-        await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
-        window.location.href = '/profile';
+        updates.account_status = 'active';
       } else {
-        // Professional roles need to fill personal data in profile
-        console.log(`🎭 [ROLE] Updating Firestore for ${selectedRole}...`);
-        await updateDoc(userRef, {
-          role: selectedRole,
-          accountStatus: 'pending_personal_data',
-          updatedAt: new Date(),
-        });
-
-        console.log(`✅ [ROLE] ${selectedRole} role set, refreshing profile...`);
-        await refreshUserProfile();
-        console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
-        window.location.href = '/profile';
+        updates.account_status = 'pending_personal_data';
       }
+      
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) throw error;
+
+      console.log(`✅ [ROLE] ${selectedRole} role set, refreshing profile...`);
+      await refreshUserProfile();
+      console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
+      window.location.href = '/profile';
     } catch (err) {
       console.error('🚫 [ROLE] Error updating role:', err);
       setError(`Failed to update account: ${err instanceof Error ? err.message : 'Unknown error'}`);

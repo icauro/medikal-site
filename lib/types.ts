@@ -45,7 +45,7 @@ export type TreatmentPlanPriority = typeof TREATMENT_PLAN_PRIORITIES[number];
 export type CommentSortType = typeof COMMENT_SORT_TYPES[number];
 
 export interface UserProfile {
-  uid: string;
+  id: string;
   email: string;
   displayName: string;
   photoURL?: string;
@@ -138,6 +138,7 @@ export interface HealthcarePersonnelListing {
   slug?: string;
   image?: string;
   country: string;   // Required field
+  province?: string; // State/province based on country
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
@@ -192,13 +193,9 @@ export interface MedicalFacilityListing {
   id: string;
   name: string;
   facilityType: MedicalFacilityType;
-  address: string;   // Required for public listing
   country: string;    // Required field
-  province: string;   // Required field - state/province based on country
-  phone?: string;
-  email?: string;
-  website?: string;
-  specializations?: MedicalSpecialization[];
+  province?: string;  // State/province based on country
+  city?: string;      // City/municipality
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
@@ -206,6 +203,8 @@ export interface MedicalFacilityListing {
   userId?: string; // Link to user account (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
+  image?: string;
+  links?: string[];
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin UID
@@ -249,18 +248,17 @@ export interface AgencyAccountData {
 export interface AgencyListing {
   id: string;
   name: string;
-  country: string;    // Required field
-  province: string;   // Required field - state/province based on country
-  address: string;    // Required for public listing
-  phone?: string;
-  email?: string;
-  website?: string;
+  country?: string;    // Optional field
+  province?: string;   // State/province based on country
+  city?: string;       // City/municipality
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
   googleReviewsEmbedUrl?: string;
   userId?: string; // Link to user account (admin-controlled)
   slug?: string;
+  image?: string;
+  links?: string[];
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin UID

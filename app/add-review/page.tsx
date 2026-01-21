@@ -3,17 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  serverTimestamp,
-  query,
-  where,
-  limit,
-} from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 interface HealthcarePersonnel {
@@ -97,15 +87,20 @@ export default function AddReviewPage() {
   useEffect(() => {
     const fetchPersonnel = async () => {
       try {
-        const personnelRef = collection(db, "healthcare_personnel_listings");
-        const snapshot = await getDocs(personnelRef);
-        const personnelData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().name || "",
-          specialization: doc.data().specialization || "",
-          slug: doc.data().slug || "",
+        const { data, error } = await supabase
+          .from('healthcare_personnel_listings')
+          .select('*');
+
+        if (error) throw error;
+
+        const doctorsList = (data || []).map((doctor: any) => ({
+          id: doctor.id,
+          name: doctor.name,
+          specialization: doctor.specialization,
+          slug: doctor.slug
         }));
-        setDoctors(personnelData);
+
+        setDoctors(doctorsList);
       } catch (error) {
         console.error("Error fetching healthcare personnel:", error);
       } finally {
@@ -139,36 +134,32 @@ export default function AddReviewPage() {
       return;
     }
 
-    // Debounce search to avoid too many queries
-    const timer = setTimeout(async () => {
-      if (facilitySearch.length >= 2) {
-        setFacilityLoading(true);
-        try {
-          const facilitiesRef = collection(db, "medical_facility_listings");
-          const q = query(
-            facilitiesRef,
-            where("name", ">=", facilitySearch),
-            where("name", "<=", facilitySearch + "\uf8ff"),
-            limit(20)
-          );
-          const snapshot = await getDocs(q);
-          const facilitiesData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.data().name || "",
-            facilityType: doc.data().facilityType || "",
-            province: doc.data().province || "",
-            slug: doc.data().slug || "",
-          }));
-          setFacilities(facilitiesData);
-        } catch (error) {
-          console.error("Error searching facilities:", error);
-        } finally {
-          setFacilityLoading(false);
-        }
-      }
-    }, 300);
+    const searchFacilities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('medical_facility_listings')
+          .select('*')
+          .ilike('name', `%${facilitySearch}%`)
+          .limit(10);
 
-    return () => clearTimeout(timer);
+        if (error) throw error;
+
+        const facilitiesList = (data || []).map((facility: any) => ({
+          id: facility.id,
+          name: facility.name,
+          facilityType: facility.facility_type,
+          province: facility.province,
+          slug: facility.slug
+        }));
+
+        setFacilities(facilitiesList);
+      } catch (error) {
+        console.error("Error searching facilities:", error);
+        setFacilities([]);
+      }
+    };
+
+    searchFacilities();
   }, [facilitySearch]);
 
   // Get selected facility
@@ -225,57 +216,24 @@ export default function AddReviewPage() {
     setSubmitting(true);
 
     try {
-      // Generate unique review ID
-      const reviewId = `review_${Date.now()}_${user.uid}_${formData.doctorId}`;
-
-      // Prepare review data for Firestore
+      // Submit review to database
       const reviewData = {
-        // User information
-        userId: user.uid,
-        userDisplayName: userProfile.displayName,
-
-        // Doctor information
-        doctorId: formData.doctorId,
-        doctorName: selectedDoctor.name,
-        doctorSpecialization: selectedDoctor.specialization,
-        doctorSlug: selectedDoctor.slug,
-
-        // Medical facility information
-        medicalFacilityId: formData.medicalFacilityId,
-        medicalFacilityName: selectedFacility?.name || "",
-        medicalFacilityType: selectedFacility?.facilityType || "",
-        medicalFacilityProvince: selectedFacility?.province || "",
-        medicalFacilitySlug: selectedFacility?.slug || "",
-
-        // Review content
-        categories: formData.categories,
+        user_id: user.id,
+        user_display_name: userProfile.displayName,
+        facility_id: formData.medicalFacilityId,
+        doctor_id: formData.doctorId,
         rating: formData.rating,
-        experienceText: formData.experienceText.trim(),
-
-        // Metadata
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-
-        // Future media uploads (empty arrays for now)
-        media: {
-          images: [], // Array of image URLs from Firebase Storage (future use)
-          videos: [], // Array of video URLs from Firebase Storage (future use)
-        },
-
-        // Review status
-        status: "published", // Could be 'published', 'pending', 'rejected' in future
-        helpful: 0, // Number of helpful votes (future feature)
+        comment: formData.experienceText,
+        categories: formData.categories,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      // Save to Firestore
-      const reviewRef = doc(db, "reviews", reviewId);
-      await setDoc(reviewRef, reviewData);
+      const { error: insertError } = await supabase
+        .from('reviews')
+        .insert([reviewData]);
 
-      // Success feedback
-      alert("Thank you! Your review has been submitted successfully.");
-
-      // Redirect to homepage
-      router.push("/");
+      if (insertError) throw insertError;
 
     } catch (error) {
       console.error("Error submitting review:", error);

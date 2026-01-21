@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import {
   HealthcarePersonnelListing,
   MedicalFacilityListing,
   AgencyListing,
 } from "@/lib/types";
 import ListingCard from "@/app/components/ListingCard";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 
 type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
@@ -28,43 +27,52 @@ export default function HealthcareDatabase() {
     "Turkey",
   ];
 
-  // Fetch data from Firestore
+  // Fetch data from Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch healthcare personnel
-        const personnelSnapshot = await getDocs(
-          collection(db, "healthcare_personnel_listings")
-        );
-        const personnelData = personnelSnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as HealthcarePersonnelListing)
-        );
-        setPersonnel(personnelData);
+        // Fetch healthcare personnel listings
+        const { data: personnelData, error: personnelError } = await supabase
+          .from('healthcare_personnel_listings')
+          .select('*');
 
-        // Fetch medical facilities
-        const facilitiesSnapshot = await getDocs(
-          collection(db, "medical_facility_listings")
-        );
-        const facilitiesData = facilitiesSnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as MedicalFacilityListing)
-        );
-        setFacilities(facilitiesData);
+        if (personnelError) {
+          console.error("🚫 [DATABASE] Error fetching personnel:", personnelError);
+        } else {
+          const converted = (personnelData || []).map(row => convertDatabaseRow(row));
+          setPersonnel(converted as HealthcarePersonnelListing[]);
+        }
 
-        // Fetch agencies
-        const agenciesSnapshot = await getDocs(
-          collection(db, "agency_listings")
-        );
-        const agenciesData = agenciesSnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as AgencyListing)
-        );
-        setAgencies(agenciesData);
+        // Fetch medical facility listings
+        const { data: facilitiesData, error: facilitiesError } = await supabase
+          .from('medical_facility_listings')
+          .select('*');
+
+        if (facilitiesError) {
+          console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesError);
+        } else {
+          const converted = (facilitiesData || []).map(row => convertDatabaseRow(row));
+          setFacilities(converted as MedicalFacilityListing[]);
+        }
+
+        // Fetch agencies listings
+        const { data: agenciesData, error: agenciesError } = await supabase
+          .from('agency_listings')
+          .select('*');
+
+        if (agenciesError) {
+          console.error("🚫 [DATABASE] Error fetching agencies:", agenciesError);
+        } else {
+          const converted = (agenciesData || []).map(row => convertDatabaseRow(row));
+          setAgencies(converted as AgencyListing[]);
+        }
 
         console.log("📋 [DATABASE] Loaded healthcare data", {
-          personnel: personnelData.length,
-          facilities: facilitiesData.length,
-          agencies: agenciesData.length,
+          personnel: personnelData?.length || 0,
+          facilities: facilitiesData?.length || 0,
+          agencies: agenciesData?.length || 0,
         });
       } catch (error) {
         console.error("🚫 [DATABASE] Error fetching data:", error);
@@ -97,10 +105,7 @@ export default function HealthcareDatabase() {
   const filterFacilities = (items: MedicalFacilityListing[]) => {
     return items.filter((item) => {
       const matchesSearch =
-        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.specializations?.some((spec) =>
-          spec.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
 
@@ -112,7 +117,7 @@ export default function HealthcareDatabase() {
     return items.filter((item) => {
       const matchesSearch =
         item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.address?.toLowerCase().includes(searchQuery.toLowerCase());
+        item.city?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
 
@@ -271,7 +276,7 @@ export default function HealthcareDatabase() {
                       href={`/medical-facilities/${facility.slug}`}
                       hasUser={!!facility.userId}
                       emoji="🏥"
-                      primaryInfo={facility.specializations?.join(", ") || "General"}
+                      primaryInfo={facility.city || "Medical Facility"}
                       secondaryInfo={facility.province ? `${facility.province}, ${facility.country}` : undefined}
                       rating={facility.rating}
                     />

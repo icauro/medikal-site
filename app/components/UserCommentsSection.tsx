@@ -2,21 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { UserComment, CommentSortType } from "@/lib/types";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-  CollectionReference,
-} from "firebase/firestore";
 import Link from "next/link";
 
 type EntityType = "healthcare_personnel" | "medical_facility" | "agency";
@@ -61,52 +48,39 @@ export default function UserCommentsSection({
   const loadComments = async () => {
     setCommentsLoading(true);
     try {
-      const listingPath = getCollectionPath();
-      const commentsRef = collection(
-        db,
-        listingPath,
-        entityId,
-        "comments"
-      ) as CollectionReference<UserComment>;
-      let q;
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('listing_type', entityType)
+        .eq('listing_id', entityId)
+        .is('parent_comment_id', null)
+        .order('created_at', { ascending: sortBy === 'newest' });
 
-      switch (sortBy) {
-        case "newest":
-          q = query(
-            commentsRef,
-            orderBy("createdAt", "desc")
-          );
-          break;
-        case "oldest":
-          q = query(
-            commentsRef,
-            orderBy("createdAt", "asc")
-          );
-          break;
-        case "top":
-        default:
-          q = query(
-            commentsRef,
-            orderBy("score", "desc")
-          );
+      if (error) {
+        console.error("📋 [COMMENTS] Supabase error details:", {
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+          details: error.details,
+          fullError: JSON.stringify(error)
+        });
+        throw error;
       }
 
-      const snapshot = await getDocs(q);
-      const loadedComments = snapshot.docs
-        .filter((doc) => !doc.data().isDeleted) // Filter out soft-deleted comments
-        .map((doc) => {
-          const data = doc.data();
-          const convertTimestamp = (ts: any) => {
-            if (ts instanceof Date) return ts;
-            return ts?.toDate?.() || new Date();
-          };
-          return {
-            ...data,
-            id: doc.id,
-            createdAt: convertTimestamp(data.createdAt),
-            updatedAt: convertTimestamp(data.updatedAt),
-          } as UserComment;
-        });
+      const loadedComments = (data || []).map((comment: any) => convertDatabaseRow({
+        id: comment.id,
+        userId: comment.user_id,
+        userDisplayName: comment.user_display_name,
+        content: comment.content,
+        rating: comment.rating,
+        entityId: comment.listing_id,
+        entityType: comment.listing_type,
+        parentId: comment.parent_comment_id,
+        upvotes: comment.upvotes || [],
+        downvotes: comment.downvotes || [],
+        createdAt: new Date(comment.created_at),
+        updatedAt: new Date(comment.updated_at)
+      }));
 
       setComments(loadedComments);
 
@@ -118,16 +92,20 @@ export default function UserCommentsSection({
       if (user) {
         const votes = new Map<string, "upvote" | "downvote">();
         loadedComments.forEach((comment) => {
-          if (comment.upvotes?.includes(user.uid)) {
+          if (comment.upvotes?.includes(user.id)) {
             votes.set(comment.id, "upvote");
-          } else if (comment.downvotes?.includes(user.uid)) {
+          } else if (comment.downvotes?.includes(user.id)) {
             votes.set(comment.id, "downvote");
           }
         });
         setUserVotes(votes);
       }
-    } catch (error) {
-      console.error("📋 [COMMENTS] Error loading comments:", error);
+    } catch (error: any) {
+      console.error("📋 [COMMENTS] Error loading comments:", {
+        message: error?.message,
+        code: error?.code,
+        fullError: error
+      });
     } finally {
       setCommentsLoading(false);
     }
@@ -138,24 +116,23 @@ export default function UserCommentsSection({
 
     setSubmitting(true);
     try {
-      const listingPath = getCollectionPath();
-      await addDoc(
-        collection(db, listingPath, entityId, "comments"),
-        {
-          userId: user.uid,
-          userDisplayName: user.displayName || "Anonymous",
-          userPhotoUrl: user.photoURL || null,
-          content: newComment,
-          upvotes: [],
-          downvotes: [],
-          score: 0,
-          replyCount: 0,
-          isEdited: false,
-          isDeleted: false,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }
-      );
+      const commentData = {
+        user_id: user.id,
+        content: newComment.trim(),
+        listing_id: entityId,
+        listing_type: entityType,
+        parent_comment_id: parentCommentId || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('comments')
+        .insert([commentData]);
+
+      if (error) throw error;
+
+      console.log('✅ [COMMENTS] Comment submitted successfully');
 
       setNewComment("");
       setReplyingTo(null);
@@ -178,33 +155,39 @@ export default function UserCommentsSection({
     if (!comment) return;
 
     const currentVote = userVotes.get(commentId);
-    const listingPath = getCollectionPath();
-    const commentRef = doc(db, listingPath, entityId, "comments", commentId);
 
     try {
       let newUpvotes = [...(comment.upvotes || [])];
       let newDownvotes = [...(comment.downvotes || [])];
 
       // Remove existing vote if present
-      newUpvotes = newUpvotes.filter((userId) => userId !== user.uid);
-      newDownvotes = newDownvotes.filter((userId) => userId !== user.uid);
+      newUpvotes = newUpvotes.filter((userId) => userId !== user.id);
+      newDownvotes = newDownvotes.filter((userId) => userId !== user.id);
 
       // Add new vote if different
       if (currentVote !== voteType) {
         if (voteType === "upvote") {
-          newUpvotes.push(user.uid);
+          newUpvotes.push(user.id);
         } else {
-          newDownvotes.push(user.uid);
+          newDownvotes.push(user.id);
         }
       }
 
       const newScore = newUpvotes.length - newDownvotes.length;
 
-      await updateDoc(commentRef, {
-        upvotes: newUpvotes,
-        downvotes: newDownvotes,
-        score: newScore,
-      });
+      // Update votes in Supabase
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          upvotes: newUpvotes,
+          downvotes: newDownvotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      console.log('✅ [COMMENTS] Vote updated successfully');
 
       // Update local state
       const newVotes = new Map(userVotes);
@@ -225,28 +208,23 @@ export default function UserCommentsSection({
     if (!confirm("Are you sure you want to delete this comment?")) return;
 
     try {
-      const listingPath = getCollectionPath();
-      
-      // 1. Soft-delete the comment (mark as deleted)
-      await updateDoc(doc(db, listingPath, entityId, "comments", commentId), {
-        isDeleted: true,
-        updatedAt: serverTimestamp(),
-      });
-      
-      // 2. Cascade delete: Also soft-delete all replies to this comment
-      const repliesRef = collection(db, listingPath, entityId, "comments", commentId, "replies");
-      const repliesSnapshot = await getDocs(repliesRef);
-      
-      const deleteRepliesPromises = repliesSnapshot.docs.map((doc) =>
-        updateDoc(doc.ref, {
-          isDeleted: true,
-          updatedAt: serverTimestamp(),
+      // Soft-delete the comment
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          is_deleted: true,
+          updated_at: new Date().toISOString()
         })
-      );
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      console.log('✅ [COMMENTS] Comment deleted successfully');
+      loadComments();
       
-      await Promise.all(deleteRepliesPromises);
+      // await Promise.all(deleteRepliesPromises);
       
-      console.log(`📋 [COMMENTS] Soft-deleted comment ${commentId} and ${repliesSnapshot.docs.length} replies`);
+      console.log(`📋 [COMMENTS] Soft-deleted comment ${commentId}`);
       loadComments();
     } catch (error) {
       console.error("📋 [COMMENTS] Error deleting comment:", error);
@@ -303,10 +281,10 @@ export default function UserCommentsSection({
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
           <div className="flex gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold flex-shrink-0">
-              {user.displayName?.charAt(0).toUpperCase() || "U"}
+              {userProfile?.displayName?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-white mb-1">{user.displayName}</p>
+              <p className="text-sm font-medium text-white mb-1">{userProfile?.displayName}</p>
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -443,35 +421,32 @@ function CommentThread({
     if (expanded) {
       setLoadingReplies(true);
       try {
-        const listingPath = getCollectionPath();
-        const repliesPaths = [...pathSegments, comment.id, "replies"];
-        const pathDisplay = repliesPaths.join("/");
-        console.log(`📋 [COMMENTS] Loading replies from: ${listingPath}/${entityId}/${pathDisplay}`);
-        
-        const q = query(
-          collection(db, listingPath, entityId, ...repliesPaths) as CollectionReference<UserComment>,
-          orderBy("createdAt", "asc")
-        );
-        const snapshot = await getDocs(q);
-        console.log(`📋 [COMMENTS] Found ${snapshot.docs.length} replies (before filtering)`);
-        
-        const loadedReplies = snapshot.docs
-          .filter((doc) => !doc.data().isDeleted)
-          .map((doc) => {
-            const data = doc.data();
-            const convertTimestamp = (ts: any) => {
-              if (ts instanceof Date) return ts;
-              return ts?.toDate?.() || new Date();
-            };
-            return {
-              ...data,
-              id: doc.id,
-              createdAt: convertTimestamp(data.createdAt),
-              updatedAt: convertTimestamp(data.updatedAt),
-            } as UserComment;
-          });
-        
-        console.log(`📋 [COMMENTS] Loaded ${loadedReplies.length} replies (after filtering deleted)`);
+        const { data, error } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('parent_comment_id', comment.id)
+          .eq('listing_id', entityId)
+          .eq('listing_type', entityType)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const loadedReplies = (data || []).map((reply: any) => convertDatabaseRow({
+          id: reply.id,
+          userId: reply.user_id,
+          userDisplayName: reply.user_display_name,
+          content: reply.content,
+          rating: reply.rating,
+          entityId: reply.listing_id,
+          entityType: reply.listing_type,
+          parentId: reply.parent_comment_id,
+          upvotes: reply.upvotes || [],
+          downvotes: reply.downvotes || [],
+          createdAt: new Date(reply.created_at),
+          updatedAt: new Date(reply.updated_at)
+        }));
+
+        console.log(`📋 [COMMENTS] Loaded ${loadedReplies.length} replies for comment ${comment.id}`);
         setReplies(loadedReplies);
 
         // Expand all nested replies by default
@@ -482,9 +457,9 @@ function CommentThread({
         if (user) {
           const votes = new Map<string, "upvote" | "downvote">();
           loadedReplies.forEach((reply) => {
-            if (reply.upvotes?.includes(user.uid)) {
+            if (reply.upvotes?.includes(user.id)) {
               votes.set(reply.id, "upvote");
-            } else if (reply.downvotes?.includes(user.uid)) {
+            } else if (reply.downvotes?.includes(user.id)) {
               votes.set(reply.id, "downvote");
             }
           });
@@ -522,34 +497,40 @@ function CommentThread({
     }
 
     const currentVote = userVote;
-    const listingPath = getCollectionPath();
-    const commentPaths = [...pathSegments, comment.id];
-    const commentRef = doc(db, listingPath, entityId, ...commentPaths);
+    // const listingPath = getCollectionPath();
+    // const commentPaths = [...pathSegments, comment.id];
+    // const commentRef = doc(db, listingPath, entityId, ...commentPaths);
 
     try {
       let newUpvotes = [...(comment.upvotes || [])];
       let newDownvotes = [...(comment.downvotes || [])];
 
-      newUpvotes = newUpvotes.filter((userId) => userId !== user.uid);
-      newDownvotes = newDownvotes.filter((userId) => userId !== user.uid);
+      newUpvotes = newUpvotes.filter((userId) => userId !== user.id);
+      newDownvotes = newDownvotes.filter((userId) => userId !== user.id);
 
       if (currentVote !== voteType) {
         if (voteType === "upvote") {
-          newUpvotes.push(user.uid);
+          newUpvotes.push(user.id);
         } else {
-          newDownvotes.push(user.uid);
+          newDownvotes.push(user.id);
         }
       }
 
       const newScore = newUpvotes.length - newDownvotes.length;
 
-      await updateDoc(commentRef, {
-        upvotes: newUpvotes,
-        downvotes: newDownvotes,
-        score: newScore,
-      });
+      // Update votes in Supabase
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          upvotes: newUpvotes,
+          downvotes: newDownvotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', comment.id);
 
-      console.log(`✅ [COMMENTS] Voted on comment at path: ${[...pathSegments, comment.id].join("/")}`);
+      if (error) throw error;
+
+      console.log(`✅ [COMMENTS] Voted on comment ${comment.id}`);
       if (onCommentUpdated) {
         onCommentUpdated();
       }
@@ -563,15 +544,16 @@ function CommentThread({
 
     setSubmittingEdit(true);
     try {
-      const listingPath = getCollectionPath();
-      const commentPaths = [...pathSegments, comment.id];
-      const commentRef = doc(db, listingPath, entityId, ...commentPaths);
-      
-      await updateDoc(commentRef, {
-        content: editContent,
-        isEdited: true,
-        updatedAt: serverTimestamp(),
-      });
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          content: editContent.trim(),
+          is_edited: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', comment.id);
+
+      if (error) throw error;
       
       console.log(`✅ [COMMENTS] Edited comment ${comment.id}`);
       setIsEditing(false);
@@ -593,40 +575,23 @@ function CommentThread({
 
     setSubmittingReply(true);
     try {
-      const listingPath = getCollectionPath();
-      const repliesPaths = [...pathSegments, comment.id, "replies"];
-      const pathDisplay = repliesPaths.join("/");
-      console.log(`📋 [COMMENTS] Submitting reply to: ${listingPath}/${entityId}/${pathDisplay}`);
-      
-      // Add the reply to the replies subcollection
-      const docRef = await addDoc(
-        collection(db, listingPath, entityId, ...repliesPaths),
-        {
-          userId: user.uid,
-          userDisplayName: user.displayName || "Anonymous",
-          userPhotoUrl: user.photoURL || null,
-          content: replyContent,
-          upvotes: [],
-          downvotes: [],
-          score: 0,
-          replyCount: 0,
-          isEdited: false,
-          isDeleted: false,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }
-      );
-      
-      console.log(`✅ [COMMENTS] Reply created with ID: ${docRef.id}`);
+      const replyData = {
+        user_id: user.id,
+        content: replyContent.trim(),
+        listing_id: entityId,
+        listing_type: entityType,
+        parent_comment_id: comment.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      // Increment parent comment's reply count
-      const parentPaths = [...pathSegments, comment.id];
-      const parentRef = doc(db, listingPath, entityId, ...parentPaths);
-      
-      await updateDoc(parentRef, {
-        replyCount: (comment.replyCount || 0) + 1,
-      });
-      console.log(`📋 [COMMENTS] Updated parent reply count to ${(comment.replyCount || 0) + 1}`);
+      const { error } = await supabase
+        .from('comments')
+        .insert([replyData]);
+
+      if (error) throw error;
+
+      console.log(`✅ [COMMENTS] Reply created successfully`);
 
       setReplyContent("");
       setReplyingTo(false);
@@ -736,7 +701,7 @@ function CommentThread({
               )}
 
               {/* Delete Button */}
-              {user && (user.uid === comment.userId || userProfile?.role === 'admin') && (
+              {user && (user.id === comment.userId || userProfile?.role === 'admin') && (
                 <>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
@@ -758,7 +723,7 @@ function CommentThread({
       </div>
 
       {/* Edit Form */}
-      {isEditing && user && user.uid === comment.userId && (
+      {isEditing && user && user.id === comment.userId && (
         <div className="bg-zinc-900/20 border border-zinc-800 rounded-lg p-3">
           <div className="flex gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">

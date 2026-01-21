@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { UserProfile, UserRole, HealthcarePersonnelListing, MedicalFacilityListing, AgencyListing, SupportTicket } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 // Modals
 import UserCRUDModal from "./components/user-data/UserCRUDModal";
@@ -45,31 +44,33 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       // Fetch listings first (public read access)
-      const [personnelSnap, facilitiesSnap, agenciesSnap] = await Promise.all([
-        getDocs(collection(db, "healthcare_personnel_listings")),
-        getDocs(collection(db, "medical_facility_listings")),
-        getDocs(collection(db, "agency_listings"))
+      const [personnelRes, facilitiesRes, agenciesRes] = await Promise.all([
+        supabase.from('healthcare_personnel_listings').select('*'),
+        supabase.from('medical_facility_listings').select('*'),
+        supabase.from('agency_listings').select('*')
       ]);
 
       setOpenData({
-        personnel: personnelSnap.docs.map(d => ({ id: d.id, ...d.data() } as HealthcarePersonnelListing)),
-        facilities: facilitiesSnap.docs.map(d => ({ id: d.id, ...d.data() } as MedicalFacilityListing)),
-        agencies: agenciesSnap.docs.map(d => ({ id: d.id, ...d.data() } as AgencyListing))
+        personnel: personnelRes.data || [],
+        facilities: facilitiesRes.data || [],
+        agencies: agenciesRes.data || []
       });
 
       // Fetch users and tickets (requires admin permission)
-      const [usersSnap, ticketsSnap] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(collection(db, "support_tickets"))
+      const [usersRes, ticketsRes] = await Promise.all([
+        supabase.from('users').select('*'),
+        supabase.from('support_tickets').select('*')
       ]);
 
-      const usersList = usersSnap.docs.map(doc => ({
-        ...doc.data(),
-        uid: doc.id,
-      } as UserProfile));
-      setUsers(usersList);
+      setUsers(usersRes.data || []);
+      setTickets(ticketsRes.data || []);
 
-      setTickets(ticketsSnap.docs.map(d => ({ id: d.id, ...d.data() } as SupportTicket)));
+      if (usersRes.error) {
+        console.error("🚫 [ADMIN] Error fetching users:", usersRes.error);
+      }
+      if (ticketsRes.error) {
+        console.error("🚫 [ADMIN] Error fetching tickets:", ticketsRes.error);
+      }
 
     } catch (error) {
       console.error("🚫 [ADMIN] Error fetching admin data:", error);
@@ -142,7 +143,7 @@ export default function AdminDashboard() {
                   <td colSpan={5} className="p-8 text-center text-zinc-500">No users found</td>
                 </tr>
               ) : users.map(user => (
-                <tr key={user.uid} className="hover:bg-zinc-800/50">
+                <tr key={user.id} className="hover:bg-zinc-800/50">
                   <td className="p-4">
                     <div className="font-medium">{user.displayName || 'Unnamed'}</div>
                     <div className="text-xs text-zinc-500">{user.email}</div>
@@ -224,7 +225,7 @@ export default function AdminDashboard() {
                 <td colSpan={7} className="p-8 text-center text-zinc-500">No healthcare personnel found</td>
               </tr>
             ) : personnelUsers.map(user => (
-              <tr key={user.uid} className="hover:bg-zinc-800/50">
+              <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
                   <div className="font-medium">{user.healthcarePersonnelAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
@@ -309,7 +310,7 @@ export default function AdminDashboard() {
                 <td colSpan={6} className="p-8 text-center text-zinc-500">No medical facilities found</td>
               </tr>
             ) : facilityUsers.map(user => (
-              <tr key={user.uid} className="hover:bg-zinc-800/50">
+              <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
                   <div className="font-medium">{user.medicalFacilityAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
@@ -379,7 +380,7 @@ export default function AdminDashboard() {
                 <td colSpan={5} className="p-8 text-center text-zinc-500">No agencies found</td>
               </tr>
             ) : agencyUsers.map(user => (
-              <tr key={user.uid} className="hover:bg-zinc-800/50">
+              <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
                   <div className="font-medium">{user.agencyAccountData?.name || user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
@@ -444,7 +445,7 @@ export default function AdminDashboard() {
                 <td colSpan={5} className="p-8 text-center text-zinc-500">No patients found</td>
               </tr>
             ) : patientUsers.map(user => (
-              <tr key={user.uid} className="hover:bg-zinc-800/50">
+              <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4 font-medium">{user.displayName || 'Unnamed User'}</td>
                 <td className="p-4 text-sm text-zinc-400">{user.email}</td>
                 <td className="p-4">
@@ -532,7 +533,7 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
+                      setSelectedUser(users.find(u => u.id === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
                         setIsPersonnelModalOpen(true);
@@ -604,7 +605,7 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
+                        setSelectedUser(users.find(u => u.id === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
                         setIsFacilityModalOpen(true);
@@ -671,7 +672,7 @@ export default function AdminDashboard() {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {
-                        setSelectedUser(users.find(u => u.uid === item.userId) || null);
+                        setSelectedUser(users.find(u => u.id === item.userId) || null);
                         setSelectedOpenData(item);
                         setModalMode('edit');
                         setIsAgencyModalOpen(true);

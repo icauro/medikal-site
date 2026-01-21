@@ -26,7 +26,7 @@ export default function UserMenu() {
     hasProfile: !!userProfile,
     userRole: userProfile?.role,
     userEmail: user?.email,
-    userUid: user?.uid,
+    userId: user?.id,
     accountStatus: userProfile?.accountStatus
   });
 
@@ -114,6 +114,12 @@ export default function UserMenu() {
     }
   };
 
+  // Return null if profile isn't loaded yet
+  if (!userProfile) {
+    console.log('⚠️ [USERMENU] userProfile not loaded, returning null');
+    return null;
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -123,19 +129,19 @@ export default function UserMenu() {
         {userProfile.photoURL ? (
           <Image
             src={userProfile.photoURL}
-            alt={userProfile.displayName}
+            alt={userProfile.displayName || 'User avatar'}
             width={32}
             height={32}
             className="rounded-full ring-2 ring-zinc-700 hover:ring-zinc-600"
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-sm font-medium ring-2 ring-zinc-700 hover:ring-zinc-600">
-            {userProfile.displayName.charAt(0).toUpperCase()}
+            {(userProfile.displayName || 'U').charAt(0).toUpperCase()}
           </div>
         )}
         <div className="hidden md:block text-left">
           <div className="text-white text-sm font-medium">
-            {userProfile.displayName}
+            {userProfile.displayName || 'User'}
           </div>
           <div className={`text-xs ${getRoleColor(userProfile.role)}`}>
             {formatRole(userProfile.role)}
@@ -167,12 +173,12 @@ export default function UserMenu() {
                 />
               ) : (
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-lg font-bold">
-                  {userProfile.displayName.charAt(0).toUpperCase()}
+                  {(userProfile.displayName || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="flex-1">
-                <div className="text-white font-semibold">{userProfile.displayName}</div>
-                <div className="text-zinc-400 text-sm">{userProfile.email}</div>
+                <div className="text-white font-semibold">{userProfile.displayName || 'User'}</div>
+                <div className="text-zinc-400 text-sm">{userProfile.email || 'No email'}</div>
               </div>
             </div>
             <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getRoleBadgeColor(userProfile.role)}`}>

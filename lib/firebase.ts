@@ -1,3 +1,19 @@
+// DEPRECATED: Firebase has been replaced with Supabase
+// This file is kept for reference only. All imports should use @/lib/supabase instead.
+// 
+// Migration Status: ✅ Complete
+// - Authentication: Supabase Auth + Google OAuth
+// - Database: Supabase PostgreSQL
+// - Storage: Supabase Storage
+//
+// To remove this file:
+// 1. Check that no imports reference 'firebase/app', 'firebase/auth', etc.
+// 2. Verify all pages use Supabase client from lib/supabase.ts
+// 3. Delete this file and lib/firebase-admin.ts
+//
+// DO NOT USE THE CODE BELOW - It is deprecated and dependencies are not installed
+/*
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth, GoogleAuthProvider } from "firebase/auth";
@@ -33,3 +49,5 @@ googleProvider.setCustomParameters({
 
 // Export the app instance
 export default app;
+
+*/

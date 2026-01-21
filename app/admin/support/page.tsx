@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { SupportTicket, TicketStatus, TicketPriority, TicketMessage } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function AdminSupportPage() {
@@ -25,30 +24,21 @@ export default function AdminSupportPage() {
 
   const fetchTickets = async () => {
     try {
-      const ticketsRef = collection(db, "support_tickets");
-      const ticketsQuery = query(ticketsRef, orderBy("updatedAt", "desc"));
-      const querySnapshot = await getDocs(ticketsQuery);
-      
-      const ticketsData: SupportTicket[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        ticketsData.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-          resolvedAt: data.resolvedAt?.toDate(),
-          closedAt: data.closedAt?.toDate(),
-          messages: (data.messages || []).map((msg: any) => ({
-            ...msg,
-            createdAt: msg.createdAt?.toDate(),
-          })),
-        } as SupportTicket);
-      });
+      // Fetch tickets from support_tickets table
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      setTickets(ticketsData);
+      if (error) {
+        console.error('❌ [TICKETS] Error fetching tickets:', error);
+        throw error;
+      }
+
+      setTickets(data || []);
+      console.log('✅ [TICKETS] Fetched', (data || []).length, 'support tickets');
     } catch (error) {
-      console.error("Error fetching tickets:", error);
+      console.error("🚫 [TICKETS] Error fetching tickets:", error);
       setError("Failed to fetch support tickets");
     } finally {
       setLoading(false);
@@ -62,27 +52,26 @@ export default function AdminSupportPage() {
     setError(null);
 
     try {
-      const ticketRef = doc(db, "support_tickets", ticketId);
-      const updateData: any = {
-        status: newStatus,
-        updatedAt: serverTimestamp(),
-      };
-
-      if (newStatus === "resolved") {
-        updateData.resolvedAt = serverTimestamp();
-        updateData.resolvedBy = user.uid;
-      } else if (newStatus === "closed") {
-        updateData.closedAt = serverTimestamp();
-      }
-
-      await updateDoc(ticketRef, updateData);
+      // Update ticket status and status_changed_at timestamp
+      const { error: updateError } = await supabase
+        .from('support_tickets')
+        .update({ 
+          status: newStatus,
+          status_changed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ticketId);
+      
+      if (updateError) throw updateError;
+      
+      console.log('✅ [TICKETS] Ticket status updated:', ticketId, '->', newStatus);
       await fetchTickets();
       
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket({ ...selectedTicket, status: newStatus });
       }
     } catch (error) {
-      console.error("Error updating ticket status:", error);
+      console.error("🚫 [TICKETS] Error updating ticket status:", error);
       setError("Failed to update ticket status");
     } finally {
       setProcessing(null);
@@ -96,11 +85,9 @@ export default function AdminSupportPage() {
     setError(null);
 
     try {
-      const ticketRef = doc(db, "support_tickets", ticketId);
       const ticket = tickets.find((t) => t.id === ticketId);
       if (!ticket) return;
 
-      // Use Date objects for messages array (serverTimestamp() not supported in arrays)
       if (userProfile.role !== "admin") {
         setProcessing(null);
         setError("Admin role required to reply");
@@ -109,7 +96,7 @@ export default function AdminSupportPage() {
 
       const newMessage: TicketMessage = {
         id: Date.now().toString(),
-        authorId: user.uid,
+        authorId: user.id,
         authorName: userProfile.displayName,
         authorRole: userProfile.role,
         content: replyContent,
@@ -117,14 +104,20 @@ export default function AdminSupportPage() {
         isInternal: false,
       };
 
-      const updatedMessages = [...ticket.messages, newMessage];
+      const updatedMessages = [...(ticket.messages || []), newMessage];
 
-      await updateDoc(ticketRef, {
-        messages: updatedMessages,
-        status: ticket.status === "closed" ? "open" : ticket.status,
-        updatedAt: serverTimestamp(),
-      });
+      // Update ticket with new message
+      const { error: updateError } = await supabase
+        .from('support_tickets')
+        .update({
+          messages: updatedMessages,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ticketId);
 
+      if (updateError) throw updateError;
+
+      console.log('✅ [TICKETS] Reply added to ticket:', ticketId);
       setReplyContent("");
       await fetchTickets();
       
@@ -132,7 +125,7 @@ export default function AdminSupportPage() {
         setSelectedTicket({ ...selectedTicket, messages: updatedMessages });
       }
     } catch (error) {
-      console.error("Error adding reply:", error);
+      console.error("🚫 [TICKETS] Error adding reply:", error);
       setError("Failed to add reply");
     } finally {
       setProcessing(null);

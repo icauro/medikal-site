@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import ListingCard from "@/app/components/ListingCard";
 
 interface Agency {
@@ -13,7 +12,7 @@ interface Agency {
   country?: string;
   image?: string;
   rating?: number;
-  personalAgencyDataId?: string;
+  user_id?: string;
 }
 
 export default function AgenciesPage() {
@@ -23,48 +22,49 @@ export default function AgenciesPage() {
   useEffect(() => {
     async function fetchAgencies() {
       try {
-        const agenciesCollection = collection(db, "agency_listings");
-        const agenciesSnapshot = await getDocs(agenciesCollection);
+        // Fetch agencies from Supabase
+        const { data: agenciesData, error: agenciesError } = await supabase
+          .from("agency_listings")
+          .select("*");
+
+        if (agenciesError) throw agenciesError;
 
         const agenciesList: Agency[] = [];
 
-        for (const doc of agenciesSnapshot.docs) {
-          const data = doc.data();
-
+        for (const data of agenciesData || []) {
           // Fetch reviews for this agency to calculate average rating
           let averageRating: number | undefined = undefined;
           try {
-            const reviewsQuery = query(
-              collection(db, "reviews"),
-              where("agencyId", "==", doc.id),
-              where("status", "==", "published")
-            );
-            const reviewsSnapshot = await getDocs(reviewsQuery);
+            const { data: reviewsData, error: reviewsError } = await supabase
+              .from("reviews")
+              .select("rating")
+              .eq("listing_id", data.id)
+              .eq("listing_type", "agency")
+              .eq("status", "published");
 
-            if (!reviewsSnapshot.empty) {
-              const reviews = reviewsSnapshot.docs.map(reviewDoc => reviewDoc.data());
-              const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-              averageRating = totalRating / reviews.length;
+            if (!reviewsError && reviewsData && reviewsData.length > 0) {
+              const totalRating = reviewsData.reduce((sum: number, review: any) => sum + (review.rating || 0), 0);
+              averageRating = totalRating / reviewsData.length;
             }
           } catch (error) {
-            console.warn(`Error fetching reviews for agency ${doc.id}:`, error);
+            console.warn(`Error fetching reviews for agency ${data.id}:`, error);
           }
 
           agenciesList.push({
-            id: doc.id,
+            id: data.id,
             slug: data.slug || "",
             name: data.name || "",
             province: data.province || undefined,
             country: data.country || undefined,
             image: data.image || undefined,
             rating: averageRating,
-            personalAgencyDataId: data.personalAgencyDataId,
+            user_id: data.user_id,
           });
         }
 
         setAgencies(agenciesList);
       } catch (error) {
-        console.error("Error fetching agencies from Firestore:", error);
+        console.error("Error fetching agencies from Supabase:", error);
       } finally {
         setLoading(false);
       }
@@ -96,14 +96,14 @@ export default function AgenciesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agencies.length > 0 ? (
             agencies.map((agency) => (
-              <ListingCard
+          <ListingCard
                 key={agency.id}
                 id={agency.id}
                 slug={agency.slug}
                 name={agency.name}
                 href={`/agencies/${agency.slug}`}
                 image={agency.image}
-                hasData={!!agency.personalAgencyDataId}
+                hasData={!!agency.user_id}
                 emoji="🏢"
                 primaryInfo=""
                 secondaryInfo={agency.province ? `${agency.province}, ${agency.country}` : undefined}

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import slugify from "slugify";
 import { MedicalSpecialization, MEDICAL_SPECIALIZATIONS, HealthcarePersonnelListing, PersonnelType } from "@/lib/types";
 import { COUNTRIES } from "@/lib/constants";
+import { convertToSnakeCase } from "@/lib/supabase";
 import { Country, State } from "country-state-city";
+import { supabase } from "@/lib/supabase";
 
 interface HealthcarePersonnelListingCRUDModalProps {
   isOpen: boolean;
@@ -98,63 +99,110 @@ export default function HealthcarePersonnelListingCRUDModal({
     setLoading(true);
     setError(null);
     try {
-      const slug = openData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const slug = slugify(openData.name, { lower: true, strict: true, locale: 'tr' });
       const currentUserId = openData.userId;
       
       const payload = {
         ...openData,
         slug,
-        updatedAt: serverTimestamp(),
-        ...(!openData.id && mode === 'create' ? { createdAt: serverTimestamp() } : {})
+        updated_at: new Date().toISOString(),
+        ...(!openData.id && mode === 'create' ? { created_at: new Date().toISOString() } : {})
       };
 
-      // Remove undefined userId to prevent Firestore error
+      // Remove undefined userId to prevent Supabase error
       if (payload.userId === undefined || payload.userId === '') {
         delete payload.userId;
       }
 
-      // Remove ID from payload before saving to Firestore
+      // Remove ID from payload before saving to Supabase
       const { id, ...dataToSave } = payload;
+      
+      // Convert camelCase to snake_case for database
+      const dataWithSnakeCase = convertToSnakeCase(dataToSave);
 
       let savedId = openData.id;
 
+      // Add/Update personnel listing
       if (mode === 'edit' && openData.id) {
-        await updateDoc(doc(db, "healthcare_personnel_listings", openData.id), dataToSave);
+        const { error: updateError } = await supabase
+          .from('healthcare_personnel_listings')
+          .update(dataWithSnakeCase)
+          .eq('id', openData.id);
+        
+        if (updateError) throw updateError;
+        console.log('✅ [LISTING_CRUD] Personnel listing updated:', openData.id);
       } else {
-        const docRef = await addDoc(collection(db, "healthcare_personnel_listings"), dataToSave);
-        savedId = docRef.id;
-      }
-
-      // 2. Handle Two-Way Link Sync (Repair & Sync)
-      console.log("🔗 [LINK] Processing two-way link for listing:", savedId, "to user:", currentUserId);
-      if (currentUserId && savedId) {
-        try {
-          // Always ensure the user doc knows about this listing
-          await updateDoc(doc(db, "users", currentUserId), {
-            "healthcarePersonnelAccountData.listingId": savedId
-          });
-          console.log("✅ [LINK] Synced user document:", currentUserId);
-        } catch (e) { 
-          console.error("🚫 [LINK] Could not link user:", e); 
+        const { data, error: insertError } = await supabase
+          .from('healthcare_personnel_listings')
+          .insert([dataWithSnakeCase])
+          .select();
+        
+        if (insertError) throw insertError;
+        if (data && data.length > 0) {
+          savedId = data[0].id;
+          console.log('✅ [LISTING_CRUD] Personnel listing created:', savedId);
         }
       }
 
-      // If we switched away from an old user, unlink them
-      if (initialUserId && initialUserId !== currentUserId) {
-        try {
-          await updateDoc(doc(db, "users", initialUserId), {
-            "healthcarePersonnelAccountData.listingId": null
-          });
-          console.log("✅ [LINK] Unlinked old user:", initialUserId);
-        } catch (e) { 
-          console.error("⚠️ [LINK] Could not unlink old user:", e); 
+      // Handle Two-Way Link Sync (Repair & Sync)
+      console.log("🔗 [LINK] Link sync check:", {
+        currentUserId,
+        savedId,
+        shouldLink: !!(currentUserId && savedId)
+      });
+      
+      if (currentUserId && savedId) {
+        console.log("🔗 [LINK] Syncing user to listing:", currentUserId, "->", savedId);
+        const { error: userLinkError } = await supabase
+          .from('healthcare_personnel_listings')
+          .update({ user_id: currentUserId })
+          .eq('id', savedId);
+        
+        if (userLinkError) {
+          console.error("🚫 [LINK] Could not link user:", userLinkError);
+        } else {
+          console.log("✅ [LINK] Synced user document:", currentUserId);
+        }
+      } else {
+        console.log("ℹ️ [LINK] Skipping link - missing currentUserId or savedId");
+      }
+
+      if (initialUserId && initialUserId !== currentUserId && initialUserId) {
+        console.log("🔗 [LINK] Unlinking old user:", initialUserId);
+        // Check if this listing was linked to the old user
+        const { data: oldLink } = await supabase
+          .from('healthcare_personnel_listings')
+          .select('id')
+          .eq('user_id', initialUserId)
+          .neq('id', savedId);
+        
+        if (oldLink && oldLink.length > 0) {
+          const { error: unlinkError } = await supabase
+            .from('healthcare_personnel_listings')
+            .update({ user_id: null })
+            .eq('user_id', initialUserId)
+            .eq('id', oldLink[0].id);
+          
+          if (unlinkError) {
+            console.error("⚠️ [LINK] Could not unlink old user:", unlinkError);
+          } else {
+            console.log("✅ [LINK] Unlinked old user:", initialUserId);
+          }
         }
       }
 
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('🚫 [LISTING_CRUD] Error details:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        fullError: JSON.stringify(err)
+      });
+      setError(err?.message || err?.details || 'Failed to save listing');
+      console.error('🚫 [LISTING_CRUD] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -164,11 +212,28 @@ export default function HealthcarePersonnelListingCRUDModal({
     if (!openData.id || !confirm("Are you sure you want to delete this public listing? This will not delete the user account.")) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "healthcare_personnel_listings", openData.id));
+      // Delete personnel listing
+      const { error: deleteError } = await supabase
+        .from('healthcare_personnel_listings')
+        .delete()
+        .eq('id', openData.id);
+
+      if (deleteError) throw deleteError;
+      
+      console.log('✅ [LISTING_CRUD] Personnel listing deleted:', openData.id);
+      
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('🚫 [LISTING_CRUD] Delete error details:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        fullError: JSON.stringify(err)
+      });
+      setError(err?.message || err?.details || 'Failed to delete listing');
+      console.error('🚫 [LISTING_CRUD] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -185,7 +250,11 @@ export default function HealthcarePersonnelListingCRUDModal({
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-          {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
+          {error && (
+            <div className="p-4 bg-red-500/20 text-red-300 text-sm rounded border-2 border-red-500/50 font-semibold">
+              ⚠️ Error: {error}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

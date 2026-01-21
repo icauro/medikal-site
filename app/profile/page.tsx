@@ -1,13 +1,12 @@
 "use client";
 
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function ProfilePage() {
   const { user, userProfile, logout, deleteAccount } = useAuth();
@@ -44,14 +43,15 @@ export default function ProfilePage() {
 
     setIsSavingName(true);
     try {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        displayName: newName.trim(),
-        updatedAt: new Date()
-      });
+      // Update user displayName in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ display_name: newName.trim(), updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      
+      if (error) throw error;
       console.log('✅ [PROFILE] Display name updated');
       setIsEditingName(false);
-      // Wait for AuthContext to sync or manually trigger if needed
     } catch (error) {
       console.error('❌ [PROFILE] Failed to update name:', error);
       setSyncError('Failed to update name');
@@ -63,7 +63,7 @@ export default function ProfilePage() {
   console.log('👤 [PROFILE] Profile page rendered', {
     hasProfile: !!userProfile,
     profileData: userProfile ? {
-      uid: userProfile.uid,
+      id: userProfile.id,
       email: userProfile.email,
       displayName: userProfile.displayName,
       role: userProfile.role,
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="hidden md:block">
                     <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">User ID</label>
-                    <p className="text-zinc-400 text-[10px] font-mono truncate">{userProfile.uid}</p>
+                    <p className="text-zinc-400 text-[10px] font-mono truncate">{userProfile.id}</p>
                   </div>
                 </div>
               </div>

@@ -23,7 +23,7 @@ function LoginContent() {
     // If user is logged in but NOT trying to add another account, redirect to home
     if (user && !addAccount) {
       console.log('✅ [LOGIN] User already authenticated, redirecting to home', {
-        uid: user.uid,
+        uid: user.id,
         email: user.email
       });
       router.push('/');

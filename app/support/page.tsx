@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/types";
 import Link from "next/link";
 
@@ -36,32 +35,21 @@ export default function SupportPage() {
     if (!user) return;
 
     try {
-      const ticketsQuery = query(
-        collection(db, "support_tickets"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(ticketsQuery);
-      
-      const ticketsData: SupportTicket[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        ticketsData.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-          resolvedAt: data.resolvedAt?.toDate(),
-          closedAt: data.closedAt?.toDate(),
-          messages: (data.messages || []).map((msg: any) => ({
-            ...msg,
-            createdAt: msg.createdAt?.toDate(),
-          })),
-        } as SupportTicket);
-      });
+      // Fetch tickets from support_tickets table
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
 
-      // Sort by updated date (newest first)
-      ticketsData.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      if (error) {
+        console.error("🚫 [SUPPORT] Error fetching tickets:", error);
+        return;
+      }
+
+      const ticketsData = (data || []).map(row => convertDatabaseRow(row)) as SupportTicket[];
       setTickets(ticketsData);
+      console.log("✅ [SUPPORT] Loaded tickets:", ticketsData.length);
     } catch (error) {
       console.error("Error fetching tickets:", error);
     } finally {
@@ -79,52 +67,42 @@ export default function SupportPage() {
 
     try {
       // Check for unresolved tickets (open or in_progress) - limit to 3
-      const userTicketsQuery = query(
-        collection(db, "support_tickets"),
-        where("userId", "==", user.uid)
-      );
-      const userTicketsSnapshot = await getDocs(userTicketsQuery);
-      
-      // Count unresolved tickets (status: "open" or "in_progress")
-      const unresolvedCount = userTicketsSnapshot.docs.filter(
-        (doc) => {
-          const status = doc.data().status;
-          return status === "open" || status === "in_progress";
-        }
-      ).length;
+      const { data: unresolvedData, error: countError } = await supabase
+        .from('support_tickets')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id)
+        .in('status', ['open', 'in_progress']);
+
+      if (countError) throw countError;
+
+      const unresolvedCount = unresolvedData?.length || 0;
       
       if (unresolvedCount >= 3) {
         setError("You can have a maximum of 3 unresolved tickets at a time. Please wait for your existing tickets to be resolved or closed before creating a new one.");
         setSubmitting(false);
         return;
       }
-      // Use Date objects for messages array (serverTimestamp() not supported in arrays)
+
+      // Create new ticket
       const ticketData = {
-        userId: user.uid,
-        userEmail: userProfile.email,
-        userName: userProfile.displayName,
-        userRole: userProfile.role,
+        user_id: user.id,
         subject: formData.subject,
         category: formData.category,
         description: formData.description,
         priority: formData.priority,
-        status: "open",
-        messages: [
-          {
-            id: Date.now().toString(),
-            authorId: user.uid,
-            authorName: userProfile.displayName,
-            authorRole: userProfile.role,
-            content: formData.description,
-            createdAt: new Date(),
-          },
-        ],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        status: 'open' as TicketStatus,
+        messages: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      await addDoc(collection(db, "support_tickets"), ticketData);
+      const { error: createError } = await supabase
+        .from('support_tickets')
+        .insert([ticketData]);
 
+      if (createError) throw createError;
+
+      console.log('✅ [SUPPORT] Ticket created');
       setSuccess(true);
       setFormData({
         subject: "",

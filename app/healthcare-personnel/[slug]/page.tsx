@@ -4,17 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  where,
-} from "firebase/firestore";
 import UserCommentsSection from "@/app/components/UserCommentsSection";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 
 type TabKey = "info" | "reviews";
 type ReviewTabKey = "site-reviews" | "google-reviews";
@@ -62,7 +53,6 @@ export default function DoctorProfilePage() {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     if (!slug) {
       return;
@@ -73,53 +63,26 @@ export default function DoctorProfilePage() {
       setError(null);
 
       try {
-        const personnelRef = collection(db, "healthcare_personnel_listings");
-        const slugQuery = query(
-          personnelRef,
-          where("slug", "==", slug),
-          limit(1)
-        );
-        const slugSnapshot = await getDocs(slugQuery);
+        const { data, error } = await supabase
+          .from('healthcare_personnel_listings')
+          .select('*')
+          .eq('slug', slug)
+          .single();
 
-        if (slugSnapshot.empty) {
+        if (error) {
+          console.error("🚫 [PERSONNEL_DETAIL] Error fetching doctor:", error);
           setDoctor(null);
           setError("not-found");
           return;
         }
 
-        const match = slugSnapshot.docs[0];
-        const matchData = match.data();
-        setDoctor({
-          id: match.id,
-          name: matchData.name || "",
-          slug: matchData.slug || slug,
-          specialization: matchData.specialization || "",
-          bio: matchData.bio ?? null,
-          image: matchData.image ?? null,
-          rating:
-            typeof matchData.rating === "number"
-              ? matchData.rating
-              : matchData.rating
-              ? Number(matchData.rating)
-              : null,
-          reviewCount: matchData.reviewCount ?? null,
-          medicalFacilityIds: Array.isArray(matchData.medicalFacilityIds) ? matchData.medicalFacilityIds : [],
-          links: Array.isArray(matchData.links) ? matchData.links : [],
-          images: Array.isArray(matchData.images) ? matchData.images : [],
-          experience:
-            typeof matchData.experience === "number"
-              ? matchData.experience
-              : matchData.experience
-              ? Number(matchData.experience)
-              : null,
-          procedureTags: Array.isArray(matchData.procedureTags)
-            ? matchData.procedureTags
-            : [],
-          googleReviewsEmbedUrl: matchData.googleReviewsEmbedUrl ?? null,
-          userId: matchData.userId ?? null,
-        });
+        if (data) {
+          const converted = convertDatabaseRow(data);
+          setDoctor(converted);
+          console.log("✅ [PERSONNEL_DETAIL] Loaded doctor:", converted.name);
+        }
       } catch (err) {
-        console.error("Error loading doctor profile", err);
+        console.error("🚫 [PERSONNEL_DETAIL] Error loading doctor profile:", err);
         setError("unknown");
       } finally {
         setLoading(false);
@@ -138,21 +101,28 @@ export default function DoctorProfilePage() {
     const fetchReviews = async () => {
       setReviewsLoading(true);
       try {
-        console.log('Fetching reviews for doctor:', doctor.id);
-        const reviewsRef = collection(db, "reviews");
-        const reviewsQuery = query(
-          reviewsRef,
-          where("doctorId", "==", doctor.id),
-          where("status", "==", "published")
-        );
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('doctor_id', doctor.id);
 
-        const reviewsSnapshot = await getDocs(reviewsQuery);
-        const reviewsData = reviewsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Review[];
+        if (error) throw error;
 
-        console.log('Fetched reviews:', reviewsData.length);
+        const reviewsData = (data || []).map((review: any) => ({
+          id: review.id,
+          userId: review.user_id,
+          userDisplayName: review.user_display_name,
+          doctorId: review.doctor_id,
+          doctorName: doctor.name,
+          categories: review.categories || [],
+          rating: review.rating,
+          experienceText: review.comment,
+          status: review.status || 'published',
+          createdAt: new Date(review.created_at),
+          updatedAt: new Date(review.updated_at)
+        }));
+
+        console.log('📋 [REVIEWS] Fetched reviews for doctor:', doctor.id, '- Count:', reviewsData.length);
         setReviews(reviewsData);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -163,7 +133,6 @@ export default function DoctorProfilePage() {
 
     fetchReviews();
   }, [doctor?.id]);
-
 
   const googleMapsEmbedUrl = useMemo(() => {
     if (!doctor?.googlePlaceId) return null;

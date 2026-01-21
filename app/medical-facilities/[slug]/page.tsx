@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import Link from "next/link";
 import UserCommentsSection from "@/app/components/UserCommentsSection";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 
 export default function MedicalFacilityProfilePage() {
   const params = useParams<{ slug: string }>();
@@ -18,17 +17,25 @@ export default function MedicalFacilityProfilePage() {
 
     async function fetchFacility() {
       try {
-        const q = query(
-          collection(db, "medical_facility_listings"),
-          where("slug", "==", slug),
-          limit(1)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          setFacility({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        const { data, error } = await supabase
+          .from('medical_facility_listings')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) {
+          console.error("🚫 [FACILITY_DETAIL] Error fetching facility:", error);
+          setFacility(null);
+          return;
+        }
+
+        if (data) {
+          const converted = convertDatabaseRow(data);
+          setFacility(converted);
+          console.log("✅ [FACILITY_DETAIL] Loaded facility:", converted.name);
         }
       } catch (error) {
-        console.error("Error fetching facility:", error);
+        console.error("🚫 [FACILITY_DETAIL] Error fetching facility:", error);
       } finally {
         setLoading(false);
       }
@@ -115,10 +122,10 @@ export default function MedicalFacilityProfilePage() {
                  Contact Details
               </h2>
               <div className="space-y-6">
-                {facility.address && (
+                {facility.city && (
                   <div>
                     <label className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] block mb-2">Location</label>
-                    <p className="text-zinc-300 leading-snug">{facility.address}</p>
+                    <p className="text-zinc-300 leading-snug">{facility.city}</p>
                   </div>
                 )}
                 {facility.phone && (

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { SupportTicket, TicketStatus, TicketMessage } from "@/lib/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,31 +27,23 @@ export default function TicketDetailPage({
         const resolvedParams = await params;
         const ticketId = resolvedParams.id;
 
-        const ticketRef = doc(db, "support_tickets", ticketId);
-        const ticketSnap = await getDoc(ticketRef);
+        const { data, error: fetchError } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
 
-        if (!ticketSnap.exists()) {
+        if (fetchError || !data) {
+          console.error("🚫 [TICKET_DETAIL] Error fetching ticket:", fetchError);
           setError("Ticket not found");
           setLoading(false);
           return;
         }
 
-        const data = ticketSnap.data();
-        const ticketData: SupportTicket = {
-          id: ticketSnap.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-          resolvedAt: data.resolvedAt?.toDate(),
-          closedAt: data.closedAt?.toDate(),
-          messages: (data.messages || []).map((msg: any) => ({
-            ...msg,
-            createdAt: msg.createdAt?.toDate(),
-          })),
-        } as SupportTicket;
+        const ticketData = convertDatabaseRow(data) as SupportTicket;
 
-        // Check if user has access to this ticket
-        if (user && ticketData.userId !== user.uid && userProfile?.role !== "admin") {
+        // Check if user has access to this ticket - ticketData is guaranteed to be non-null here
+        if (user && (ticketData as SupportTicket).userId !== user.id && userProfile?.role !== "admin") {
           setError("Access denied");
           setLoading(false);
           return;
@@ -84,12 +75,10 @@ export default function TicketDetailPage({
     setError(null);
 
     try {
-      const ticketRef = doc(db, "support_tickets", ticket.id!);
-
       // Use Date objects for messages array (serverTimestamp() not supported in arrays)
       const newMessage: TicketMessage = {
         id: Date.now().toString(),
-        authorId: user.uid,
+        authorId: user.id,
         authorName: userProfile.displayName,
         authorRole: userProfile.role,
         content: replyContent,
@@ -98,32 +87,21 @@ export default function TicketDetailPage({
 
       const updatedMessages = [...ticket.messages, newMessage];
 
-      await updateDoc(ticketRef, {
-        messages: updatedMessages,
-        status: ticket.status === "closed" ? "open" : ticket.status,
-        updatedAt: serverTimestamp(),
-      });
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({
+          messages: updatedMessages,
+          updated_at: new Date().toISOString(),
+          status: 'in_progress'
+        })
+        .eq('id', ticket.id);
+
+      if (error) throw error;
+
+      console.log('✅ [SUPPORT] Message added to ticket');
 
       setTicket({ ...ticket, messages: updatedMessages });
       setReplyContent("");
-      
-      // Refresh the ticket
-      const ticketSnap = await getDoc(ticketRef);
-      if (ticketSnap.exists()) {
-        const data = ticketSnap.data();
-        setTicket({
-          ...ticket,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-          resolvedAt: data.resolvedAt?.toDate(),
-          closedAt: data.closedAt?.toDate(),
-          messages: (data.messages || []).map((msg: any) => ({
-            ...msg,
-            createdAt: msg.createdAt?.toDate(),
-          })),
-        } as SupportTicket);
-      }
     } catch (err) {
       console.error("Error adding reply:", err);
       setError("Failed to add reply");
@@ -229,7 +207,7 @@ export default function TicketDetailPage({
                   className={`p-4 rounded-lg ${
                     message.authorRole === "admin"
                       ? "bg-blue-900/20 border border-blue-800"
-                      : message.authorId === user?.uid
+                      : message.authorId === user?.id
                       ? "bg-zinc-800 border border-zinc-700"
                       : "bg-zinc-800/50"
                   }`}

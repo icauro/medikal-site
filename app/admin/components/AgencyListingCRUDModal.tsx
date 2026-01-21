@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc, collection, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import slugify from "slugify";
 import { Country, State } from "country-state-city";
 import { COUNTRIES } from "@/lib/constants";
+import { convertToSnakeCase } from "@/lib/supabase";
 import { AgencyListing } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 interface AgencyListingCRUDModalProps {
   isOpen: boolean;
@@ -29,12 +30,9 @@ export default function AgencyListingCRUDModal({
 
   const [openData, setOpenData] = useState<Partial<AgencyListing>>({
     name: "",
-    address: "",
-    province: "Istanbul",
     country: "Turkey",
-    phone: "",
-    email: "",
-    website: "",
+    province: "Istanbul",
+    city: "",
     rating: 0,
     reviewCount: 0,
     googlePlaceId: "",
@@ -47,10 +45,9 @@ export default function AgencyListingCRUDModal({
       if (mode === 'edit' && openDataRecord) {
         setOpenData({
           ...openDataRecord,
-          address: openDataRecord.address || "",
-          phone: openDataRecord.phone || "",
-          email: openDataRecord.email || "",
-          website: openDataRecord.website || "",
+          country: openDataRecord.country || "Turkey",
+          province: openDataRecord.province || "Istanbul",
+          city: openDataRecord.city || "",
           rating: openDataRecord.rating || 0,
           reviewCount: openDataRecord.reviewCount || 0,
           googlePlaceId: openDataRecord.googlePlaceId || "",
@@ -60,12 +57,9 @@ export default function AgencyListingCRUDModal({
       } else {
         setOpenData({
           name: "",
-          address: "",
-          province: "Istanbul",
           country: "Turkey",
-          phone: "",
-          email: "",
-          website: "",
+          province: "Istanbul",
+          city: "",
           rating: 0,
           reviewCount: 0,
           googlePlaceId: "",
@@ -101,61 +95,109 @@ export default function AgencyListingCRUDModal({
     setLoading(true);
     setError(null);
     try {
-      const slug = openData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const slug = slugify(openData.name, { lower: true, strict: true, locale: 'tr' });
       const currentUserId = openData.userId;
 
       const payload = {
         ...openData,
         slug,
-        updatedAt: serverTimestamp(),
-        ...(!openData.id && mode === 'create' ? { createdAt: serverTimestamp() } : {})
+        updated_at: new Date().toISOString(),
+        ...(!openData.id && mode === 'create' ? { created_at: new Date().toISOString() } : {})
       };
 
-      // Remove undefined userId to prevent Firestore error
+      // Remove undefined userId to prevent Supabase error
       if (payload.userId === undefined || payload.userId === '') {
         delete payload.userId;
       }
 
       const { id, ...dataToSave } = payload;
+      
+      // Convert camelCase to snake_case for database
+      const dataWithSnakeCase = convertToSnakeCase(dataToSave);
+      
       let savedId = openData.id;
 
+      // Add/Update agency listing
       if (mode === 'edit' && openData.id) {
-        await updateDoc(doc(db, "agency_listings", openData.id), dataToSave);
+        const { error: updateError } = await supabase
+          .from('agency_listings')
+          .update(dataWithSnakeCase)
+          .eq('id', openData.id);
+        
+        if (updateError) throw updateError;
+        console.log('✅ [LISTING_CRUD] Agency listing updated:', openData.id);
       } else {
-        const docRef = await addDoc(collection(db, "agency_listings"), dataToSave);
-        savedId = docRef.id;
-      }
-
-      // 2. Handle Two-Way Link Sync (Repair & Sync)
-      console.log("🔗 [LINK] Processing two-way link for listing:", savedId, "to user:", currentUserId);
-      if (currentUserId && savedId) {
-        try {
-          // Always ensure the user doc knows about this listing
-          await updateDoc(doc(db, "users", currentUserId), {
-            "agencyAccountData.listingId": savedId
-          });
-          console.log("✅ [LINK] Synced user document:", currentUserId);
-        } catch (e) { 
-          console.error("🚫 [LINK] Could not link user:", e); 
+        const { data, error: insertError } = await supabase
+          .from('agency_listings')
+          .insert([dataWithSnakeCase])
+          .select();
+        
+        if (insertError) throw insertError;
+        if (data && data.length > 0) {
+          savedId = data[0].id;
+          console.log('✅ [LISTING_CRUD] Agency listing created:', savedId);
         }
       }
 
-      // If we switched away from an old user, unlink them
-      if (initialUserId && initialUserId !== currentUserId) {
-        try {
-          await updateDoc(doc(db, "users", initialUserId), {
-            "agencyAccountData.listingId": null
-          });
-          console.log("✅ [LINK] Unlinked old user:", initialUserId);
-        } catch (e) { 
-          console.error("⚠️ [LINK] Could not unlink old user:", e); 
+      // Handle Two-Way Link Sync (Repair & Sync)
+      console.log("🔗 [LINK] Link sync check:", {
+        currentUserId,
+        savedId,
+        shouldLink: !!(currentUserId && savedId)
+      });
+      
+      if (currentUserId && savedId) {
+        console.log("🔗 [LINK] Syncing user to listing:", currentUserId, "->", savedId);
+        const { error: userLinkError } = await supabase
+          .from('agency_listings')
+          .update({ user_id: currentUserId })
+          .eq('id', savedId);
+        
+        if (userLinkError) {
+          console.error("🚫 [LINK] Could not link user:", userLinkError);
+        } else {
+          console.log("✅ [LINK] Synced user document:", currentUserId);
+        }
+      } else {
+        console.log("ℹ️ [LINK] Skipping link - missing currentUserId or savedId");
+      }
+      
+      if (initialUserId && initialUserId !== currentUserId && initialUserId) {
+        console.log("🔗 [LINK] Unlinking old user:", initialUserId);
+        // Check if this listing was linked to the old user
+        const { data: oldLink } = await supabase
+          .from('agency_listings')
+          .select('id')
+          .eq('user_id', initialUserId)
+          .neq('id', savedId);
+        
+        if (oldLink && oldLink.length > 0) {
+          const { error: unlinkError } = await supabase
+            .from('agency_listings')
+            .update({ user_id: null })
+            .eq('user_id', initialUserId)
+            .eq('id', oldLink[0].id);
+          
+          if (unlinkError) {
+            console.error("⚠️ [LINK] Could not unlink old user:", unlinkError);
+          } else {
+            console.log("✅ [LINK] Unlinked old user:", initialUserId);
+          }
         }
       }
 
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('🚫 [LISTING_CRUD] Error details:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        fullError: JSON.stringify(err)
+      });
+      setError(err?.message || err?.details || 'Failed to save listing');
+      console.error('🚫 [LISTING_CRUD] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -165,11 +207,27 @@ export default function AgencyListingCRUDModal({
     if (!openData.id || !confirm("Are you sure you want to delete this public agency listing?")) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "agency_listings", openData.id));
+      // Delete agency listing
+      const { error: deleteError } = await supabase
+        .from('agency_listings')
+        .delete()
+        .eq('id', openData.id);
+
+      if (deleteError) throw deleteError;
+      
+      console.log('✅ [LISTING_CRUD] Agency listing deleted:', openData.id);
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('🚫 [LISTING_CRUD] Delete error details:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        fullError: JSON.stringify(err)
+      });
+      setError(err?.message || err?.details || 'Failed to delete listing');
+      console.error('🚫 [LISTING_CRUD] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -186,7 +244,11 @@ export default function AgencyListingCRUDModal({
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-          {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
+          {error && (
+            <div className="p-4 bg-red-500/20 text-red-300 text-sm rounded border-2 border-red-500/50 font-semibold">
+              ⚠️ Error: {error}
+            </div>
+          )}
 
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Agency Name</label>
@@ -220,24 +282,8 @@ export default function AgencyListingCRUDModal({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Full Address</label>
-            <input type="text" value={openData.address || ""} onChange={(e) => setOpenData({...openData, address: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Public Phone</label>
-              <input type="text" value={openData.phone || ""} onChange={(e) => setOpenData({...openData, phone: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Public Email</label>
-              <input type="email" value={openData.email || ""} onChange={(e) => setOpenData({...openData, email: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-orange-500">Website URL</label>
-            <input type="text" value={openData.website || ""} onChange={(e) => setOpenData({...openData, website: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="https://..." />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
+            <input type="text" value={openData.city || ""} onChange={(e) => setOpenData({...openData, city: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

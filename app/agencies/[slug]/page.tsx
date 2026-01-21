@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import Link from "next/link";
 import UserCommentsSection from "@/app/components/UserCommentsSection";
+import { supabase, convertDatabaseRow } from "@/lib/supabase";
 
 export default function AgencyProfilePage() {
   const params = useParams<{ slug: string }>();
@@ -18,17 +17,25 @@ export default function AgencyProfilePage() {
 
     async function fetchAgency() {
       try {
-        const q = query(
-          collection(db, "agency_listings"),
-          where("slug", "==", slug),
-          limit(1)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          setAgency({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        const { data, error } = await supabase
+          .from('agency_listings')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) {
+          console.error("🚫 [AGENCY_DETAIL] Error fetching agency:", error);
+          setAgency(null);
+          return;
+        }
+
+        if (data) {
+          const converted = convertDatabaseRow(data);
+          setAgency(converted);
+          console.log("✅ [AGENCY_DETAIL] Loaded agency:", converted.name);
         }
       } catch (error) {
-        console.error("Error fetching agency:", error);
+        console.error("🚫 [AGENCY_DETAIL] Error fetching agency:", error);
       } finally {
         setLoading(false);
       }

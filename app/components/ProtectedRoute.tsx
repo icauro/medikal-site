@@ -67,7 +67,7 @@ export const ProtectedRoute = ({
         console.log('🚫 [PROTECTED] Access denied: Insufficient role permissions', {
           requiredRole: requiredRole,
           userRole: userProfile?.role,
-          uid: user.uid,
+          uid: user.id,
           redirectingTo: '/unauthorized'
         });
         router.push('/unauthorized');
@@ -75,7 +75,7 @@ export const ProtectedRoute = ({
       }
 
       console.log('✅ [PROTECTED] Access granted', {
-        uid: user.uid,
+        uid: user.id,
         role: userProfile?.role,
         requiredRole: requiredRole
       });

@@ -1,15 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {
-  User,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
-import { deleteUser } from 'firebase/auth';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase, convertTimestampsToDates, signInWithGoogle, signOut as supabaseSignOut } from '@/lib/supabase';
 import { UserProfile, UserRole, AccountStatus } from '@/lib/types';
 
 interface AuthContextType {
@@ -23,21 +16,6 @@ interface AuthContextType {
   acceptGDPR: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
-
-// Helper function to convert Firestore Timestamps to Date objects
-const convertTimestampsToDates = (profile: any): UserProfile => {
-  return {
-    ...profile,
-    createdAt: profile.createdAt instanceof Timestamp ? profile.createdAt.toDate() : profile.createdAt,
-    updatedAt: profile.updatedAt instanceof Timestamp ? profile.updatedAt.toDate() : profile.updatedAt,
-    ...(profile.adminAccountData?.lastLogin && {
-      adminAccountData: {
-        ...profile.adminAccountData,
-        lastLogin: profile.adminAccountData.lastLogin instanceof Timestamp ? profile.adminAccountData.lastLogin.toDate() : profile.adminAccountData.lastLogin
-      }
-    })
-  };
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -58,140 +36,186 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Create or update user profile in Firestore
-  const createUserProfile = async (firebaseUser: User) => {
+  // Create or update user profile in Supabase
+  const createUserProfile = async (supabaseUser: User) => {
     console.log('👤 [PROFILE] Creating/loading user profile...', {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email
+      uid: supabaseUser.id,
+      email: supabaseUser.email
     });
 
-    const userRef = doc(db, 'users', firebaseUser.uid);
-    const userSnap = await getDoc(userRef);
+    try {
+      // Check if user profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-    if (!userSnap.exists()) {
-      console.log('🆕 [PROFILE] New user detected, creating profile with pending_gdpr status...');
-
-      // Check admin email list
-      const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
-      const isAdmin = adminEmails.includes(firebaseUser.email!);
-
-      console.log('👑 [PROFILE] Admin check:', {
-        email: firebaseUser.email,
-        isAdmin: isAdmin,
-      });
-
-      const profile: UserProfile = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email!,
-        displayName: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-        photoURL: firebaseUser.photoURL || undefined,
-        role: isAdmin ? 'admin' : null, // null until role is selected (unless admin)
-        accountStatus: isAdmin ? 'active' : 'pending_gdpr', // New users need to accept GDPR first
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        // Admin gets active status immediately
-        ...(isAdmin && {
-          adminAccountData: {
-            permissions: ['manage_users', 'manage_content'],
-            lastLogin: new Date(),
-          }
-        }),
-      };
-
-      try {
-        console.log('💾 [PROFILE] Saving new user profile to Firestore...');
-        await setDoc(userRef, profile);
-        console.log('✅ [PROFILE] New user profile created successfully with status:', profile.accountStatus);
-        return profile;
-      } catch (error) {
-        console.error('❌ [PROFILE] Failed to create user profile:', error);
-        throw error;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError; // PGRST116 means no rows found, which is expected for new users
       }
-    } else {
-      console.log('🔄 [PROFILE] Existing user detected, updating last login...');
-      const rawProfile = userSnap.data();
-      const existingProfile = convertTimestampsToDates(rawProfile) as UserProfile;
 
-      // Check if user is admin (for migration purposes)
-      const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
-      const isAdmin = adminEmails.includes(firebaseUser.email!);
+      if (!existingProfile) {
+        console.log('🆕 [PROFILE] New user detected, creating profile with pending_gdpr status...');
 
-      // Migration: Set accountStatus to 'active' for existing users without it, or for admins
-      if (!existingProfile.accountStatus || (isAdmin && existingProfile.accountStatus !== 'active')) {
-        console.log('🔧 [MIGRATION] Setting accountStatus to active for existing user', { isAdmin });
-        try {
-          const updates: any = { 
-            accountStatus: 'active',
-            updatedAt: new Date() 
-          };
-          
-          // Ensure admin role and adminAccountData are set for admin users
-          if (isAdmin && existingProfile.role !== 'admin') {
-            console.log('👑 [MIGRATION] Upgrading user to admin role');
-            updates.role = 'admin';
-            updates.adminAccountData = {
+        // Check admin email list
+        const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+        const isAdmin = adminEmails.includes(supabaseUser.email!);
+
+        console.log('👑 [PROFILE] Admin check:', {
+          email: supabaseUser.email,
+          isAdmin: isAdmin,
+        });
+
+        const profile: UserProfile = {
+          id: supabaseUser.id,
+          email: supabaseUser.email!,
+          displayName: supabaseUser.user_metadata?.display_name || supabaseUser.email!.split('@')[0],
+          photoURL: supabaseUser.user_metadata?.avatar_url || undefined,
+          role: isAdmin ? 'admin' : null,
+          accountStatus: isAdmin ? 'active' : 'pending_gdpr',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...(isAdmin && {
+            adminAccountData: {
               permissions: ['manage_users', 'manage_content'],
               lastLogin: new Date(),
-            };
-            existingProfile.role = 'admin';
-            existingProfile.adminAccountData = updates.adminAccountData;
-          }
-          
-          await updateDoc(userRef, updates);
-          existingProfile.accountStatus = 'active';
-          existingProfile.updatedAt = new Date();
-          console.log('✅ [MIGRATION] accountStatus set to active');
-        } catch (error) {
-          console.error('❌ [MIGRATION] Failed to update accountStatus:', error);
-          // Continue with existing profile even if migration fails
-        }
-      } else {
-        // Normal update for users with accountStatus
+            }
+          }),
+        };
+
         try {
-          console.log('💾 [PROFILE] Updating user profile timestamp...');
-          await updateDoc(userRef, { updatedAt: new Date() });
-          existingProfile.updatedAt = new Date();
-          console.log('✅ [PROFILE] User profile updated successfully');
+          console.log('💾 [PROFILE] Saving new user profile to Supabase...');
+          console.log('📝 [PROFILE] User data to insert:', {
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            displayName: profile.displayName,
+            accountStatus: profile.accountStatus,
+          });
+
+          const { error: insertError, data } = await supabase
+            .from('users')
+            .insert([{
+              id: supabaseUser.id,
+              email: supabaseUser.email,
+              display_name: profile.displayName,
+              photo_url: profile.photoURL,
+              role: profile.role,
+              account_status: profile.accountStatus,
+              created_at: profile.createdAt.toISOString(),
+              updated_at: profile.updatedAt.toISOString(),
+              gdpr_consent: profile.gdprConsent || null,
+              admin_account_data: profile.adminAccountData || null,
+            }]);
+
+          if (insertError) {
+            console.error('🔴 [PROFILE] Insert error details:', {
+              fullError: JSON.stringify(insertError),
+              message: insertError?.message || 'No message',
+              code: insertError?.code || 'No code',
+              hint: insertError?.hint || 'No hint',
+              details: insertError?.details || 'No details',
+              status: (insertError as any)?.status || 'No status',
+            });
+            throw insertError;
+          }
+          console.log('✅ [PROFILE] New user profile created successfully with status:', profile.accountStatus);
+          console.log('📊 [PROFILE] Insert response:', data);
+          return profile;
         } catch (error) {
-          console.error('❌ [PROFILE] Failed to update user profile:', error);
+          console.error('❌ [PROFILE] Failed to create user profile:', error);
+          if (error instanceof Error) {
+            console.error('   Error message:', error.message);
+            console.error('   Stack:', error.stack);
+          } else {
+            console.error('   Full error object:', JSON.stringify(error));
+          }
           throw error;
         }
+      } else {
+        console.log('🔄 [PROFILE] Existing user detected, updating last login...');
+        const rawProfile = existingProfile;
+        const existingUserProfile = convertTimestampsToDates(rawProfile) as UserProfile;
+
+        // Check if user is admin (for migration purposes)
+        const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+        const isAdmin = adminEmails.includes(supabaseUser.email!);
+
+        if (!existingUserProfile.accountStatus || (isAdmin && existingUserProfile.accountStatus !== 'active')) {
+          console.log('🔧 [MIGRATION] Setting accountStatus to active for existing user', { isAdmin });
+          try {
+            const updates: any = {
+              account_status: 'active',
+              updated_at: new Date().toISOString()
+            };
+
+            if (isAdmin && existingUserProfile.role !== 'admin') {
+              console.log('👑 [MIGRATION] Upgrading user to admin role');
+              updates.role = 'admin';
+              updates.admin_account_data = {
+                permissions: ['manage_users', 'manage_content'],
+                lastLogin: new Date().toISOString(),
+              };
+              existingUserProfile.role = 'admin';
+              existingUserProfile.adminAccountData = updates.admin_account_data;
+            }
+
+            const { error: updateError } = await supabase
+              .from('users')
+              .update(updates)
+              .eq('id', supabaseUser.id);
+
+            if (updateError) throw updateError;
+            existingUserProfile.accountStatus = 'active';
+            existingUserProfile.updatedAt = new Date();
+            console.log('✅ [MIGRATION] accountStatus set to active');
+          } catch (error) {
+            console.error('❌ [MIGRATION] Failed to update accountStatus:', error);
+          }
+        } else {
+          try {
+            console.log('💾 [PROFILE] Updating user profile timestamp...');
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ updated_at: new Date().toISOString() })
+              .eq('id', supabaseUser.id);
+
+            if (updateError) throw updateError;
+            existingUserProfile.updatedAt = new Date();
+            console.log('✅ [PROFILE] User profile updated successfully');
+          } catch (error) {
+            console.error('❌ [PROFILE] Failed to update user profile:', error);
+            throw error;
+          }
+        }
+
+        return existingUserProfile;
       }
-      
-      return existingProfile;
+    } catch (error) {
+      console.error('❌ [PROFILE] Unexpected error in createUserProfile:', error);
+      throw error;
     }
   };
 
-  const signInWithGoogle = async () => {
+  const handleSignInWithGoogle = async () => {
     console.log('🔐 [AUTH] Starting Google sign-in process...');
 
     try {
       console.log('🔐 [AUTH] Opening Google OAuth popup...');
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      console.log('✅ [AUTH] Google OAuth successful', {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        provider: 'google'
-      });
-
-      console.log('🔐 [AUTH] User signed in:', user.email);
-      console.log('🔐 [AUTH] Profile creation/update will be handled by auth state listener');
-
+      await signInWithGoogle();
+      console.log('✅ [AUTH] Google OAuth successful');
     } catch (error: unknown) {
       console.error('❌ [AUTH] Google sign in error:', error);
       throw error;
     }
   };
 
-  const logout = async () => {
+  const handleLogout = async () => {
     console.log('🔐 [AUTH] Starting logout process...');
 
     try {
-      console.log('🔐 [AUTH] Signing out from Firebase...');
-      await firebaseSignOut(auth);
+      console.log('🔐 [AUTH] Signing out from Supabase...');
+      await supabaseSignOut();
       setUser(null);
       setUserProfile(null);
       console.log('✅ [AUTH] Successfully signed out');
@@ -208,18 +232,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     console.log('👑 [PROFILE] Updating user role...', {
-      uid: user.uid,
+      id: user.id,
       currentRole: userProfile?.role,
       newRole: role
     });
 
-    const userRef = doc(db, 'users', user.uid);
-
     try {
-      await updateDoc(userRef, {
-        role,
-        updatedAt: new Date()
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({
+          role,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
 
       if (userProfile) {
         setUserProfile({ ...userProfile, role });
@@ -237,18 +264,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return;
     }
 
-    console.log('🔄 [PROFILE] Refreshing user profile from Firestore...');
+    console.log('🔄 [PROFILE] Refreshing user profile from Supabase...');
 
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
+    try {
+      const { data: profileData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    if (userSnap.exists()) {
-      const rawProfile = userSnap.data();
-      const profile = convertTimestampsToDates(rawProfile) as UserProfile;
-      setUserProfile(profile);
-      console.log('✅ [PROFILE] User profile refreshed successfully');
-    } else {
-      console.warn('⚠️ [PROFILE] No profile found in Firestore for user:', user.uid);
+      if (error) throw error;
+
+      if (profileData) {
+        const profile = convertTimestampsToDates(profileData) as UserProfile;
+        setUserProfile(profile);
+        console.log('✅ [PROFILE] User profile refreshed successfully');
+      } else {
+        console.warn('⚠️ [PROFILE] No profile found in Supabase for user:', user.id);
+      }
+    } catch (error) {
+      console.error('❌ [PROFILE] Failed to refresh profile:', error);
+      throw error;
     }
   };
 
@@ -260,18 +296,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     console.log('📋 [GDPR] User accepting GDPR consent...');
 
-    const userRef = doc(db, 'users', user.uid);
-
     try {
-      await updateDoc(userRef, {
-        accountStatus: 'pending_role', // Move to role selection step
-        gdprConsent: {
-          accepted: true,
-          acceptedAt: new Date(),
-          version: '1.0',
-        },
-        updatedAt: new Date(),
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({
+          account_status: 'pending_role',
+          gdpr_consent: {
+            accepted: true,
+            acceptedAt: new Date().toISOString(),
+            version: '1.0',
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
 
       if (userProfile) {
         setUserProfile({
@@ -293,28 +332,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    console.log('👂 [AUTH] Setting up Firebase auth state listener...');
+    console.log('👂 [AUTH] Setting up Supabase auth state listener...');
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session && session.user) {
+        const supabaseUser = session.user;
         console.log('🔐 [AUTH] Auth state changed: User signed in', {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          emailVerified: firebaseUser.emailVerified
+          uid: supabaseUser.id,
+          email: supabaseUser.email,
+          displayName: supabaseUser.user_metadata?.display_name,
+          emailVerified: supabaseUser.email_confirmed_at
         });
 
-        setUser(firebaseUser);
-        console.log('🔐 [AUTH] Firebase user set:', {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName
+        setUser(supabaseUser);
+        console.log('🔐 [AUTH] Supabase user set:', {
+          uid: supabaseUser.id,
+          email: supabaseUser.email,
+          displayName: supabaseUser.user_metadata?.display_name
         });
 
-        // Load or create user profile from Firestore
+        // Load or create user profile from Supabase
         try {
           console.log('👤 [PROFILE] Loading/creating user profile...');
-          const profile = await createUserProfile(firebaseUser);
+          const profile = await createUserProfile(supabaseUser);
           setUserProfile(profile);
           console.log('✅ [AUTH] User authentication and profile setup complete', {
             profileRole: profile.role,
@@ -323,10 +363,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         } catch (error: unknown) {
           console.error('❌ [AUTH] Error loading user profile:', error);
-          // If profile creation fails, sign out the user to avoid inconsistent state
           console.log('🚨 [AUTH] Signing out user due to profile creation failure');
           try {
-            await firebaseSignOut(auth);
+            await supabaseSignOut();
             setUser(null);
             setUserProfile(null);
           } catch (signOutError) {
@@ -345,7 +384,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return () => {
       console.log('🧹 [AUTH] Cleaning up auth state listener');
-      unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -356,89 +395,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     console.log('🗑️ [DELETE] Starting account deletion process...', {
-      uid: user.uid,
+      uid: user.id,
       role: userProfile?.role,
     });
 
     try {
-      // 1. Delete user-owned data (but NOT doctor pages, clinic pages, or reviews)
-      const collections = [
-        'support_tickets',
-        'treatment_plans',
-      ];
+      // 1. Delete user-owned data (but NOT listings or reviews)
+      const collections = ['support_tickets', 'treatment_plans'];
 
-      for (const collectionName of collections) {
-        console.log(`🗑️ [DELETE] Deleting ${collectionName}...`);
-        const q = query(
-          collection(db, collectionName),
-          where('userId', '==', user.uid)
-        );
-        const snapshot = await getDocs(q);
-        
-        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        console.log(`✅ [DELETE] Deleted ${snapshot.docs.length} ${collectionName}`);
+      for (const tableName of collections) {
+        console.log(`🗑️ [DELETE] Deleting ${tableName}...`);
+        const { data, error: deleteError } = await supabase
+          .from(tableName)
+          .delete()
+          .eq('user_id', user.id);
+
+        if (deleteError) throw deleteError;
+        console.log(`✅ [DELETE] Deleted ${tableName}`);
       }
 
-      // 2. Soft-delete user's comments and replies in all listing collections
+      // 2. Soft-delete user's comments
       console.log('🗑️ [DELETE] Soft-deleting user comments...');
-      const listingCollections = [
-        'healthcare_personnel_listings',
-        'medical_facility_listings',
-        'agency_listings',
-      ];
+      const { error: commentError } = await supabase
+        .from('comments')
+        .update({ is_deleted: true, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
 
-      let totalDeletedComments = 0;
-      for (const listingCollection of listingCollections) {
-        // Query all documents in the listing collection
-        const listingsSnapshot = await getDocs(collection(db, listingCollection));
-        
-        for (const listingDoc of listingsSnapshot.docs) {
-          // Query all comments for this listing
-          const commentsRef = collection(db, listingCollection, listingDoc.id, 'comments');
-          const commentsSnapshot = await getDocs(commentsRef);
-          
-          for (const commentDoc of commentsSnapshot.docs) {
-            // Check if this comment belongs to the user being deleted
-            if (commentDoc.data().userId === user.uid) {
-              // Soft-delete the comment
-              await updateDoc(commentDoc.ref, {
-                isDeleted: true,
-                updatedAt: Timestamp.now(),
-              });
-              totalDeletedComments++;
-              
-              // Soft-delete all replies to this comment
-              const repliesRef = collection(db, listingCollection, listingDoc.id, 'comments', commentDoc.id, 'replies');
-              const repliesSnapshot = await getDocs(repliesRef);
-              
-              const deleteRepliesPromises = repliesSnapshot.docs
-                .filter(replyDoc => replyDoc.data().userId === user.uid)
-                .map(replyDoc => 
-                  updateDoc(replyDoc.ref, {
-                    isDeleted: true,
-                    updatedAt: Timestamp.now(),
-                  })
-                );
-              
-              await Promise.all(deleteRepliesPromises);
-              totalDeletedComments += deleteRepliesPromises.length;
-            }
-          }
-        }
-      }
-      console.log(`✅ [DELETE] Soft-deleted ${totalDeletedComments} comments and replies`);
+      if (commentError) throw commentError;
+      console.log('✅ [DELETE] Soft-deleted user comments');
 
-      // 3. Delete user profile from Firestore
-      console.log('🗑️ [DELETE] Deleting user profile from Firestore...');
-      const userRef = doc(db, 'users', user.uid);
-      await deleteDoc(userRef);
+      // 3. Delete user profile from Supabase
+      console.log('🗑️ [DELETE] Deleting user profile from Supabase...');
+      const { error: profileError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
       console.log('✅ [DELETE] User profile deleted');
 
-      // 4. Delete Firebase Auth account
-      console.log('🗑️ [DELETE] Deleting Firebase Authentication account...');
-      await deleteUser(user);
-      console.log('✅ [DELETE] Firebase Auth account deleted');
+      // 4. Delete Supabase Auth account
+      console.log('🗑️ [DELETE] Deleting Supabase Authentication account...');
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+      if (authError) throw authError;
+      console.log('✅ [DELETE] Supabase Auth account deleted');
 
       // 5. Clear local state
       setUser(null);
@@ -447,12 +447,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('✅ [DELETE] Account deletion complete');
     } catch (error: any) {
       console.error('❌ [DELETE] Error deleting account:', error);
-      
-      // Handle re-authentication requirement
-      if (error.code === 'auth/requires-recent-login') {
-        throw new Error('For security, please log out and log back in before deleting your account.');
-      }
-      
       throw error;
     }
   };
@@ -461,8 +455,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     userProfile,
     loading,
-    signInWithGoogle,
-    logout,
+    signInWithGoogle: handleSignInWithGoogle,
+    logout: handleLogout,
     updateUserRole,
     refreshUserProfile,
     acceptGDPR,

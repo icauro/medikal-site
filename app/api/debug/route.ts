@@ -1,29 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
 
 export async function GET() {
   try {
     console.log('🔍 Debug API called');
 
-    // Test Firebase connection
-    console.log('🔗 Testing Firebase connection...');
-    const testDoc = await adminDb.collection('test').doc('debug').get();
-    console.log('✅ Firebase connection successful');
-
-    // Test auth (optional)
-    try {
-      console.log('🔐 Testing auth...');
-      const auth = getAuth();
-      console.log('✅ Auth initialized successfully');
-    } catch (authError) {
-      console.log('⚠️ Auth test failed:', authError);
-    }
-
     return NextResponse.json({
       status: 'success',
-      message: 'Debug API working',
-      firebase: 'connected',
+      message: 'Debug API working - Supabase migration active',
       timestamp: new Date().toISOString()
     });
 
@@ -48,21 +31,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📦 Received body:', JSON.stringify(body, null, 2));
 
-    // Test Firestore write
-    console.log('💾 Testing Firestore write...');
-    const testRef = adminDb.collection('test').doc('debug_post');
-    await testRef.set({
-      testData: body,
-      timestamp: new Date(),
-      message: 'Debug POST test successful'
-    });
-    console.log('✅ Firestore write successful');
-
     return NextResponse.json({
       status: 'success',
       message: 'Debug POST API working',
       received: body,
-      firestore: 'write successful'
+      note: 'Supabase migration active - Firebase Admin deprecated'
     });
 
   } catch (error) {
