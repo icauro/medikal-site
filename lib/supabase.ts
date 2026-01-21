@@ -1,14 +1,15 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || "";
+// Initialize Supabase client - allow missing vars during build
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables");
-}
-
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+// Create client with dummy values if env vars are missing (for build-time prerendering)
+// At runtime, these MUST be defined or Supabase queries will fail
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder_key"
+);
 
 // Helper: Convert snake_case from database to camelCase for TypeScript types
 const snakeToCamel = (str: string): string => {
