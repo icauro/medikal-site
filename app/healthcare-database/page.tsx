@@ -32,6 +32,7 @@ export default function HealthcareDatabase() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log("📋 [DATABASE] Starting to fetch healthcare data...");
 
         // Fetch healthcare personnel listings
         const { data: personnelData, error: personnelError } = await supabase
@@ -39,8 +40,14 @@ export default function HealthcareDatabase() {
           .select('*');
 
         if (personnelError) {
-          console.error("🚫 [DATABASE] Error fetching personnel:", personnelError);
+          console.error("🚫 [DATABASE] Error fetching personnel:", {
+            message: personnelError.message,
+            code: personnelError.code,
+            details: personnelError.details,
+            hint: personnelError.hint,
+          });
         } else {
+          console.log("✅ [DATABASE] Personnel fetched:", personnelData?.length || 0, "records");
           const converted = (personnelData || []).map(row => convertDatabaseRow(row));
           setPersonnel(converted as HealthcarePersonnelListing[]);
         }
@@ -51,8 +58,14 @@ export default function HealthcareDatabase() {
           .select('*');
 
         if (facilitiesError) {
-          console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesError);
+          console.error("🚫 [DATABASE] Error fetching facilities:", {
+            message: facilitiesError.message,
+            code: facilitiesError.code,
+            details: facilitiesError.details,
+            hint: facilitiesError.hint,
+          });
         } else {
+          console.log("✅ [DATABASE] Facilities fetched:", facilitiesData?.length || 0, "records");
           const converted = (facilitiesData || []).map(row => convertDatabaseRow(row));
           setFacilities(converted as MedicalFacilityListing[]);
         }
@@ -63,19 +76,25 @@ export default function HealthcareDatabase() {
           .select('*');
 
         if (agenciesError) {
-          console.error("🚫 [DATABASE] Error fetching agencies:", agenciesError);
+          console.error("🚫 [DATABASE] Error fetching agencies:", {
+            message: agenciesError.message,
+            code: agenciesError.code,
+            details: agenciesError.details,
+            hint: agenciesError.hint,
+          });
         } else {
+          console.log("✅ [DATABASE] Agencies fetched:", agenciesData?.length || 0, "records");
           const converted = (agenciesData || []).map(row => convertDatabaseRow(row));
           setAgencies(converted as AgencyListing[]);
         }
 
-        console.log("📋 [DATABASE] Loaded healthcare data", {
-          personnel: personnelData?.length || 0,
-          facilities: facilitiesData?.length || 0,
-          agencies: agenciesData?.length || 0,
+        console.log("✅ [DATABASE] All data loaded successfully");
+      } catch (error: any) {
+        console.error("🚫 [DATABASE] Error fetching data:", {
+          message: error?.message,
+          code: error?.code,
+          fullError: error,
         });
-      } catch (error) {
-        console.error("🚫 [DATABASE] Error fetching data:", error);
       } finally {
         setLoading(false);
       }
