@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["@geist-ui/core"],
+  },
 };
 
 export default nextConfig;

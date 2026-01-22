@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('🔧 [PROFILE] INSERT result:', {
             error: insertError,
             hasData: !!data,
-            dataLength: Array.isArray(data) ? data.length : 'not array'
+            dataLength: Array.isArray(data) ? (data as any[]).length : 'not array'
           });
 
           if (insertError) {
