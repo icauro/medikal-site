@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
 import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, MEDICAL_PROCEDURES, MedicalProcedureType } from "@/lib/types";
+import { theme } from "@/lib/theme";
 
 export default function TreatmentPlanPage() {
   const { user, userProfile } = useAuth();
@@ -202,7 +203,7 @@ export default function TreatmentPlanPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-black text-white">
+      <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white`}>
         <div className="flex h-screen">
           {/* Sidebar - Treatment Plans List */}
           <div className="w-80 border-r border-zinc-800 overflow-y-auto">

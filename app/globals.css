@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors - from lib/theme.ts */
+  --background: #000000;
+  --foreground: #e5e7eb;
+  --primary-green: #10b981;      /* Emerald Green */
+  --primary-blue: #0ea5e9;       /* Sky Blue */
+  --accent-green: #34d399;       /* Light Emerald */
+  --accent-blue: #38bdf8;        /* Light Sky Blue */
+  
+  /* Background Colors */
+  --background-darkest: #000000;
+  --background-dark: #050505;
+  --background-medium: #0a0a0a;
+  --background-surface: #0f0f0f;
+  
+  /* Note: These CSS variables are synchronized with lib/theme.ts theme.cssVariables */
 }
 
 @theme inline {
@@ -14,15 +27,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a1929;
+    --foreground: #e5e7eb;
   }
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #000000 0%, #050505 50%, #0a0a0a 100%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
 }
 
 /* Comment thread line - L-shaped connector with 90 degree turn */

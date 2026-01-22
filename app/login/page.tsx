@@ -1,5 +1,7 @@
 "use client";
 
+import { theme } from "@/lib/theme";
+
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
@@ -114,8 +116,8 @@ function LoginContent() {
 }
 
 const suspenseFallback = (
-  <div className="min-h-screen bg-black flex items-center justify-center">
-    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+  <div className={`min-h-screen ${theme.gradients.pageBgClasses} flex items-center justify-center`}>
+    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-400"></div>
   </div>
 );
 

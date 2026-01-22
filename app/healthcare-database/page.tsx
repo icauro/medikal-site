@@ -11,6 +11,8 @@ import { supabase, convertDatabaseRow } from "@/lib/supabase";
 
 type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
+import { theme } from "@/lib/theme";
+
 export default function HealthcareDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("all");
@@ -33,70 +35,66 @@ export default function HealthcareDatabase() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         console.log("📋 [DATABASE] Starting to fetch healthcare data...");
 
-        // Fetch healthcare personnel listings
-        const { data: personnelData, error: personnelError } = await supabase
-          .from('healthcare_personnel_listings')
-          .select('*');
+        // Set a timeout for the entire fetch operation (10 seconds)
+        const fetchPromise = async () => {
+          // Fetch healthcare personnel listings
+          console.log("📋 [DATABASE] Fetching healthcare personnel...");
+          const { data: personnelData, error: personnelError } = await supabase
+            .from('healthcare_personnel_listings')
+            .select('id, name, slug, specialization, country, province, image, rating, user_id');
 
-        if (personnelError) {
-          console.error("🚫 [DATABASE] Error fetching personnel:", {
-            message: personnelError.message,
-            code: personnelError.code,
-            details: personnelError.details,
-            hint: personnelError.hint,
-          });
-        } else {
-          console.log("✅ [DATABASE] Personnel fetched:", personnelData?.length || 0, "records");
-          const converted = (personnelData || []).map(row => convertDatabaseRow(row));
-          setPersonnel(converted as HealthcarePersonnelListing[]);
-        }
+          if (personnelError) {
+            console.error("🚫 [DATABASE] Error fetching personnel:", personnelError?.message);
+          } else {
+            console.log("✅ [DATABASE] Personnel fetched:", personnelData?.length || 0, "records");
+            const converted = (personnelData || []).map(row => convertDatabaseRow(row));
+            setPersonnel(converted as HealthcarePersonnelListing[]);
+          }
 
-        // Fetch medical facility listings
-        const { data: facilitiesData, error: facilitiesError } = await supabase
-          .from('medical_facility_listings')
-          .select('*');
+          // Fetch medical facility listings
+          console.log("📋 [DATABASE] Fetching medical facilities...");
+          const { data: facilitiesData, error: facilitiesError } = await supabase
+            .from('medical_facility_listings')
+            .select('id, name, slug, country, province, city, image, rating, user_id');
 
-        if (facilitiesError) {
-          console.error("🚫 [DATABASE] Error fetching facilities:", {
-            message: facilitiesError.message,
-            code: facilitiesError.code,
-            details: facilitiesError.details,
-            hint: facilitiesError.hint,
-          });
-        } else {
-          console.log("✅ [DATABASE] Facilities fetched:", facilitiesData?.length || 0, "records");
-          const converted = (facilitiesData || []).map(row => convertDatabaseRow(row));
-          setFacilities(converted as MedicalFacilityListing[]);
-        }
+          if (facilitiesError) {
+            console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesError?.message);
+          } else {
+            console.log("✅ [DATABASE] Facilities fetched:", facilitiesData?.length || 0, "records");
+            const converted = (facilitiesData || []).map(row => convertDatabaseRow(row));
+            setFacilities(converted as MedicalFacilityListing[]);
+          }
 
-        // Fetch agencies listings
-        const { data: agenciesData, error: agenciesError } = await supabase
-          .from('agency_listings')
-          .select('*');
+          // Fetch agencies listings
+          console.log("📋 [DATABASE] Fetching agencies...");
+          const { data: agenciesData, error: agenciesError } = await supabase
+            .from('agency_listings')
+            .select('id, name, slug, country, province, city, image, rating, user_id');
 
-        if (agenciesError) {
-          console.error("🚫 [DATABASE] Error fetching agencies:", {
-            message: agenciesError.message,
-            code: agenciesError.code,
-            details: agenciesError.details,
-            hint: agenciesError.hint,
-          });
-        } else {
-          console.log("✅ [DATABASE] Agencies fetched:", agenciesData?.length || 0, "records");
-          const converted = (agenciesData || []).map(row => convertDatabaseRow(row));
-          setAgencies(converted as AgencyListing[]);
-        }
+          if (agenciesError) {
+            console.error("🚫 [DATABASE] Error fetching agencies:", agenciesError?.message);
+          } else {
+            console.log("✅ [DATABASE] Agencies fetched:", agenciesData?.length || 0, "records");
+            const converted = (agenciesData || []).map(row => convertDatabaseRow(row));
+            setAgencies(converted as AgencyListing[]);
+          }
 
-        console.log("✅ [DATABASE] All data loaded successfully");
+          console.log("✅ [DATABASE] All data loaded successfully");
+        };
+
+        // Race the fetch against a 10 second timeout
+        await Promise.race([
+          fetchPromise(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Database fetch timed out after 10 seconds")), 10000)
+          ),
+        ]);
       } catch (error: any) {
-        console.error("🚫 [DATABASE] Error fetching data:", {
-          message: error?.message,
-          code: error?.code,
-          fullError: error,
-        });
-        setError(error?.message || "Failed to load healthcare database. Please check the console for details.");
+        console.error("🚫 [DATABASE] Error fetching data:", error?.message);
+        setError(error?.message || "Failed to load healthcare database. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -166,11 +164,11 @@ export default function HealthcareDatabase() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 py-12">
+      <div className={`min-h-screen ${theme.gradients.pageBgClasses} py-12`}>
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-zinc-700 border-r-cyan-400"></div>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-700 border-r-green-400"></div>
               <p className="mt-4 text-zinc-400">Loading healthcare database...</p>
             </div>
           </div>
@@ -181,7 +179,7 @@ export default function HealthcareDatabase() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 py-12">
+      <div className={`min-h-screen ${theme.gradients.pageBgClasses} py-12`}>
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-center h-64">
             <div className="text-center bg-red-900/20 border border-red-800 rounded-lg p-6">
@@ -195,7 +193,7 @@ export default function HealthcareDatabase() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 py-12">
+    <div className={`min-h-screen ${theme.gradients.pageBgClasses} py-12`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">

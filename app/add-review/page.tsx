@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { theme } from "@/lib/theme";
 
 interface HealthcarePersonnel {
   id: string;
@@ -287,7 +288,7 @@ export default function AddReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+    <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white p-4 md:p-8`}>
       <div className="max-w-2xl mx-auto">
         {/* Back button */}
         <div className="mb-6">

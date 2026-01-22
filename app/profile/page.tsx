@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { theme } from '@/lib/theme';
 
 export default function ProfilePage() {
   const { user, userProfile, logout, deleteAccount } = useAuth();
@@ -113,7 +114,7 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white p-8`}>
         <div className="max-w-4xl mx-auto">
           {/* Header with Logout */}
           <div className="flex justify-between items-center mb-8">
