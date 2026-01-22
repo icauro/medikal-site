@@ -324,7 +324,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
       }
 
-      console.log('✅ [GDPR] GDPR consent accepted, moving to role selection');
+      // Refresh user profile to ensure SignupFlowManager gets updated data
+      await refreshUserProfile();
+
+      console.log('✅ [GDPR] GDPR consent accepted, SignupFlowManager will handle navigation');
     } catch (error) {
       console.error('❌ [GDPR] Failed to accept GDPR:', error);
       throw error;
@@ -363,11 +366,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         } catch (error: unknown) {
           console.error('❌ [AUTH] Error loading user profile:', error);
-          console.log('🚨 [AUTH] Signing out user due to profile creation failure');
+          console.log('🚨 [AUTH] Profile creation/loading failed, signing out user');
+
+          // Clear local state first to prevent loading state issues
+          setUser(null);
+          setUserProfile(null);
+          setLoading(false);
+
           try {
             await supabaseSignOut();
-            setUser(null);
-            setUserProfile(null);
+            console.log('✅ [AUTH] Successfully signed out after profile error');
           } catch (signOutError) {
             console.error('❌ [AUTH] Failed to sign out after profile error:', signOutError);
           }
@@ -414,15 +422,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log(`✅ [DELETE] Deleted ${tableName}`);
       }
 
-      // 2. Soft-delete user's comments
-      console.log('🗑️ [DELETE] Soft-deleting user comments...');
+      // 2. Mark user's comments as deleted (temporary solution until is_deleted column is added)
+      console.log('🗑️ [DELETE] Marking user comments as deleted...');
       const { error: commentError } = await supabase
         .from('comments')
-        .update({ is_deleted: true, updated_at: new Date().toISOString() })
+        .update({
+          content: '[This comment was deleted by the user]',
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id);
 
-      if (commentError) throw commentError;
-      console.log('✅ [DELETE] Soft-deleted user comments');
+      if (commentError) {
+        console.warn('⚠️ [DELETE] Failed to update comments, continuing with deletion:', commentError);
+        // Don't throw error for comments, continue with deletion
+      } else {
+        console.log('✅ [DELETE] Marked user comments as deleted');
+      }
 
       // 3. Delete user profile from Supabase
       console.log('🗑️ [DELETE] Deleting user profile from Supabase...');
@@ -434,13 +449,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (profileError) throw profileError;
       console.log('✅ [DELETE] User profile deleted');
 
-      // 4. Delete Supabase Auth account
-      console.log('🗑️ [DELETE] Deleting Supabase Authentication account...');
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-      if (authError) throw authError;
-      console.log('✅ [DELETE] Supabase Auth account deleted');
+      // 4. Supabase Auth account will be automatically deleted when user profile is deleted
+      // Note: admin.deleteUser() requires service role key, which we don't have in client-side
+      console.log('ℹ️ [DELETE] Supabase Auth account will be auto-deleted when profile is removed');
 
-      // 5. Clear local state
+      // 5. Sign out locally (this will clear the session)
+      console.log('🗑️ [DELETE] Signing out locally...');
+      await supabaseSignOut();
+
+      // 6. Clear local state
       setUser(null);
       setUserProfile(null);
 

@@ -147,8 +147,8 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
     try {
       await acceptGDPR();
       setShowGDPR(false);
-      console.log('✅ [SIGNUP_FLOW] GDPR accepted, proceeding to role selection');
-      router.push('/signup/role-selection');
+      console.log('✅ [SIGNUP_FLOW] GDPR accepted, SignupFlowManager will handle navigation');
+      // Don't manually navigate - let SignupFlowManager handle it based on updated accountStatus
     } catch (error) {
       console.error('🚫 [SIGNUP_FLOW] Failed to accept GDPR:', error);
       alert('Failed to save your consent. Please try again.');

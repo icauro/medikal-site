@@ -377,20 +377,40 @@ export default function ProfilePage() {
                       <input
                         type="text"
                         id="deleteConfirmText"
-                        className="w-full px-2 py-1 bg-black border border-red-900/50 rounded text-xs text-white"
+                        className="w-full px-2 py-1 bg-black border border-red-900/50 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-red-500"
                         placeholder="Type DELETE"
+                        onChange={(e) => {
+                          // Clear error when user starts typing
+                          if (deleteError) setDeleteError('');
+                        }}
                       />
+                      {deleteError && (
+                        <p className="text-[10px] text-red-400">{deleteError}</p>
+                      )}
                       <div className="flex gap-2">
-                        <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-1 bg-zinc-800 rounded text-[10px]">Cancel</button>
-                        <button 
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            setDeleteError('');
+                          }}
+                          className="flex-1 py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-[10px] transition-colors"
+                          disabled={isDeleting}
+                        >
+                          Cancel
+                        </button>
+                        <button
                           onClick={() => {
                             const input = document.getElementById('deleteConfirmText') as HTMLInputElement;
-                            if (input?.value === 'DELETE') handleDeleteAccount();
-                            else setDeleteError('Type DELETE');
+                            if (input?.value === 'DELETE') {
+                              handleDeleteAccount();
+                            } else {
+                              setDeleteError('Please type DELETE to confirm');
+                            }
                           }}
-                          className="flex-1 py-1 bg-red-600 rounded text-[10px] font-bold"
+                          disabled={isDeleting}
+                          className="flex-1 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:opacity-50 rounded text-[10px] font-bold transition-colors"
                         >
-                          DELETE
+                          {isDeleting ? 'Deleting...' : 'DELETE'}
                         </button>
                       </div>
                     </div>
