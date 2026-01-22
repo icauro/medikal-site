@@ -7,6 +7,8 @@ import { COUNTRIES } from "@/lib/constants";
 import { convertToSnakeCase } from "@/lib/supabase";
 import { Country, State } from "country-state-city";
 import { supabase } from "@/lib/supabase";
+import { logDatabaseRejection, logDatabaseSuccess, getErrorMessageForUI } from "@/lib/logging";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 interface HealthcarePersonnelListingCRUDModalProps {
   isOpen: boolean;
@@ -23,6 +25,14 @@ export default function HealthcarePersonnelListingCRUDModal({
   mode, 
   onSuccess 
 }: HealthcarePersonnelListingCRUDModalProps) {
+  let user;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+  } catch (e) {
+    // In test environments or outside AuthProvider, user will be undefined
+    user = undefined;
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -194,15 +204,20 @@ export default function HealthcarePersonnelListingCRUDModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('🚫 [LISTING_CRUD] Error details:', {
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint,
-        fullError: JSON.stringify(err)
+      logDatabaseRejection({
+        operation: mode === 'edit' ? 'UPDATE' : 'INSERT',
+        table: 'healthcare_personnel_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        userRole: user?.role,
+        error: err,
+        additionalContext: {
+          personnelName: openData.name,
+          mode,
+        }
       });
-      setError(err?.message || err?.details || 'Failed to save listing');
-      console.error('🚫 [LISTING_CRUD] Error:', err);
+      const errorMessage = getErrorMessageForUI(err, 'Failed to save listing');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -220,20 +235,30 @@ export default function HealthcarePersonnelListingCRUDModal({
 
       if (deleteError) throw deleteError;
       
-      console.log('✅ [LISTING_CRUD] Personnel listing deleted:', openData.id);
+      logDatabaseSuccess({
+        operation: 'DELETE',
+        table: 'healthcare_personnel_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        message: `Personnel "${openData.name}" deleted`
+      });
       
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('🚫 [LISTING_CRUD] Delete error details:', {
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint,
-        fullError: JSON.stringify(err)
+      logDatabaseRejection({
+        operation: 'DELETE',
+        table: 'healthcare_personnel_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        userRole: user?.role,
+        error: err,
+        additionalContext: {
+          personnelName: openData.name,
+        }
       });
-      setError(err?.message || err?.details || 'Failed to delete listing');
-      console.error('🚫 [LISTING_CRUD] Error:', err);
+      const errorMessage = getErrorMessageForUI(err, 'Failed to delete listing');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
