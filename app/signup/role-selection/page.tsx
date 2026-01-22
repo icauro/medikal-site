@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +12,17 @@ export default function RoleSelectionPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Debug: Log current state changes
+  useEffect(() => {
+    console.log('🎭 [ROLE] Current state:', {
+      selectedRole,
+      loading,
+      error,
+      user: user?.id,
+      userProfile: userProfile?.accountStatus
+    });
+  }, [selectedRole, loading, error, user, userProfile]);
 
   const handleRoleSelection = async () => {
     if (!selectedRole || !user) {
@@ -28,7 +39,7 @@ export default function RoleSelectionPage() {
         userId: user.id,
         currentProfile: userProfile
       });
-      
+
       // Update user role in Supabase
       const updates: any = {
         role: selectedRole,
@@ -40,22 +51,33 @@ export default function RoleSelectionPage() {
       } else {
         updates.account_status = 'pending_personal_data';
       }
-      
-      const { error } = await supabase
+
+      console.log('🔧 [ROLE] Sending update to Supabase:', updates);
+
+      const { error, data } = await supabase
         .from('users')
         .update(updates)
         .eq('id', user.id);
-      
-      if (error) throw error;
+
+      console.log('🔧 [ROLE] Supabase response:', { error, data });
+
+      if (error) {
+        console.error('❌ [ROLE] Supabase update error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
 
       console.log(`✅ [ROLE] ${selectedRole} role set, refreshing profile...`);
       await refreshUserProfile();
       console.log('✅ [ROLE] Profile refreshed, navigating to /profile');
-      window.location.href = '/profile';
+
+      // Use Next.js router instead of window.location for better UX
+      router.push('/profile');
+
     } catch (err) {
       console.error('🚫 [ROLE] Error updating role:', err);
-      setError(`Failed to update account: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      setLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update account';
+      setError(`Failed to update account: ${errorMessage}`);
+      setLoading(false); // Only set loading false on error
     }
   };
 
