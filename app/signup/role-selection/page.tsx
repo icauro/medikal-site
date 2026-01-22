@@ -36,13 +36,6 @@ export default function RoleSelectionPage() {
     );
   }
 
-  // If user already has a role and account is active, redirect immediately
-  if (userProfile.role && userProfile.accountStatus === 'active') {
-    console.log('🚫 [ROLE] User already has role and active account, redirecting to profile');
-    router.push('/profile');
-    return null; // Return null to prevent any rendering
-  }
-
   const handleRoleSelection = async () => {
     if (!selectedRole || !user) {
       setError('Please select a role');

@@ -96,14 +96,21 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
           hasRole: !!userProfile.role
         });
 
-        // If user has a role and account is active, never show role selection
-        const signupPages = ['/signup/role-selection', '/signup/'];
-        const isOnSignupPage = signupPages.some(page => pathname.startsWith(page) || pathname === page);
-
-        if (isOnSignupPage) {
-          console.log('🔄 [SIGNUP_FLOW] Account active with role, redirecting away from signup pages');
+        // Active users should never see role selection page
+        if (pathname === '/signup/role-selection') {
+          console.log('🚫 [SIGNUP_FLOW] Active user on role selection page, redirecting to profile');
           router.push('/profile');
           return; // Early return to prevent any flash
+        }
+
+        // If on other signup pages but account is active, redirect away
+        const otherSignupPages = ['/signup/'];
+        const isOnOtherSignupPage = otherSignupPages.some(page => pathname.startsWith(page) || pathname === page);
+
+        if (isOnOtherSignupPage) {
+          console.log('🔄 [SIGNUP_FLOW] Account active, redirecting away from signup pages');
+          router.push('/profile');
+          return;
         }
         break;
 

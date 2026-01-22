@@ -45,11 +45,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       // Check if user profile exists
+      console.log('🔍 [PROFILE] Checking if user profile exists in database...');
       const { data: existingProfile, error: fetchError } = await supabase
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
+
+      console.log('🔍 [PROFILE] Database query result:', {
+        hasData: !!existingProfile,
+        error: fetchError,
+        errorCode: fetchError?.code,
+        errorMessage: fetchError?.message
+      });
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError; // PGRST116 means no rows found, which is expected for new users
@@ -64,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         console.log('👑 [PROFILE] Admin check:', {
           email: supabaseUser.email,
+          adminEmails: adminEmails,
           isAdmin: isAdmin,
         });
 
@@ -93,6 +102,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             accountStatus: profile.accountStatus,
           });
 
+          console.log('🔧 [PROFILE] Executing INSERT query...');
+
           const { error: insertError, data } = await supabase
             .from('users')
             .insert([{
@@ -108,7 +119,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               admin_account_data: profile.adminAccountData || null,
             }]);
 
+          console.log('🔧 [PROFILE] INSERT result:', {
+            error: insertError,
+            hasData: !!data,
+            dataLength: Array.isArray(data) ? data.length : 'not array'
+          });
+
           if (insertError) {
+            // Handle duplicate key error - profile might have been created by another auth state change
+            if (insertError.code === '23505') {
+              console.log('⚠️ [PROFILE] Duplicate key error, profile might already exist. Retrying SELECT...');
+
+              // Retry SELECT to get existing profile
+              const { data: retryData, error: retryError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', supabaseUser.id)
+                .single();
+
+              if (!retryError && retryData) {
+                console.log('✅ [PROFILE] Found existing profile after duplicate key error');
+                return convertTimestampsToDates(retryData) as UserProfile;
+              }
+            }
+
             console.error('🔴 [PROFILE] Insert error details:', {
               fullError: JSON.stringify(insertError),
               message: insertError?.message || 'No message',
@@ -338,6 +372,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('👂 [AUTH] Setting up Supabase auth state listener...');
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 [AUTH] Auth state change detected:', {
+        event,
+        hasSession: !!session,
+        hasUser: !!(session?.user),
+        userId: session?.user?.id,
+        userEmail: session?.user?.email
+      });
+
       if (session && session.user) {
         const supabaseUser = session.user;
         console.log('🔐 [AUTH] Auth state changed: User signed in', {
@@ -359,6 +401,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('👤 [PROFILE] Loading/creating user profile...');
           const profile = await createUserProfile(supabaseUser);
           setUserProfile(profile);
+
+          // Prevent flash: If active user is on role selection page, redirect immediately
+          if (profile.accountStatus === 'active' && typeof window !== 'undefined' && window.location.pathname === '/signup/role-selection') {
+            console.log('🔄 [AUTH] Active user on role selection page, redirecting to profile to prevent flash');
+            window.location.href = '/profile';
+            return;
+          }
+
           console.log('✅ [AUTH] User authentication and profile setup complete', {
             profileRole: profile.role,
             profileStatus: profile.accountStatus,
