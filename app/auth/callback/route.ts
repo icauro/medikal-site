@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // If no code provided, redirect to login
-  return NextResponse.redirect(`${requestUrl.origin}/login`);
+  // Implicit flow: token is in the URL fragment, which is handled client-side by AuthContext
+  // Just redirect to role selection to let AuthContext pick it up
+  console.log('🔐 [AUTH] No code parameter, redirecting to role-selection (implicit flow)');
+  return NextResponse.redirect(`${requestUrl.origin}/signup/role-selection`);
 }

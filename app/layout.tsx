@@ -5,7 +5,6 @@ import Navbar from "./components/Navbar";
 import SignupFlowManager from "./components/SignupFlowManager";
 import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "./components/Toast";
-import "../lib/firebase"; // Initialize Firebase at app startup
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 
 const geistSans = Geist({
