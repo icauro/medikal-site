@@ -4,10 +4,22 @@ export async function GET() {
   try {
     console.log('🔍 Debug API called');
 
+    // Check admin emails environment variable
+    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+
     return NextResponse.json({
       status: 'success',
       message: 'Debug API working - Supabase migration active',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      environment: {
+        adminEmails: adminEmails,
+        adminEmailsCount: adminEmails.length,
+        hasSupabaseUrl: !!supabaseUrl,
+        hasSupabaseKey: !!supabaseKey,
+        supabaseUrlPrefix: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : null
+      }
     });
 
   } catch (error) {

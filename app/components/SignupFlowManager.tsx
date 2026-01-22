@@ -18,11 +18,18 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
   const [showGDPR, setShowGDPR] = useState(false);
 
   useEffect(() => {
-    if (loading || !user || !userProfile) return;
+    if (loading || !user) return;
+
+    // If userProfile is not loaded yet, don't do anything (prevent flash)
+    if (!userProfile) {
+      console.log('⏳ [SIGNUP_FLOW] Waiting for userProfile to load...');
+      return;
+    }
 
     console.log('🚦 [SIGNUP_FLOW] Checking account status:', {
       status: userProfile.accountStatus,
       role: userProfile.role,
+      email: userProfile.email,
       pathname,
     });
 
@@ -37,9 +44,27 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
 
     const isAllowedPath = allowedPaths.some(path => pathname.startsWith(path));
 
+    // Check if user is admin by email (fallback check)
+    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+    const isAdminByEmail = adminEmails.includes(userProfile.email);
+
     // Admin users bypass all checks
-    if (userProfile.role === 'admin' && (userProfile.accountStatus === 'active' || !userProfile.accountStatus)) {
-      console.log('✅ [SIGNUP_FLOW] Admin user, allowing access');
+    if (userProfile.role === 'admin' || isAdminByEmail) {
+      console.log('✅ [SIGNUP_FLOW] Admin user detected, allowing access', {
+        role: userProfile.role,
+        isAdminByEmail,
+        accountStatus: userProfile.accountStatus,
+        email: userProfile.email
+      });
+
+      // If admin user is on signup pages, redirect away
+      const signupPages = ['/signup/role-selection', '/signup/'];
+      if (signupPages.some(page => pathname.startsWith(page))) {
+        console.log('🔄 [SIGNUP_FLOW] Admin user on signup page, redirecting to profile');
+        router.push('/profile');
+        return;
+      }
+
       return;
     }
 
@@ -66,16 +91,19 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         break;
 
       case 'active':
-        console.log('✅ [SIGNUP_FLOW] Account active');
-        // If on signup pages but account is active, redirect to home/profile
-        const signupPendingPages = [
-          '/signup/',
-        ];
-        const isOnSignupPage = signupPendingPages.some(page => pathname.startsWith(page) || pathname === page);
-        
+        console.log('✅ [SIGNUP_FLOW] Account active', {
+          role: userProfile.role,
+          hasRole: !!userProfile.role
+        });
+
+        // If user has a role and account is active, never show role selection
+        const signupPages = ['/signup/role-selection', '/signup/'];
+        const isOnSignupPage = signupPages.some(page => pathname.startsWith(page) || pathname === page);
+
         if (isOnSignupPage) {
-          console.log('🔄 [SIGNUP_FLOW] Account active, redirecting away from signup pages');
+          console.log('🔄 [SIGNUP_FLOW] Account active with role, redirecting away from signup pages');
           router.push('/profile');
+          return; // Early return to prevent any flash
         }
         break;
 

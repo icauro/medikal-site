@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
 
 export default function RoleSelectionPage() {
-  const { user, userProfile, refreshUserProfile } = useAuth();
+  const { user, userProfile, refreshUserProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,25 @@ export default function RoleSelectionPage() {
       userProfile: userProfile?.accountStatus
     });
   }, [selectedRole, loading, error, user, userProfile]);
+
+  // Prevent flash: If userProfile is not loaded yet, show loading
+  if (authLoading || !userProfile) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user already has a role and account is active, redirect immediately
+  if (userProfile.role && userProfile.accountStatus === 'active') {
+    console.log('🚫 [ROLE] User already has role and active account, redirecting to profile');
+    router.push('/profile');
+    return null; // Return null to prevent any rendering
+  }
 
   const handleRoleSelection = async () => {
     if (!selectedRole || !user) {
