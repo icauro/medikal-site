@@ -21,6 +21,7 @@ export default function HealthcareDatabase() {
   const [facilities, setFacilities] = useState<MedicalFacilityListing[]>([]);
   const [agencies, setAgencies] = useState<AgencyListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Countries list for filter
   const countries = [
@@ -95,6 +96,7 @@ export default function HealthcareDatabase() {
           code: error?.code,
           fullError: error,
         });
+        setError(error?.message || "Failed to load healthcare database. Please check the console for details.");
       } finally {
         setLoading(false);
       }
@@ -170,6 +172,21 @@ export default function HealthcareDatabase() {
             <div className="text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-zinc-700 border-r-cyan-400"></div>
               <p className="mt-4 text-zinc-400">Loading healthcare database...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 py-12">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center bg-red-900/20 border border-red-800 rounded-lg p-6">
+              <p className="text-red-400 font-semibold">Error Loading Database</p>
+              <p className="text-zinc-400 mt-2">{error}</p>
             </div>
           </div>
         </div>
