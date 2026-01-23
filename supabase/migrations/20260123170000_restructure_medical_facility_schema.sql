@@ -9,9 +9,8 @@ CREATE TABLE IF NOT EXISTS public.medical_facility_user_data (
   facility_listing_id UUID REFERENCES public.medical_facility_listings(id) ON DELETE CASCADE,
 
   -- User-specific data
-  city TEXT,
   image TEXT,
-  link TEXT, -- Consolidated from city, image, google_reviews_embed_url, links
+  link TEXT, -- Consolidated link field
 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -25,11 +24,10 @@ ALTER TABLE public.medical_facility_listings ADD COLUMN IF NOT EXISTS link TEXT;
 
 -- Migrate existing user data to new table (if any exists)
 -- Note: This assumes existing data structure. Adjust as needed based on actual data.
-INSERT INTO public.medical_facility_user_data (user_id, facility_listing_id, city, image, link)
+INSERT INTO public.medical_facility_user_data (user_id, facility_listing_id, image, link)
 SELECT
   user_id,
   id as facility_listing_id,
-  city,
   image,
   CASE
     WHEN google_reviews_embed_url IS NOT NULL THEN google_reviews_embed_url

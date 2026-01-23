@@ -209,14 +209,11 @@ export interface MedicalFacilityUserData {
   id: string;
   userId: string;
   facilityListingId?: string;
-  city?: string;
   image?: string;
   link?: string; // Consolidated link field
   createdAt: Date;
   updatedAt: Date;
 }
-
-// Medical Facility Listing (public, admin-managed)
 export interface MedicalFacilityListing {
   id: string;
   name: string;
