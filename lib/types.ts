@@ -204,6 +204,18 @@ export interface MedicalFacilityAccountData {
   claimedDoctorIds?: string[]; // Pending verification
 }
 
+// Medical Facility User Data (user-specific, private)
+export interface MedicalFacilityUserData {
+  id: string;
+  userId: string;
+  facilityListingId?: string;
+  city?: string;
+  image?: string;
+  link?: string; // Consolidated link field
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Medical Facility Listing (public, admin-managed)
 export interface MedicalFacilityListing {
   id: string;
@@ -211,17 +223,14 @@ export interface MedicalFacilityListing {
   facilityType: MedicalFacilityType;
   country: string;    // Required field
   province?: string;  // State/province based on country
-  city?: string;      // City/municipality
   procedures?: MedicalProcedureType[]; // Array of offered procedures
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
-  googleReviewsEmbedUrl?: string;
   userId?: string; // Link to user account (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
-  image?: string;
-  links?: string[];
+  link?: string; // Consolidated link field
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin UID

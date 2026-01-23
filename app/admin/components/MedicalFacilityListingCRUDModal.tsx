@@ -47,11 +47,10 @@ export default function MedicalFacilityListingCRUDModal({
     facilityType: "Hospital",
     country: "Turkey",
     province: "Istanbul",
-    city: "",
     rating: 0,
     reviewCount: 0,
     googlePlaceId: "",
-    googleReviewsEmbedUrl: "",
+    link: "",
     userId: ""
   });
   const [initialUserId, setInitialUserId] = useState("");
@@ -118,7 +117,6 @@ export default function MedicalFacilityListingCRUDModal({
       ...openData,
       name: facility.name,
       facilityType: facility.facilityType,
-      city: facility.city,
       province: facility.province,
       country: facility.country
     });
@@ -132,11 +130,10 @@ export default function MedicalFacilityListingCRUDModal({
         setOpenData({
           ...openDataRecord,
           facilityType: openDataRecord.facilityType || "Hospital",
-          city: openDataRecord.city || "",
           rating: openDataRecord.rating || 0,
           reviewCount: openDataRecord.reviewCount || 0,
           googlePlaceId: openDataRecord.googlePlaceId || "",
-          googleReviewsEmbedUrl: openDataRecord.googleReviewsEmbedUrl || "",
+          link: openDataRecord.link || "",
           userId: openDataRecord.userId || ""
         });
         // Facility search term'ini de güncelle
@@ -148,11 +145,10 @@ export default function MedicalFacilityListingCRUDModal({
           facilityType: "Hospital",
           country: "Turkey",
           province: "Istanbul",
-          city: "",
           rating: 0,
           reviewCount: 0,
           googlePlaceId: "",
-          googleReviewsEmbedUrl: "",
+          link: "",
           userId: ""
         });
         setInitialUserId("");
@@ -447,19 +443,14 @@ export default function MedicalFacilityListingCRUDModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">City</label>
-            <input type="text" value={openData.city || ""} onChange={(e) => setOpenData({...openData, city: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Google Place ID</label>
               <input type="text" value={openData.googlePlaceId || ""} onChange={(e) => setOpenData({...openData, googlePlaceId: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="ChIJ..." />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Reviews Embed URL</label>
-              <input type="text" value={openData.googleReviewsEmbedUrl || ""} onChange={(e) => setOpenData({...openData, googleReviewsEmbedUrl: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="https://..." />
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Link</label>
+              <input type="text" value={openData.link || ""} onChange={(e) => setOpenData({...openData, link: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none text-sm" placeholder="https://..." />
             </div>
           </div>
 

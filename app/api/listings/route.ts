@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         .select('id, name, slug, specialization, country, province, image, rating, user_id'),
       supabase
         .from('medical_facility_listings')
-        .select('id, name, slug, country, province, city, image, rating, user_id'),
+        .select('id, name, slug, country, province, rating, user_id, link'),
       supabase
         .from('agency_listings')
         .select('id, name, slug, country, province, city, image, rating, user_id'),

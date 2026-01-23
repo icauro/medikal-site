@@ -118,8 +118,7 @@ export default function HealthcareDatabase() {
   const filterAgencies = (items: AgencyListing[]) => {
     return items.filter((item) => {
       const matchesSearch =
-        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.city?.toLowerCase().includes(searchQuery.toLowerCase());
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
 
@@ -293,7 +292,7 @@ export default function HealthcareDatabase() {
                       href={`/medical-facilities/${facility.slug}`}
                       hasUser={!!facility.userId}
                       emoji="🏥"
-                      primaryInfo={facility.city || "Medical Facility"}
+                      primaryInfo={facility.facilityType || "Medical Facility"}
                       secondaryInfo={facility.province ? `${facility.province}, ${facility.country}` : undefined}
                       rating={facility.rating}
                     />
