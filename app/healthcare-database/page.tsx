@@ -7,7 +7,7 @@ import {
   AgencyListing,
 } from "@/lib/types";
 import ListingCard from "@/app/components/ListingCard";
-import { supabase, convertDatabaseRow } from "@/lib/supabase";
+import { convertDatabaseRow } from "@/lib/supabase";
 
 type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
@@ -37,56 +37,47 @@ export default function HealthcareDatabase() {
         setLoading(true);
         setError(null);
         console.log("📋 [DATABASE] Starting to fetch healthcare data...");
-        // Fetch the three listing sets in parallel to reduce total latency
-        const start = Date.now();
-        const personnelQ = supabase
-          .from('healthcare_personnel_listings')
-          .select('id, name, slug, specialization, country, province, image, rating, user_id');
+        
+        // Call server-side API to avoid client-side Supabase initialization delays
+        const response = await fetch('/api/listings');
+        const result = await response.json();
 
-        const facilitiesQ = supabase
-          .from('medical_facility_listings')
-          .select('id, name, slug, country, province, city, image, rating, user_id');
-
-        const agenciesQ = supabase
-          .from('agency_listings')
-          .select('id, name, slug, country, province, city, image, rating, user_id');
-
-        // Run queries in parallel
-        const [personnelRes, facilitiesRes, agenciesRes] = await Promise.all([
-          personnelQ,
-          facilitiesQ,
-          agenciesQ,
-        ] as unknown as [any, any, any]);
-
-        const elapsed = Date.now() - start;
-        console.log(`📋 [DATABASE] Parallel fetch completed in ${elapsed}ms`);
-
-        // Handle personnel result
-        if (personnelRes.error) {
-          console.error("🚫 [DATABASE] Error fetching personnel:", personnelRes.error.message);
-        } else {
-          console.log("✅ [DATABASE] Personnel fetched:", personnelRes.data?.length || 0, "records");
-          setPersonnel((personnelRes.data || []).map((r: any) => convertDatabaseRow(r)) as HealthcarePersonnelListing[]);
+        if (!response.ok) {
+          console.error("🚫 [DATABASE] API error:", result.error);
+          setError(result.error || "Failed to load healthcare database");
+          return;
         }
 
-        // Handle facilities result
-        if (facilitiesRes.error) {
-          console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesRes.error.message);
-        } else {
-          console.log("✅ [DATABASE] Facilities fetched:", facilitiesRes.data?.length || 0, "records");
-          setFacilities((facilitiesRes.data || []).map((r: any) => convertDatabaseRow(r)) as MedicalFacilityListing[]);
-        }
+        console.log(
+          `✅ [DATABASE] Listings fetched in ${result.elapsed}ms:`,
+          {
+            personnel: result.personnel?.length || 0,
+            facilities: result.facilities?.length || 0,
+            agencies: result.agencies?.length || 0,
+          }
+        );
 
-        // Handle agencies result
-        if (agenciesRes.error) {
-          console.error("🚫 [DATABASE] Error fetching agencies:", agenciesRes.error.message);
-        } else {
-          console.log("✅ [DATABASE] Agencies fetched:", agenciesRes.data?.length || 0, "records");
-          setAgencies((agenciesRes.data || []).map((r: any) => convertDatabaseRow(r)) as AgencyListing[]);
-        }
+        // Convert and set data
+        setPersonnel(
+          (result.personnel || []).map((r: any) =>
+            convertDatabaseRow(r)
+          ) as HealthcarePersonnelListing[]
+        );
+        setFacilities(
+          (result.facilities || []).map((r: any) =>
+            convertDatabaseRow(r)
+          ) as MedicalFacilityListing[]
+        );
+        setAgencies(
+          (result.agencies || []).map((r: any) =>
+            convertDatabaseRow(r)
+          ) as AgencyListing[]
+        );
       } catch (error: any) {
         console.error("🚫 [DATABASE] Error fetching data:", error?.message);
-        setError(error?.message || "Failed to load healthcare database. Please try again.");
+        setError(
+          error?.message || "Failed to load healthcare database. Please try again."
+        );
       } finally {
         setLoading(false);
       }
