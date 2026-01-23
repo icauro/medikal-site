@@ -129,6 +129,8 @@ export default function MedicalFacilityListingCRUDModal({
           googleReviewsEmbedUrl: openDataRecord.googleReviewsEmbedUrl || "",
           userId: openDataRecord.userId || ""
         });
+        // Facility search term'ini de güncelle
+        setFacilitySearchTerm(openDataRecord.name || "");
         setInitialUserId(openDataRecord.userId || "");
       } else {
         setOpenData({
@@ -298,7 +300,7 @@ export default function MedicalFacilityListingCRUDModal({
         .eq('id', openData.id);
 
       if (deleteError) throw deleteError;
-      
+
       console.log('✅ [LISTING_CRUD] Facility listing deleted:', openData.id);
       onSuccess();
       onClose();
@@ -310,8 +312,7 @@ export default function MedicalFacilityListingCRUDModal({
         hint: err?.hint,
         fullError: JSON.stringify(err)
       });
-      setError(err?.message || err?.details || 'Failed to delete listing');
-      console.error('🚫 [LISTING_CRUD] Error:', err);
+      setError(`Delete failed: ${err?.message || err?.details || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
