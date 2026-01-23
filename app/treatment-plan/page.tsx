@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, MEDICAL_PROCEDURES, MedicalProcedureType } from "@/lib/types";
+import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, PLASTIC_SURGERY_PROCEDURES, MedicalProcedureType } from "@/lib/types";
 import { theme } from "@/lib/theme";
 
 export default function TreatmentPlanPage() {
@@ -322,7 +322,7 @@ export default function TreatmentPlanPage() {
                     <div>
                       <label className="block text-sm font-medium mb-2">Medical Procedures <span className="text-red-400">*</span></label>
                       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-h-60 overflow-y-auto">
-                        {MEDICAL_PROCEDURES.map((procedure) => (
+                        {PLASTIC_SURGERY_PROCEDURES.map((procedure) => (
                           <label key={procedure} className="flex items-center gap-2 py-2 hover:bg-zinc-800 px-2 rounded cursor-pointer">
                             <input
                               type="checkbox"

@@ -50,8 +50,8 @@ export const TREATMENT_PLAN_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as 
 // Comment sorting
 export const COMMENT_SORT_TYPES = ['top', 'newest', 'oldest'] as const;
 
-// Medical procedures (from types.ts)
-export const MEDICAL_PROCEDURES = [
+// Plastic Surgery procedures
+export const PLASTIC_SURGERY_PROCEDURES = [
   'Rhinoplasty (Nose Job)',
   'Blepharoplasty (Eyelid Surgery)',
   'Rhytidectomy (Face Lift)',
@@ -72,7 +72,6 @@ export const MEDICAL_PROCEDURES = [
   'Brazilian Butt Lift (Fat Transfer)',
   'Body Lift (Body Contouring)',
   'Labiaplasty (Labia Minora Reduction)',
-  'Hair Transplant (Hair Restoration)',
   'Scar Revision Surgery',
   'Fat Transfer (Fat Grafting)',
   'Botox Injections (Botulinum Toxin)',
@@ -83,3 +82,78 @@ export const MEDICAL_PROCEDURES = [
   'Lip Augmentation (Lip Fillers)',
   'Non-Surgical Nose Job (Liquid Rhinoplasty)',
 ] as const;
+
+// Hair Restoration procedures
+export const HAIR_RESTORATION_PROCEDURES = [
+  'Hair Transplant (FUT - Follicular Unit Transplantation)',
+  'Hair Transplant (FUE - Follicular Unit Extraction)',
+  'Hair Transplant (DHI - Direct Hair Implantation)',
+  'Scalp Micropigmentation (SMP)',
+  'Platelet-Rich Plasma (PRP) Hair Treatment',
+  'Low-Level Laser Therapy (LLLT)',
+  'Hair Loss Assessment and Consultation',
+  'Hair Restoration Surgery',
+] as const;
+
+// Dental Treatment procedures
+export const DENTAL_TREATMENT_PROCEDURES = [
+  'General Dentistry Check-up',
+  'Professional Cleaning (Prophylaxis)',
+  'Dental Filling (Composite/Amalgam)',
+  'Root Canal Treatment (Endodontic)',
+  'Tooth Extraction',
+  'Wisdom Tooth Extraction',
+  'Dental Crown (Cap)',
+  'Dental Bridge',
+  'Dental Implant Placement',
+  'Implant-Supported Crown',
+  'Teeth Whitening (Bleaching)',
+  'Gum Disease Treatment (Scaling & Root Planing)',
+  'Orthodontic Treatment (Braces)',
+  'Clear Aligner Treatment (Invisalign)',
+  'Veneers (Porcelain)',
+  'Cosmetic Bonding',
+] as const;
+
+// Wellness & Check-Up procedures
+export const WELLNESS_PROCEDURES = [
+  'Full Body Health Check-up',
+  'Annual Physical Examination',
+  'Blood Pressure Screening',
+  'Cholesterol Screening',
+  'Blood Sugar (Glucose) Testing',
+  'Complete Blood Count (CBC)',
+  'Liver Function Tests',
+  'Kidney Function Tests',
+  'Thyroid Function Tests (TSH, T3, T4)',
+  'Cardiac Health Screening',
+  'Cancer Screening (Mammography, Colonoscopy)',
+  'Skin Cancer Screening',
+  'Vaccination and Immunizations',
+  'Nutritional Counseling',
+  'Weight Management Consultation',
+  'Stress Management and Mental Health Screening',
+] as const;
+
+export const PROCEDURE_CATEGORIES = [
+  'Plastic and Reconstructive Surgery',
+  'Hair Restoration',
+  'Dental Treatments',
+  'Wellness & Check-Up Procedures',
+] as const;
+
+// Combined all procedure arrays for easy access
+export const ALL_PROCEDURES = [
+  ...PLASTIC_SURGERY_PROCEDURES,
+  ...HAIR_RESTORATION_PROCEDURES,
+  ...DENTAL_TREATMENT_PROCEDURES,
+  ...WELLNESS_PROCEDURES,
+] as const;
+
+// Map procedures to their categories for filtering/searching
+export const PROCEDURE_TO_CATEGORY = {
+  ...Object.fromEntries(PLASTIC_SURGERY_PROCEDURES.map(p => [p, 'Plastic and Reconstructive Surgery'] as const)),
+  ...Object.fromEntries(HAIR_RESTORATION_PROCEDURES.map(p => [p, 'Hair Restoration'] as const)),
+  ...Object.fromEntries(DENTAL_TREATMENT_PROCEDURES.map(p => [p, 'Dental Treatments'] as const)),
+  ...Object.fromEntries(WELLNESS_PROCEDURES.map(p => [p, 'Wellness & Check-Up Procedures'] as const)),
+} as const;

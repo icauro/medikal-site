@@ -1,7 +1,12 @@
 // Shared types for the application
 import { 
   MEDICAL_SPECIALIZATIONS, 
-  MEDICAL_PROCEDURES, 
+  PLASTIC_SURGERY_PROCEDURES,
+  HAIR_RESTORATION_PROCEDURES,
+  DENTAL_TREATMENT_PROCEDURES,
+  WELLNESS_PROCEDURES,
+  ALL_PROCEDURES,
+  PROCEDURE_TO_CATEGORY,
   MEDICAL_FACILITY_TYPES,
   USER_ROLES,
   ACCOUNT_STATUSES,
@@ -17,7 +22,12 @@ import {
 // Re-export constants for convenience
 export { 
   MEDICAL_SPECIALIZATIONS, 
-  MEDICAL_PROCEDURES, 
+  PLASTIC_SURGERY_PROCEDURES,
+  HAIR_RESTORATION_PROCEDURES,
+  DENTAL_TREATMENT_PROCEDURES,
+  WELLNESS_PROCEDURES,
+  ALL_PROCEDURES,
+  PROCEDURE_TO_CATEGORY,
   MEDICAL_FACILITY_TYPES,
   USER_ROLES,
   ACCOUNT_STATUSES,
@@ -32,7 +42,12 @@ export {
 
 // Type derivation from constants
 export type MedicalSpecialization = typeof MEDICAL_SPECIALIZATIONS[number];
-export type MedicalProcedureType = typeof MEDICAL_PROCEDURES[number];
+export type PlasticSurgeryProcedure = typeof PLASTIC_SURGERY_PROCEDURES[number];
+export type HairRestorationProcedure = typeof HAIR_RESTORATION_PROCEDURES[number];
+export type DentalTreatmentProcedure = typeof DENTAL_TREATMENT_PROCEDURES[number];
+export type WellnessProcedure = typeof WELLNESS_PROCEDURES[number];
+// Union type for all procedure types
+export type MedicalProcedureType = PlasticSurgeryProcedure | HairRestorationProcedure | DentalTreatmentProcedure | WellnessProcedure;
 export type MedicalFacilityType = typeof MEDICAL_FACILITY_TYPES[number];
 export type UserRole = typeof USER_ROLES[number];
 export type AccountStatus = typeof ACCOUNT_STATUSES[number];
@@ -134,6 +149,7 @@ export interface HealthcarePersonnelListing {
   name: string;
   personnelType: PersonnelType;
   specialization: MedicalSpecialization;
+  procedures?: MedicalProcedureType[]; // Array of offered procedures
   userId?: string; // Link to user account (admin-controlled)
   slug?: string;
   image?: string;
@@ -196,6 +212,7 @@ export interface MedicalFacilityListing {
   country: string;    // Required field
   province?: string;  // State/province based on country
   city?: string;      // City/municipality
+  procedures?: MedicalProcedureType[]; // Array of offered procedures
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
