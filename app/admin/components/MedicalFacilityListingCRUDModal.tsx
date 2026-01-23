@@ -7,6 +7,8 @@ import { COUNTRIES } from "@/lib/constants";
 import { convertToSnakeCase } from "@/lib/supabase";
 import { Country, State } from "country-state-city";
 import { supabase } from "@/lib/supabase";
+import { logDatabaseRejection, logDatabaseSuccess, getErrorMessageForUI, parseSupabaseError } from "@/lib/logging";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 interface MedicalFacilityListingCRUDModalProps {
   isOpen: boolean;
@@ -23,6 +25,14 @@ export default function MedicalFacilityListingCRUDModal({
   mode, 
   onSuccess 
 }: MedicalFacilityListingCRUDModalProps) {
+  let user;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+  } catch (e) {
+    // In test environments or outside AuthProvider, user will be undefined
+    user = undefined;
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -275,15 +285,23 @@ export default function MedicalFacilityListingCRUDModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('🚫 [LISTING_CRUD] Error details:', {
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint,
-        fullError: JSON.stringify(err)
+      // Log the rejection with full context for debugging
+      logDatabaseRejection({
+        operation: mode === 'edit' ? 'UPDATE' : 'INSERT',
+        table: 'medical_facility_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        userRole: user?.role,
+        error: err,
+        additionalContext: {
+          facilityName: openData.name,
+          mode,
+        }
       });
-      setError(err?.message || err?.details || 'Failed to save listing');
-      console.error('🚫 [LISTING_CRUD] Error:', err);
+
+      // Get user-friendly error message
+      const errorMessage = getErrorMessageForUI(err, 'Failed to save listing');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -301,18 +319,32 @@ export default function MedicalFacilityListingCRUDModal({
 
       if (deleteError) throw deleteError;
 
-      console.log('✅ [LISTING_CRUD] Facility listing deleted:', openData.id);
+      // Log successful deletion
+      logDatabaseSuccess({
+        operation: 'DELETE',
+        table: 'medical_facility_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        message: `Facility "${openData.name}" deleted`
+      });
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('🚫 [LISTING_CRUD] Delete error details:', {
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint,
-        fullError: JSON.stringify(err)
+      // Log the rejection with full context
+      logDatabaseRejection({
+        operation: 'DELETE',
+        table: 'medical_facility_listings',
+        recordId: openData.id,
+        userId: user?.id,
+        userRole: user?.role,
+        error: err,
+        additionalContext: {
+          facilityName: openData.name,
+        }
       });
-      setError(`Delete failed: ${err?.message || err?.details || 'Unknown error'}`);
+
+      const errorMessage = getErrorMessageForUI(err, 'Failed to delete listing');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

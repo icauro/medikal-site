@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MedicalFacilityListingCRUDModal from './MedicalFacilityListingCRUDModal';
 import { MedicalFacilityListing } from '@/lib/types';
+import { AuthProvider } from '@/lib/contexts/AuthContext';
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -42,6 +43,10 @@ describe('MedicalFacilityListingCRUDModal Component', () => {
     userId: 'user-789',
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+
+  const renderWithAuthProvider = (component: React.ReactElement) => {
+    return render(<AuthProvider>{component}</AuthProvider>);
   };
 
   beforeEach(() => {

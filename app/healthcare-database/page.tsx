@@ -30,68 +30,60 @@ export default function HealthcareDatabase() {
     "Turkey",
   ];
 
-  // Fetch data from Supabase
+  // Fetch data from Supabase immediately (public data, no auth needed)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
         console.log("📋 [DATABASE] Starting to fetch healthcare data...");
+        // Fetch the three listing sets in parallel to reduce total latency
+        const start = Date.now();
+        const personnelQ = supabase
+          .from('healthcare_personnel_listings')
+          .select('id, name, slug, specialization, country, province, image, rating, user_id');
 
-        // Set a timeout for the entire fetch operation (10 seconds)
-        const fetchPromise = async () => {
-          // Fetch healthcare personnel listings
-          console.log("📋 [DATABASE] Fetching healthcare personnel...");
-          const { data: personnelData, error: personnelError } = await supabase
-            .from('healthcare_personnel_listings')
-            .select('id, name, slug, specialization, country, province, image, rating, user_id');
+        const facilitiesQ = supabase
+          .from('medical_facility_listings')
+          .select('id, name, slug, country, province, city, image, rating, user_id');
 
-          if (personnelError) {
-            console.error("🚫 [DATABASE] Error fetching personnel:", personnelError?.message);
-          } else {
-            console.log("✅ [DATABASE] Personnel fetched:", personnelData?.length || 0, "records");
-            const converted = (personnelData || []).map(row => convertDatabaseRow(row));
-            setPersonnel(converted as HealthcarePersonnelListing[]);
-          }
+        const agenciesQ = supabase
+          .from('agency_listings')
+          .select('id, name, slug, country, province, city, image, rating, user_id');
 
-          // Fetch medical facility listings
-          console.log("📋 [DATABASE] Fetching medical facilities...");
-          const { data: facilitiesData, error: facilitiesError } = await supabase
-            .from('medical_facility_listings')
-            .select('id, name, slug, country, province, city, image, rating, user_id');
+        // Run queries in parallel
+        const [personnelRes, facilitiesRes, agenciesRes] = await Promise.all([
+          personnelQ,
+          facilitiesQ,
+          agenciesQ,
+        ] as unknown as [any, any, any]);
 
-          if (facilitiesError) {
-            console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesError?.message);
-          } else {
-            console.log("✅ [DATABASE] Facilities fetched:", facilitiesData?.length || 0, "records");
-            const converted = (facilitiesData || []).map(row => convertDatabaseRow(row));
-            setFacilities(converted as MedicalFacilityListing[]);
-          }
+        const elapsed = Date.now() - start;
+        console.log(`📋 [DATABASE] Parallel fetch completed in ${elapsed}ms`);
 
-          // Fetch agencies listings
-          console.log("📋 [DATABASE] Fetching agencies...");
-          const { data: agenciesData, error: agenciesError } = await supabase
-            .from('agency_listings')
-            .select('id, name, slug, country, province, city, image, rating, user_id');
+        // Handle personnel result
+        if (personnelRes.error) {
+          console.error("🚫 [DATABASE] Error fetching personnel:", personnelRes.error.message);
+        } else {
+          console.log("✅ [DATABASE] Personnel fetched:", personnelRes.data?.length || 0, "records");
+          setPersonnel((personnelRes.data || []).map((r: any) => convertDatabaseRow(r)) as HealthcarePersonnelListing[]);
+        }
 
-          if (agenciesError) {
-            console.error("🚫 [DATABASE] Error fetching agencies:", agenciesError?.message);
-          } else {
-            console.log("✅ [DATABASE] Agencies fetched:", agenciesData?.length || 0, "records");
-            const converted = (agenciesData || []).map(row => convertDatabaseRow(row));
-            setAgencies(converted as AgencyListing[]);
-          }
+        // Handle facilities result
+        if (facilitiesRes.error) {
+          console.error("🚫 [DATABASE] Error fetching facilities:", facilitiesRes.error.message);
+        } else {
+          console.log("✅ [DATABASE] Facilities fetched:", facilitiesRes.data?.length || 0, "records");
+          setFacilities((facilitiesRes.data || []).map((r: any) => convertDatabaseRow(r)) as MedicalFacilityListing[]);
+        }
 
-          console.log("✅ [DATABASE] All data loaded successfully");
-        };
-
-        // Race the fetch against a 10 second timeout
-        await Promise.race([
-          fetchPromise(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Database fetch timed out after 10 seconds")), 10000)
-          ),
-        ]);
+        // Handle agencies result
+        if (agenciesRes.error) {
+          console.error("🚫 [DATABASE] Error fetching agencies:", agenciesRes.error.message);
+        } else {
+          console.log("✅ [DATABASE] Agencies fetched:", agenciesRes.data?.length || 0, "records");
+          setAgencies((agenciesRes.data || []).map((r: any) => convertDatabaseRow(r)) as AgencyListing[]);
+        }
       } catch (error: any) {
         console.error("🚫 [DATABASE] Error fetching data:", error?.message);
         setError(error?.message || "Failed to load healthcare database. Please try again.");
@@ -101,7 +93,7 @@ export default function HealthcareDatabase() {
     };
 
     fetchData();
-  }, []);
+  }, []); // Run once on mount - public data doesn't need auth
 
   // Filter and search logic
   const filterPersonnel = (items: HealthcarePersonnelListing[]) => {

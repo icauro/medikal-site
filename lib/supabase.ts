@@ -8,7 +8,15 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
 // At runtime, these MUST be defined or Supabase queries will fail
 export const supabase: SupabaseClient = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder_key"
+  supabaseAnonKey || "placeholder_key",
+  {
+    auth: {
+      // Persist session to localStorage for faster subsequent loads
+      persistSession: true,
+      // Auto-refresh tokens in background
+      autoRefreshToken: true,
+    },
+  }
 );
 
 // Helper: Convert snake_case from database to camelCase for TypeScript types
