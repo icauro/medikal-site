@@ -132,162 +132,130 @@ export default function ProfilePage() {
 
           {userProfile && (
             <div className="space-y-6">
-              {/* Profile Card */}
+              {/* COMMON SECTION - Top */}
               <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-                <div className="flex flex-col md:flex-row items-center md:items-center gap-6 mb-6">
-                  {userProfile.photoURL ? (
-                    <Image
-                      src={userProfile.photoURL}
-                      alt={userProfile.displayName}
-                      width={100}
-                      height={100}
-                      className="rounded-full border-2 border-zinc-800"
-                    />
+                <h2 className="text-xl font-bold mb-6 text-white">Account Information</h2>
+                
+                {/* Display Name */}
+                <div className="mb-6">
+                  <label className="text-zinc-400 text-sm font-medium mb-2 block">Display Name</label>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="flex-1 bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleUpdateName}
+                        disabled={isSavingName}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-medium transition-colors"
+                      >
+                        {isSavingName ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingName(false);
+                          setNewName(userProfile.displayName);
+                        }}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-3xl font-bold border-2 border-zinc-800">
-                      {userProfile.displayName.charAt(0).toUpperCase()}
+                    <div className="flex items-center justify-between">
+                      <p className="text-white text-lg">{userProfile.displayName}</p>
+                      <button
+                        onClick={() => setIsEditingName(true)}
+                        className="p-2 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
                     </div>
                   )}
-                  <div className="flex-1 text-center md:text-left">
-                    <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
-                      {isEditingName ? (
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                          <input
-                            type="text"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            className="bg-black border border-zinc-700 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 md:flex-none"
-                            autoFocus
-                          />
-                          <button
-                            onClick={handleUpdateName}
-                            disabled={isSavingName}
-                            className="p-1 px-3 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
-                          >
-                            {isSavingName ? 'Saving...' : 'Save'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setIsEditingName(false);
-                              setNewName(userProfile.displayName);
-                            }}
-                            className="p-1 px-3 bg-zinc-800 rounded text-sm hover:bg-zinc-700 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 justify-center md:justify-start">
-                          <h2 className="text-2xl font-bold">{userProfile.displayName}</h2>
-                          <button
-                            onClick={() => setIsEditingName(true)}
-                            className="p-1.5 text-zinc-400 hover:text-white transition-colors"
-                            title="Edit public name"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                      <p className="text-zinc-400 text-sm">{userProfile.email}</p>
-                      {userProfile.role && (
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
-                          {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'healthcare_personnel' ? '⚕️ ' : '👤 '}
-                          {userProfile.role.replace('_', ' ')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
-                {/* Compact Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-zinc-800">
-                  <div>
-                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Member Since</label>
-                    <p className="text-white text-sm font-medium">
-                      {userProfile.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Last Active</label>
-                    <p className="text-white text-sm font-medium">
-                      {userProfile.updatedAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) || '-'}
-                    </p>
-                  </div>
-                  <div className="hidden md:block">
-                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Email status</label>
-                    <p className="text-green-500 text-sm font-medium">Verified</p>
-                  </div>
-                  <div className="hidden md:block">
-                    <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">User ID</label>
-                    <p className="text-zinc-400 text-[10px] font-mono truncate">{userProfile.id}</p>
-                  </div>
+                {/* Email */}
+                <div className="mb-6">
+                  <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
+                  <p className="text-white">{userProfile.email}</p>
+                </div>
+
+                {/* Role Badge */}
+                <div>
+                  <label className="text-zinc-400 text-sm font-medium mb-2 block">Role</label>
+                  {userProfile.role && (
+                    <span className={`inline-block px-3 py-1 rounded-lg text-sm font-medium capitalize ${getRoleColor(userProfile.role)} bg-zinc-800 border border-zinc-700`}>
+                      {userProfile.role === 'admin' ? '👑 ' : userProfile.role === 'healthcare_personnel' ? '⚕️ ' : userProfile.role === 'medical_facility' ? '🏥 ' : '👤 '}
+                      {userProfile.role.replace('_', ' ')}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Role-Specific Information */}
-              {userProfile.healthcarePersonnelAccountData && (
-                <div className="bg-blue-900/10 border border-blue-900/30 rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-blue-400">
-                    ⚕️ Healthcare Personnel Info
-                  </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
+              {/* ROLE-SPECIFIC SECTION - Bottom */}
+              {userProfile.role === 'healthcare_personnel' && userProfile.healthcarePersonnelAccountData && (
+                <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                  <h2 className="text-xl font-bold mb-6 text-white">Healthcare Personnel Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Type</label>
-                      <p className="text-white text-sm">{userProfile.healthcarePersonnelAccountData.personnelType}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Personnel Type</label>
+                      <p className="text-white capitalize">{userProfile.healthcarePersonnelAccountData.personnelType || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Specialization</label>
-                      <p className="text-white text-sm">{userProfile.healthcarePersonnelAccountData.specialization}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Specialization</label>
+                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.specialization || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">License</label>
-                      <p className="text-white text-sm font-mono">{userProfile.healthcarePersonnelAccountData.licenseNumber}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">License Number</label>
+                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.licenseNumber || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
-                      <p className={`text-sm ${userProfile.healthcarePersonnelAccountData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {userProfile.healthcarePersonnelAccountData.verified ? '✅ Verified' : '⏳ Pending'}
-                      </p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Years of Experience</label>
+                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.yearsOfExperience?.toString() || 'Not provided'}</p>
                     </div>
-                    {userProfile.healthcarePersonnelAccountData.yearsOfExperience && (
-                      <div>
-                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Experience</label>
-                        <p className="text-white text-sm">{userProfile.healthcarePersonnelAccountData.yearsOfExperience} years</p>
-                      </div>
-                    )}
-                    {userProfile.healthcarePersonnelAccountData.currentMedicalFacility && (
-                      <div>
-                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Current Facility</label>
-                        <p className="text-white text-sm">{userProfile.healthcarePersonnelAccountData.currentMedicalFacility}</p>
-                      </div>
-                    )}
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
+                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.phoneNumber || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
+                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.province}, {userProfile.healthcarePersonnelAccountData.country}</p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {userProfile.patientAccountData && (
-                <div className="bg-cyan-900/10 border border-cyan-900/30 rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-cyan-400">
-                    👤 Patient Information
-                  </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
+              {userProfile.role === 'patient' && userProfile.patientAccountData && (
+                <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                  <h2 className="text-xl font-bold mb-6 text-white">Patient Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Language</label>
-                      <p className="text-white text-sm capitalize">{userProfile.patientAccountData.preferredLanguage}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Preferred Language</label>
+                      <p className="text-white capitalize">{userProfile.patientAccountData.preferredLanguage || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Country</label>
+                      <p className="text-white">{userProfile.patientAccountData.country || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Province/State</label>
+                      <p className="text-white">{userProfile.patientAccountData.province || 'Not provided'}</p>
                     </div>
                     {userProfile.patientAccountData.emergencyContact && (
                       <>
                         <div>
-                          <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Emergency Contact</label>
-                          <p className="text-white text-sm">{userProfile.patientAccountData.emergencyContact.name}</p>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Emergency Contact Name</label>
+                          <p className="text-white">{userProfile.patientAccountData.emergencyContact.name}</p>
                         </div>
                         <div>
-                          <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Emergency Phone</label>
-                          <p className="text-white text-sm">{userProfile.patientAccountData.emergencyContact.phone}</p>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Emergency Phone</label>
+                          <p className="text-white">{userProfile.patientAccountData.emergencyContact.phone}</p>
                         </div>
                       </>
                     )}
@@ -295,54 +263,82 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {userProfile.medicalFacilityAccountData && (
-                <div className="bg-green-900/10 border border-green-900/30 rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
-                    🏥 Medical Facility info
-                  </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
+              {userProfile.role === 'medical_facility' && userProfile.medicalFacilityAccountData && (
+                <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                  <h2 className="text-xl font-bold mb-6 text-white">Medical Facility Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Name</label>
-                      <p className="text-white text-sm">{userProfile.medicalFacilityAccountData.name}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Name</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.name || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Type</label>
-                      <p className="text-white text-sm">{userProfile.medicalFacilityAccountData.facilityType}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Type</label>
+                      <p className="text-white capitalize">{userProfile.medicalFacilityAccountData.facilityType || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
-                      <p className={`text-sm ${userProfile.medicalFacilityAccountData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {userProfile.medicalFacilityAccountData.verified ? '✅ Verified' : '⏳ Pending'}
-                      </p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.contactPerson || 'Not provided'}</p>
                     </div>
-                    <div className="col-span-2">
-                        <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Location</label>
-                        <p className="text-white text-sm">{userProfile.medicalFacilityAccountData.province}, {userProfile.medicalFacilityAccountData.country}</p>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.phone || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Address</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.address || 'Not provided'}</p>
+                    </div>
+                    {userProfile.medicalFacilityAccountData.website && (
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
+                        <a href={userProfile.medicalFacilityAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                          {userProfile.medicalFacilityAccountData.website}
+                        </a>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
+                      <p className="text-white">{userProfile.medicalFacilityAccountData.province}, {userProfile.medicalFacilityAccountData.country}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {userProfile.agencyAccountData && (
-                <div className="bg-purple-900/10 border border-purple-900/30 rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-purple-400">
-                    ✈️ Agency Information
-                  </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4">
+              {userProfile.role === 'agency' && userProfile.agencyAccountData && (
+                <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                  <h2 className="text-xl font-bold mb-6 text-white">Agency Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Agency Name</label>
-                      <p className="text-white text-sm">{userProfile.agencyAccountData.name}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Agency Name</label>
+                      <p className="text-white">{userProfile.agencyAccountData.name || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Verification</label>
-                      <p className={`text-sm ${userProfile.agencyAccountData.verified ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {userProfile.agencyAccountData.verified ? '✅ Verified' : '⏳ Pending'}
-                      </p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
+                      <p className="text-white">{userProfile.agencyAccountData.contactPerson || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-500 text-[10px] uppercase tracking-wider block">Location</label>
-                      <p className="text-white text-sm">{userProfile.agencyAccountData.province}, {userProfile.agencyAccountData.country}</p>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
+                      <p className="text-white">{userProfile.agencyAccountData.phone || 'Not provided'}</p>
                     </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
+                      <p className="text-white">{userProfile.agencyAccountData.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
+                      <p className="text-white">{userProfile.agencyAccountData.province}, {userProfile.agencyAccountData.country}</p>
+                    </div>
+                    {userProfile.agencyAccountData.website && (
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
+                        <a href={userProfile.agencyAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                          {userProfile.agencyAccountData.website}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

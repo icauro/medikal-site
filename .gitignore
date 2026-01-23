@@ -44,3 +44,7 @@ pdf\ to\ csv/serviceAccountKey.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.idea/
+

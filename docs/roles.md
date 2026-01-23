@@ -117,30 +117,31 @@ The platform maintains a strict separation between account ownership (Personal D
 **Restrictions**:
 - ⚠️ Should act responsibly and ethically
 
----
-
 ### Medical Facility Role
 
 **Description**: Clinics, hospitals, and other healthcare centers.
 
 **Capabilities**:
-- ✅ Manage facility information
-- ✅ Link healthcare personnel to the facility
+- ✅ View facility information on profile page (read-only)
 - ✅ Respond to treatment plan requests
-- ✅ Manage facility-specific support tickets
+- ✅ Create and manage support tickets
 
 **Restrictions**:
 - ❌ Cannot access admin pages
+- ❌ Cannot edit facility information (admin only)
 - ❌ Cannot moderate other facilities
 
 **Account Status**: 
-- `pending_personal_data` → after role selection
-- `active` → after submitting facility data
-- ⚠️ All admin actions should be logged for audit
+- `pending_personal_data` → after role selection (temporary state)
+- `active` → after admin fills in facility data via admin panel
+- Admin uses UserCRUDModal to update facility data and activate account
 
-**Account Status**: `active` immediately (bypasses GDPR and role selection)
-
-**Assignment**: Auto-assigned via `NEXT_PUBLIC_ADMIN_EMAILS` environment variable
+**Admin Setup Process**:
+1. Medical facility user completes signup (status: `pending_personal_data`)
+2. Admin accesses admin dashboard and opens UserCRUDModal for that user
+3. Admin fills in facility details (name, type, location, contact info, etc.)
+4. Admin sets account status to `active`
+5. User now has full access
 
 ---
 

@@ -30,10 +30,7 @@ This document provides a high-level overview of all main pages/routes in the Med
 | Route                                     | Purpose                                 | Access        |
 |-------------------------------------------|-----------------------------------------|--------------|
 | `/login`                                  | Google OAuth login                      | Public       |
-| `/signup/role-selection`                  | Choose user role                        | Public       |
-| `/signup/healthcare-personnel-application`| Personnel application form              | Public       |
-| `/signup/medical-facility-application`    | Facility application form               | Public       |
-| `/signup/agency-application`              | Agency application form                 | Public       |
+| `/signup/role-selection`                  | Choose user role (Patient or Medical Facility) | Public  |
 | `/profile`                                | User profile (view/edit)                | Authenticated|
 
 ## Professional Features

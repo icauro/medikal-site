@@ -23,13 +23,13 @@ New User Sign In (Google OAuth)
          ↓
         ┌────┴────┐
         ↓         ↓
-     Patient    Doctor / Clinic / Agency
+     Patient    Medical Facility
         ↓         ↓
       Active   pending_personal_data
         ↓         ↓
-      Done    Data Entry
+      Done    Redirect to /profile
+            (Admin fills data via modals)
             ↓
-          [Data Submitted]
           accountStatus: 'active'
             ↓
           Done
@@ -51,9 +51,9 @@ New User Sign In (Google OAuth)
 
 
 ### `pending_personal_data`
-- **Description**: User selected a professional role (Doctor, Clinic, or Agency) but hasn't submitted their data yet
-- **Access**: Redirected to data entry page
-- **Next Step**: Submit data to move to `active`
+- **Description**: User selected a professional role (Medical Facility) but data entry is handled by admin
+- **Access**: Redirected to `/profile` page (read-only view)
+- **Next Step**: Admin fills in facility data via admin panel modals, then sets status to `active`
 
 ### `active`
 - **Description**: Fully activated account with all features available
@@ -86,30 +86,19 @@ Wraps the entire application and manages routing based on `accountStatus`:
 - Bypasses checks for active admin users
 
 ### 3. **Role Selection Page** (`app/signup/role-selection/page.tsx`)
-Beautiful dual-option selection interface:
-- **Patient Card**: Lists benefits (search doctors, request treatment plans, reviews)
-- **Doctor Card**: Lists benefits (build profile, connect with patients, verified credentials)
-- Updates Firestore with selected role
-- Patient accounts activated immediately
-- Doctor accounts move to application phase
+Clean role selection interface:
+- **Patient Card** (Large, top): Search for doctors, request treatment plans, write reviews
+- **Medical Facility Card** (Small, bottom): Manage facility information, respond to treatment plans
+- Updates Supabase with selected role
+- **Patient** accounts activated immediately (status: `active`)
+- **Medical Facility** accounts set to `pending_personal_data` for admin setup
 
-
-### 4. **Personal Doctor Data Entry** (replaces Doctor Application Form)
-Doctors fill out their personal doctor data after selecting the doctor role. This data is private and only visible to the doctor and admins until verified. 
-
-**Dependency Rule**: Upon submission of personal data, the system automatically generates an associated **Open Data** record if one does not already exist. Personal accounts must always be linked to an Open Data record to maintain data integrity.
-
-The form collects:
-- **Personal Info**: Name, DOB, phone
-- **Professional Info**: License number, issuing authority, expiration, specialization, experience
-- **Education**: Medical school, graduation year
-- **Employment**: Current clinic, position, address
-- **Motivation**: Why join the platform
-- **Photo**: Profile photo
-
-**On Submit:**
-1. Updates user profile with submitted data and sets `accountStatus: 'active'`
-2. Redirects to profile page
+### 4. **Profile Page** (`app/profile/page.tsx`)
+User profile dashboard showing:
+- User display name (editable via inline editor)
+- Email and role information
+- For Medical Facility users: Read-only view of facility information
+- Admin must fill in facility data through admin panel UserCRUDModal
 
 ### 5. **AuthContext Updates** (`lib/contexts/AuthContext.tsx`)
 New functionality:
