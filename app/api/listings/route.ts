@@ -25,10 +25,10 @@ export async function GET(request: Request) {
     const [personnelRes, facilitiesRes, agenciesRes] = await Promise.all([
       supabase
         .from('healthcare_personnel_listings')
-        .select('id, name, slug, specialization, country, province, image, rating, user_id, procedures'),
+        .select('id, name, slug, specialization, country, province, image, rating, user_id'),
       supabase
         .from('medical_facility_listings')
-        .select('id, name, slug, country, province, city, image, rating, user_id, procedures'),
+        .select('id, name, slug, country, province, city, image, rating, user_id'),
       supabase
         .from('agency_listings')
         .select('id, name, slug, country, province, city, image, rating, user_id'),
