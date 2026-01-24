@@ -203,7 +203,7 @@ def main():
     print(f"  Total facilities after deduplication: {len(unique_facilities)}")
     print(f"  Duplicates removed: {len(all_facilities) - len(unique_facilities)}")
 
-    # Save merged data as JSON for Firebase import
+    # Save merged data as JSON for Supabase import via API
     output_file = 'merged_medical_facilities.json'
 
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -211,6 +211,7 @@ def main():
 
     print(f"\nSuccessfully created {output_file}")
     print(f"   Contains {len(unique_facilities)} medical facilities")
+    print(f"   Use API endpoint to import to Supabase")
 
     # Also save as CSV for backup
     csv_output_file = 'merged_medical_facilities.csv'

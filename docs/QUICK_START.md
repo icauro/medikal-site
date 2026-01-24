@@ -149,8 +149,8 @@ const { data } = await supabase
 ### "Google OAuth not working"
 → Verify in Supabase: Authentication > Providers > Google is enabled with credentials
 
-### "TypeScript errors about 'db' or 'firebase'"
-→ Remove old Firebase imports, use `import { supabase } from "@/lib/supabase"`
+### "TypeScript errors about database"
+→ Use `import { supabase } from "@/lib/supabase"` for all database operations
 
 ### "RLS policy error when querying"
 → Check RLS policies in schema, verify you're authenticated with correct role

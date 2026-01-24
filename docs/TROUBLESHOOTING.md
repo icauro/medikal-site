@@ -1,31 +1,11 @@
-# Troubleshooting Guide - Firebase to Supabase Migration
+# Troubleshooting Guide - Supabase Issues
 
-This guide helps you resolve common issues during the migration process.
+This guide helps you resolve common issues with Supabase integration.
 
 ---
 
 ## 🔴 Critical Issues
 
-### Issue: "Cannot find module '@/lib/firebase'"
-
-**Cause**: Old Firebase imports still exist in files
-
-**Solution**:
-1. Find the file with the error
-2. Check all imports at the top
-3. Replace Firebase imports:
-```typescript
-// OLD
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-
-// NEW
-import { supabase } from '@/lib/supabase';
-```
-4. Update queries to use Supabase syntax
-5. Run `npm run lint` to check for remaining issues
-
----
 
 ### Issue: "Missing Supabase environment variables"
 

@@ -2,14 +2,10 @@
 
 Create a `.env.local` file in your project root with the following variables:
 
-## Firebase Configuration
+## Supabase Configuration
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ## Admin Configuration
@@ -17,14 +13,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,another-admin@example.com
 ```
 
-## How to Get Firebase Config Values
+## How to Get Supabase Config Values
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
+1. Go to [Supabase Dashboard](https://app.supabase.com/)
 2. Select your project
-3. Go to Project Settings (gear icon)
-4. Scroll down to "Your apps" section
-5. Click on the web app icon (</>) to see the config values
-6. Copy the values from the `firebaseConfig` object
+3. Go to Settings > API
+4. Copy the `Project URL` and `Anon Key`
+5. Add them to your `.env.local`
 
 ## Admin Emails
 

@@ -163,15 +163,14 @@ const loadedReplies = snapshot.docs
   .map((doc) => ({...}));
 ```
 
-## Firestore Rules
+## Row Level Security (RLS)
 
-**Location:** `firebase/firestore.rules`
+**Location:** `docs/SUPABASE_SCHEMA.sql`
 
-Comment operations (update/delete) require user ownership or admin role:
-```
-allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-```
+Comment operations (update/delete) are enforced by RLS policies:
+- Users can only update/delete their own comments
+- Admin users can update/delete any comment
+- Policies are defined in the database schema with PostgreSQL row-level security
 
 This prevents unauthorized deletion or soft-deletion marking.
 

@@ -292,18 +292,25 @@ Existing user profiles in the database should have:
 **Migration Script (run once in Firestore console):**
 ```javascript
 // Update all existing users without accountStatus
-db.collection('users').where('accountStatus', '==', null).get()
-  .then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      let update = { accountStatus: 'active' };
-      if (data.doctorInfo) {
-        update.personalDoctorData = { ...data.doctorInfo };
-        update.doctorInfo = firebase.firestore.FieldValue.delete();
-      }
-      doc.ref.update(update);
-    });
-  });
+```typescript
+// Using Supabase client
+const { data, error } = await supabase
+  .from('users')
+  .select('*')
+  .is('account_status', null);
+
+if (data) {
+  for (const user of data) {
+    const update: any = { account_status: 'active' };
+    if (user.healthcare_personnel_account_data) {
+      update.healthcare_personnel_account_data = user.healthcare_personnel_account_data;
+    }
+    await supabase
+      .from('users')
+      .update(update)
+      .eq('id', user.id);
+  }
+}
 ```
 
 ## Future Enhancements

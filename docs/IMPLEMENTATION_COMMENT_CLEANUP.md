@@ -72,12 +72,12 @@ For each listing collection:
 ### 2. **lib/contexts/AuthContext.tsx**
 - ✅ Added Step 2 to `deleteAccount()` for comment cleanup
 - ✅ Soft-deletes user's comments across all three listing collections
-- ✅ Handles nested replies subcollections
+- ✅ Handles nested replies
 
-### 3. **firebase/firestore.rules**
-- ✅ Cleaned up and consolidated rule duplications
-- ✅ Verified update permissions for soft-delete operations
-- ✅ Rules already support both soft and hard delete
+### 3. **Row Level Security (RLS)**
+- ✅ Verified via `docs/SUPABASE_SCHEMA.sql`
+- ✅ Consolidated and verified RLS policies
+- ✅ RLS policies support both soft and hard delete operations
 
 ### 4. **docs/COMMENT_DELETION.md** (New)
 - ✅ Complete documentation of comment deletion system

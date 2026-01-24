@@ -315,7 +315,7 @@ export interface TicketMessage {
 
 export interface SupportTicket {
   id?: string;
-  userId: string; // Firebase Auth UID
+  userId: string;
   userEmail: string;
   userName: string;
   userRole: UserRole;
@@ -328,8 +328,8 @@ export interface SupportTicket {
   status: TicketStatus;
   
   // Attachments
-  attachments?: string[]; // URLs to Firebase Storage
-  
+  attachments?: string[];
+
   // Threading/Conversation
   messages: TicketMessage[];
   
