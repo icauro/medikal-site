@@ -118,6 +118,7 @@ export default function UserCommentsSection({
     try {
       const commentData = {
         user_id: user.id,
+        user_display_name: userProfile?.displayName || user?.email || 'User',
         content: newComment.trim(),
         listing_id: entityId,
         listing_type: entityType,
@@ -280,8 +281,8 @@ export default function UserCommentsSection({
       {user && (userProfile?.role === 'patient' || userProfile?.role === 'admin') ? (
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
           <div className="flex gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold flex-shrink-0">
-              {userProfile?.displayName?.charAt(0).toUpperCase() || "U"}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold flex-shrink-0">
+              {(userProfile?.displayName?.charAt(0) || 'U').toUpperCase()}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-white mb-1">{userProfile?.displayName}</p>
@@ -577,6 +578,7 @@ function CommentThread({
     try {
       const replyData = {
         user_id: user.id,
+        user_display_name: userProfile?.displayName || user?.email || 'User',
         content: replyContent.trim(),
         listing_id: entityId,
         listing_type: entityType,
@@ -636,7 +638,7 @@ function CommentThread({
           {/* Comment Header */}
           <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            {comment.userDisplayName.charAt(0).toUpperCase()}
+            {(comment.userDisplayName?.charAt(0) || 'U').toUpperCase()}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -727,7 +729,7 @@ function CommentThread({
         <div className="bg-zinc-900/20 border border-zinc-800 rounded-lg p-3">
           <div className="flex gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-              {user.displayName?.charAt(0).toUpperCase() || "U"}
+              {(user.displayName?.charAt(0) || 'U').toUpperCase()}
             </div>
             <textarea
               value={editContent}
@@ -764,7 +766,7 @@ function CommentThread({
         <div className="ml-6 bg-zinc-900/20 border border-zinc-800 rounded-lg p-3">
           <div className="flex gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-              {user.displayName?.charAt(0).toUpperCase() || "U"}
+              {(user.displayName?.charAt(0) || 'U').toUpperCase()}
             </div>
             <textarea
               value={replyContent}
