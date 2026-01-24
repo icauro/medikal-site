@@ -26,8 +26,11 @@ export const MEDICAL_FACILITY_TYPES = [
 // User roles
 export const USER_ROLES = ['patient', 'healthcare_personnel', 'admin', 'medical_facility', 'agency'] as const;
 
+// User-selectable roles during signup (healthcare_personnel is now admin-only)
+export const SIGNUP_ROLES = ['patient', 'medical_facility', 'agency'] as const;
+
 // Account statuses
-export const ACCOUNT_STATUSES = ['pending_gdpr', 'pending_role', 'pending_personal_data', 'active', 'suspended'] as const;
+export const ACCOUNT_STATUSES = ['pending_gdpr', 'pending_role', 'pending_personal_data', 'pending_verification', 'active', 'suspended'] as const;
 
 // Personnel types
 export const PERSONNEL_TYPES = ['Doctor', 'Patient Coordinator'] as const;

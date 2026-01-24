@@ -90,6 +90,14 @@ export default function SignupFlowManager({ children }: { children: React.ReactN
         }
         break;
 
+      case 'pending_verification':
+        // Medical facilities and agencies wait for admin verification
+        if (pathname !== '/profile') {
+          console.log('⏳ [SIGNUP_FLOW] Awaiting admin verification, redirecting to profile...');
+          router.push('/profile');
+        }
+        break;
+
       case 'active':
         console.log('✅ [SIGNUP_FLOW] Account active', {
           role: userProfile.role,

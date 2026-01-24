@@ -60,7 +60,8 @@ export default function RoleSelectionPage() {
 
       if (selectedRole === 'patient') {
         updates.account_status = 'active';
-      } else {
+      } else if (selectedRole === 'medical_facility' || selectedRole === 'agency') {
+        // Professional roles start as pending_personal_data, then move to pending_verification
         updates.account_status = 'pending_personal_data';
       }
 
@@ -137,36 +138,68 @@ export default function RoleSelectionPage() {
             </p>
           </div>
 
-          {/* Medical Facility Option - Small & Bottom */}
+          {/* Medical Facility Option */}
           <div
             onClick={() => setSelectedRole('medical_facility')}
-            className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+            className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
               selectedRole === 'medical_facility'
                 ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20'
                 : 'border-zinc-700 hover:border-green-400 hover:shadow-md hover:bg-zinc-800/50'
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                 selectedRole === 'medical_facility' ? 'border-green-500 bg-green-500' : 'border-zinc-600'
               }`}>
                 {selectedRole === 'medical_facility' && (
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
               </div>
             </div>
-            <h3 className="text-lg font-semibold mb-1 text-white">Medical Facility</h3>
-            <p className="text-zinc-400 text-xs mb-1">
-              Manage your facility, polylinic, or hospital
+            <h3 className="text-lg font-semibold mb-2 text-white">Medical Facility</h3>
+            <p className="text-zinc-400 text-sm mb-2">
+              Manage your clinic, hospital, or medical center
             </p>
-            <p className="text-xs text-yellow-300">Requires verification</p>
+            <p className="text-xs text-yellow-300">⏳ Requires verification after signup</p>
+          </div>
+
+          {/* Agency Option */}
+          <div
+            onClick={() => setSelectedRole('agency')}
+            className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+              selectedRole === 'agency'
+                ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                : 'border-zinc-700 hover:border-purple-400 hover:shadow-md hover:bg-zinc-800/50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4" />
+                </svg>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                selectedRole === 'agency' ? 'border-purple-500 bg-purple-500' : 'border-zinc-600'
+              }`}>
+                {selectedRole === 'agency' && (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-white">Medical Agency</h3>
+            <p className="text-zinc-400 text-sm mb-2">
+              Facilitate patient-doctor connections
+            </p>
+            <p className="text-xs text-yellow-300">⏳ Requires verification after signup</p>
           </div>
         </div>
 

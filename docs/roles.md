@@ -17,13 +17,13 @@ This document defines all user roles in the Medikal Site platform, their permiss
 
 The platform supports the following user roles:
 
-| Role                   | Description                                      | Signup Flow                                              |
-|------------------------|--------------------------------------------------|----------------------------------------------------------|
-| `patient`              | End users seeking medical services               | GDPR → Role selection → Active                           |
-| `healthcare_personnel` | Medical professionals with personal profiles     | GDPR → Role selection → Personal personnel data → Active |
-| `admin`                | Platform administrators                          | Auto-assigned via ADMIN_EMAILS                           |
-| `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Facility data → Active           |
-| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Agency data → Active             |
+| Role                   | Description                                      | Signup Flow                                              | Status |
+|------------------------|--------------------------------------------------|----------------------------------------------------------|----|
+| `patient`              | End users seeking medical services               | GDPR → Role selection → Active                           | ✅ Active |
+| `healthcare_personnel` | Medical professionals with personal profiles     | GDPR → Role selection → Personal personnel data → Active | ⚠️ **Deprecated** (admin only) |
+| `admin`                | Platform administrators                          | Auto-assigned via ADMIN_EMAILS                           | ✅ Active |
+| `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Fill facility data → **Pending Verification** → Active | ✅ Active |
+| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Fill agency data → **Pending Verification** → Active | ✅ Active |
 
 ---
 
@@ -72,7 +72,11 @@ The platform maintains a strict separation between account ownership (Personal D
 
 ### Healthcare Personnel Role
 
+**Status**: ⚠️ **DEPRECATED FOR USER SIGNUP** - Now admin-only assignment
+
 **Description**: Medical professionals (Doctors, Patient Coordinators) who manage their profiles and interact with patients.
+
+**Important Note**: Users can no longer sign up as healthcare personnel. This role is now assigned and managed exclusively by administrators. Existing healthcare personnel accounts remain functional.
 
 **Capabilities**:
 - ✅ All patient capabilities
@@ -91,8 +95,16 @@ The platform maintains a strict separation between account ownership (Personal D
 - ❌ Cannot moderate other professionals or delete reviews
 
 **Account Status**: 
-- `pending_personal_data` → after role selection
-- `active` → after submitting personal personnel data
+- `active` → assigned directly by admin
+- Healthcare personnel are immediately active when assigned by admin
+
+**Admin Assignment Process**:
+1. Admin accesses admin dashboard
+2. Admin opens UserCRUDModal
+3. Admin creates new user with `role: 'healthcare_personnel'`
+4. Admin fills in healthcare personnel data (specialization, credentials, etc.)
+5. Admin optionally links to public healthcare_personnel_listings
+6. User becomes active immediately
 
 **Verification**: Professionals are active upon submission of their personal data. Admin can manually link their personal data to a public listing for public visibility.
 
@@ -121,60 +133,77 @@ The platform maintains a strict separation between account ownership (Personal D
 
 **Description**: Clinics, hospitals, and other healthcare centers.
 
+**Signup Flow**: GDPR → Role selection → Fill facility data → **Pending Verification** → Active
+
 **Capabilities**:
 - ✅ View facility information on profile page (read-only)
 - ✅ Respond to treatment plan requests
 - ✅ Create and manage support tickets
+- ✅ Edit own profile information (pending admin approval)
 
 **Restrictions**:
 - ❌ Cannot access admin pages
-- ❌ Cannot edit facility information (admin only)
+- ❌ Cannot publish facility information until verified by admin
 - ❌ Cannot moderate other facilities
 
 **Account Status**: 
-- `pending_personal_data` → after role selection (temporary state)
-- `active` → after admin fills in facility data via admin panel
-- Admin uses UserCRUDModal to update facility data and activate account
+- `pending_personal_data` → after role selection
+- `pending_verification` → after submitting facility data (waiting for admin approval)
+- `active` → after admin verification and approval
 
-**Admin Setup Process**:
-1. Medical facility user completes signup (status: `pending_personal_data`)
-2. Admin accesses admin dashboard and opens UserCRUDModal for that user
-3. Admin fills in facility details (name, type, location, contact info, etc.)
-4. Admin sets account status to `active`
-5. User now has full access
+**Verification Process**:
+1. Medical facility user completes signup and fills facility data (status: `pending_personal_data`)
+2. User data submitted to admin for review
+3. Admin reviews facility details and verifies legitimacy
+4. Admin activates account via UserCRUDModal (status: `active`)
+5. Facility information becomes visible on public listing
+6. User now has full access to respond to treatment plans and support
 
 ---
 
-### Clinic Role (Future)
+### Clinic Role (Consolidated with Medical Facility)
+
+**Status**: 🔮 **Future** - Currently consolidated under `medical_facility` role
 
 **Description**: Medical clinics/facilities that can list doctors and receive patient inquiries.
 
-**Planned Capabilities**:
-- List associated doctors with links
-- Display location and contact information
-- Receive treatment plan requests
-- Post clinic information and updates
-- Claim doctors (requires doctor or admin confirmation)
-
-**Restrictions**:
-- Cannot perform patient actions (reviews, comments)
-- Cannot edit doctor profiles directly
+**Note**: The clinic role functionality is currently handled by the `medical_facility` role. A separate clinic role may be introduced in the future for more granular facility type management.
 
 ---
 
-### Agency Role (Future)
+### Agency Role
 
 **Description**: Medical tourism agencies that facilitate patient-doctor connections.
 
+**Signup Flow**: GDPR → Role selection → Fill agency data → **Pending Verification** → Active
+
 **Planned Capabilities**:
-- Browse doctors and clinics
-- Submit treatment plan requests on behalf of patients
-- Manage patient inquiries
-- Contact doctors and clinics
+- ✅ Browse doctors and clinics
+- ✅ Submit treatment plan requests on behalf of patients
+- ✅ Manage patient inquiries
+- ✅ Contact doctors and clinics
+- ✅ Create and manage support tickets
+- ✅ Edit own agency information (pending admin approval)
 
 **Restrictions**:
-- Cannot post reviews
-- Cannot moderate content
+- ❌ Cannot access admin pages
+- ❌ Cannot post reviews
+- ❌ Cannot publish agency information until verified by admin
+- ❌ Cannot moderate content
+- ❌ Limited to coordination/facilitation role
+
+**Account Status**: 
+- `pending_personal_data` → after role selection
+- `pending_verification` → after submitting agency data (waiting for admin approval)
+- `active` → after admin verification and approval
+
+**Verification Process**:
+1. Agency user completes signup and fills agency data (status: `pending_personal_data`)
+2. User data submitted to admin for review
+3. Admin reviews agency details and verifies legitimacy
+4. Admin activates account via UserCRUDModal (status: `active`)
+5. Agency information becomes visible on public listing
+6. User now has full access to submit treatment plan requests and manage inquiries
 - Limited to coordination/facilitation role
 
 ---
@@ -327,5 +356,5 @@ Users can request to change or add roles through the support ticketing system. O
 
 ---
 
-**Last Updated**: January 11, 2026  
+**Last Updated**: January 24, 2026  
 **Maintained By**: Development Team

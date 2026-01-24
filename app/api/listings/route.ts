@@ -21,17 +21,23 @@ export async function GET(request: Request) {
     console.log('📋 [API] Fetching healthcare listings...');
     const start = Date.now();
 
-    // Fetch all three listing types in parallel
+    // Fetch all three listing types in parallel with optimized queries
     const [personnelRes, facilitiesRes, agenciesRes] = await Promise.all([
       supabase
         .from('healthcare_personnel_listings')
-        .select('id, name, slug, specialization, country, province, image, rating, user_id'),
+        .select('id, name, slug, specialization, country, province, image, rating, review_count, user_id')
+        .order('rating', { ascending: false })
+        .limit(100),
       supabase
         .from('medical_facility_listings')
-        .select('id, name, slug, country, province, rating, user_id, link'),
+        .select('id, name, slug, country, province, rating, review_count, user_id, link')
+        .order('rating', { ascending: false })
+        .limit(100),
       supabase
         .from('agency_listings')
-        .select('id, name, slug, country, province, city, image, rating, user_id'),
+        .select('id, name, slug, country, province, city, image, rating, review_count, user_id')
+        .order('rating', { ascending: false })
+        .limit(100),
     ]);
 
     const elapsed = Date.now() - start;
@@ -63,21 +69,45 @@ export async function GET(request: Request) {
             agencies: agenciesRes.data || [],
           },
         },
-        { status: 200 } // Return 200 with partial data
+        {
+          status: 200, // Return 200 with partial data
+          headers: {
+            'Cache-Control': 'public, max-age=300', // 5 minute cache for partial data
+            'Content-Type': 'application/json',
+          }
+        }
       );
     }
 
-    return NextResponse.json({
+    // Successfully fetched all listings
+    const response = NextResponse.json({
       personnel: personnelRes.data || [],
       facilities: facilitiesRes.data || [],
       agencies: agenciesRes.data || [],
       elapsed,
+      timestamp: new Date().toISOString(),
     });
+
+    // Add caching headers for successful responses
+    response.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=1800'); // 10 min cache, 30 min stale
+    response.headers.set('Content-Type', 'application/json');
+
+    return response;
   } catch (error) {
     console.error('❌ [API] Unexpected error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: String(error) },
-      { status: 500 }
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      },
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 }

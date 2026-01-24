@@ -144,7 +144,7 @@ describe('AgencyListingCRUDModal Component', () => {
         onSuccess={vi.fn()}
       />
     );
-    expect(listingWithLinks.links.length).toBe(2);
+    expect(listingWithLinks.links?.length).toBe(2);
   });
 
   it('handles user linking', () => {

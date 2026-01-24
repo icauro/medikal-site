@@ -21,11 +21,13 @@ vi.mock('country-state-city', () => ({
 
 describe('UserCRUDModal Component', () => {
   const mockUser: UserProfile = {
-    uid: '1',
+    id: '1',
     email: 'test@example.com',
     displayName: 'Test User',
     role: 'patient',
     accountStatus: 'active',
+    createdAt: new Date(),
+    updatedAt: new Date(),
     gdprConsent: {
       accepted: true,
       acceptedAt: new Date(),
@@ -180,11 +182,13 @@ describe('UserCRUDModal Component', () => {
 
   it('delete button is not visible in create mode', () => {
     const newUser: UserProfile = {
-      uid: '',
+      id: '',
       email: 'new@example.com',
       displayName: 'New User',
       role: 'patient',
       accountStatus: 'pending_gdpr',
+      createdAt: new Date(),
+      updatedAt: new Date(),
       gdprConsent: {
         accepted: false,
         acceptedAt: new Date(),
