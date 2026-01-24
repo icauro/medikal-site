@@ -116,9 +116,6 @@ export interface HealthcarePersonnelAccountData {
   photoUrl?: string;
 
   // Professional Credentials (Private)
-  licenseNumber: string;
-  licenseIssuingAuthority: string;
-  licenseExpirationDate: string;
   yearsOfExperience: number;
 
   // Education (Private)
@@ -128,19 +125,15 @@ export interface HealthcarePersonnelAccountData {
 
   // Employment (Private)
   currentMedicalFacility?: string;
-  medicalFacilityAddress?: string;
   position: string;
 
   // Private Notes
-  motivation?: string;
   procedureTags?: MedicalProcedureType[];
 
   // Verification & Linking (set by admin only)
-  verified: boolean;
   listingId?: string; // Link to public healthcare personnel listing (admin-controlled)
-  verificationNotes?: string;
-  verifiedAt?: Date;
-  verifiedBy?: string; // Admin UID
+  verifiedAt?: Date; //if its null, not verified
+  verifiedBy?: string; // Admin email
 }
 
 // Healthcare Personnel Listing (public, admin-managed)
@@ -158,12 +151,10 @@ export interface HealthcarePersonnelListing {
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
-  googleReviewsEmbedUrl?: string;
-  links?: string[];
-  medicalFacilityIds?: string[];
+  medicalFacilityIds?: string[]; // IDs of affiliated medical facilities
   createdAt: Date;
   updatedAt: Date;
-  createdBy?: string; // Admin UID
+  createdBy?: string; // Admin email
 }
 
 // Medical Facility Account Data (private, facility-managed)

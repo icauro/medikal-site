@@ -33,7 +33,6 @@ interface DoctorRecord {
   rating?: number | null;
   reviewCount?: number | null;
   medicalFacilityIds?: string[];
-  links?: string[];
   images?: string[];
   experience?: number | null;
   procedureTags?: string[];
@@ -483,28 +482,6 @@ export default function DoctorProfilePage() {
                           ? doctor.procedureTags.join(", ")
                           : "Procedures coming soon"}
                       </p>
-                    </div>
-                    <div className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-4">
-                      <p className="text-xs uppercase tracking-widest text-zinc-500 mb-1">
-                        Helpful Links
-                      </p>
-                      <div className="space-y-1 text-white font-medium">
-                        {doctor.links && doctor.links.length > 0 ? (
-                          doctor.links.map((link, index) => (
-                            <a
-                              key={`${link}-${index}`}
-                              href={link}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-300 hover:text-blue-200 break-words text-sm"
-                            >
-                              {link}
-                            </a>
-                          ))
-                        ) : (
-                          <span>Links will appear once provided</span>
-                        )}
-                      </div>
                     </div>
                     <div className="bg-zinc-800/40 border border-zinc-800 rounded-xl p-4 md:col-span-2">
                       <p className="text-xs uppercase tracking-widest text-zinc-500 mb-1">

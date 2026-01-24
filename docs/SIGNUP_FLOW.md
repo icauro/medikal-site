@@ -133,38 +133,65 @@ export interface UserProfile {
 
 ### HealthcarePersonnelAccountData Interface
 * listingId is set by admin after verification; personnel cannot edit this link themselves.
+* Verification is tracked via verifiedAt and verifiedBy fields (null values indicate pending verification)
 ```typescript
 export interface HealthcarePersonnelAccountData {
-  name: string;
   personnelType: PersonnelType; // 'Doctor' | 'Patient Coordinator'
-  dob: string;
-  phone: string;
-  licenseNumber: string;
-  issuingAuthority: string;
-  licenseExpiration: string;
-  specialty: string;
-  experience: number;
+  name: string;
+  specialization: MedicalSpecialization;
+  
+  // Private Credentials & Identity
+  dateOfBirth: string;
+  phoneNumber: string;
+  nationalIdNumber?: string;
+  country: string;   // Required field
+  province: string;  // Required field - state/province based on country
+  bio?: string;
+  photoUrl?: string;
+
+  // Professional Credentials (Private)
+  yearsOfExperience: number;
+
+  // Education (Private)
   medicalSchool: string;
   graduationYear: number;
-  currentFacilityId?: string;
+  certifications?: string[];
+
+  // Employment (Private)
+  currentMedicalFacility?: string;
   position: string;
-  facilityAddress: string;
-  motivation: string;
-  photoUrl?: string;
-  listingId?: string; // Linked after verification
-  verified?: boolean;
+
+  // Private Notes
+  procedureTags?: MedicalProcedureType[];
+
+  // Verification & Linking (set by admin only)
+  listingId?: string; // Link to public healthcare personnel listing (admin-controlled)
+  verifiedAt?: Date; // if null, not verified
+  verifiedBy?: string; // Admin email
 }
 ```
 
-### HealthcarePersonnelListing Interface (Admin-managed, public, personnel cannot edit links)
+### HealthcarePersonnelListing Interface (Admin-managed, public, personnel cannot edit)
 * userId is set by admin if verified; personnel cannot edit this link themselves.
 ```typescript
 export interface HealthcarePersonnelListing {
   id: string;
   name: string;
   personnelType: PersonnelType;
-  specialty: string;
-  userId?: string; // Linked if verified
+  specialization: MedicalSpecialization;
+  procedures?: MedicalProcedureType[]; // Array of offered procedures
+  userId?: string; // Link to user account (admin-controlled)
+  slug?: string;
+  image?: string;
+  country: string;   // Required field
+  province?: string; // State/province based on country
+  rating?: number;
+  reviewCount?: number;
+  googlePlaceId?: string;
+  medicalFacilityIds?: string[]; // IDs of affiliated medical facilities
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string; // Admin email
 }
 ```
 

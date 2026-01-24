@@ -240,8 +240,8 @@ export default function AdminDashboard() {
                     : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.healthcarePersonnelAccountData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.healthcarePersonnelAccountData?.verifiedAt ? 'Yes' : 'No'}
                   </span>
                 </td>
                 <td className="p-4">
@@ -324,8 +324,8 @@ export default function AdminDashboard() {
                     : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.medicalFacilityAccountData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.medicalFacilityAccountData?.verifiedAt ? 'Yes' : 'No'}
                   </span>
                 </td>
                 <td className="p-4">

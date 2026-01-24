@@ -26,7 +26,11 @@ describe('UserCRUDModal Component', () => {
     displayName: 'Test User',
     role: 'patient',
     accountStatus: 'active',
-    gdprConsent: true,
+    gdprConsent: {
+      accepted: true,
+      acceptedAt: new Date(),
+      version: '1.0',
+    },
   };
 
   beforeEach(() => {
@@ -181,7 +185,11 @@ describe('UserCRUDModal Component', () => {
       displayName: 'New User',
       role: 'patient',
       accountStatus: 'pending_gdpr',
-      gdprConsent: false,
+      gdprConsent: {
+        accepted: false,
+        acceptedAt: new Date(),
+        version: '1.0',
+      },
     };
 
     const { container } = render(

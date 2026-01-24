@@ -32,14 +32,12 @@ describe('MedicalFacilityListingCRUDModal Component', () => {
   const mockListing: MedicalFacilityListing = {
     id: 'facility-1',
     name: 'Istanbul Hospital',
-    slug: 'istanbul-hospital',
     facilityType: 'Hospital',
     country: 'Turkey',
     province: 'Istanbul',
     rating: 4.6,
     reviewCount: 89,
-    image: 'https://example.com/hospital.jpg',
-    links: [],
+    link: 'https://hospital.com',
     userId: 'user-789',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -145,23 +143,6 @@ describe('MedicalFacilityListingCRUDModal Component', () => {
     expect(onSuccess).toBeDefined();
   });
 
-  it('preserves listing links', () => {
-    const listingWithLinks: MedicalFacilityListing = {
-      ...mockListing,
-      links: [{ platform: 'website', url: 'https://hospital.com' }],
-    };
-
-    render(
-      <MedicalFacilityListingCRUDModal
-        isOpen={true}
-        onClose={vi.fn()}
-        openDataRecord={listingWithLinks}
-        mode="edit"
-        onSuccess={vi.fn()}
-      />
-    );
-    expect(listingWithLinks.links.length).toBe(1);
-  });
 
   it('handles user linking', () => {
     render(

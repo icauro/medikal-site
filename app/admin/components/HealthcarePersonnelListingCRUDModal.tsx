@@ -44,9 +44,7 @@ export default function HealthcarePersonnelListingCRUDModal({
     rating: 0,
     reviewCount: 0,
     googlePlaceId: "",
-    googleReviewsEmbedUrl: "",
     image: "",
-    links: [],
     userId: ""
   });
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -60,9 +58,7 @@ export default function HealthcarePersonnelListingCRUDModal({
           rating: openDataRecord.rating || 0,
           reviewCount: openDataRecord.reviewCount || 0,
           googlePlaceId: openDataRecord.googlePlaceId || "",
-          googleReviewsEmbedUrl: openDataRecord.googleReviewsEmbedUrl || "",
           image: openDataRecord.image || "",
-          links: openDataRecord.links || [],
           specialization: openDataRecord.specialization || "Plastic, Reconstructive and Aesthetic Surgery"
         });
         setInitialUserId(openDataRecord.userId || "");
@@ -75,9 +71,7 @@ export default function HealthcarePersonnelListingCRUDModal({
           rating: 0,
           reviewCount: 0,
           googlePlaceId: "",
-          googleReviewsEmbedUrl: "",
           image: "",
-          links: [],
           userId: ""
         });
         setInitialUserId("");
@@ -331,26 +325,12 @@ export default function HealthcarePersonnelListingCRUDModal({
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-blue-500">Google Place ID</label>
               <input type="text" value={openData.googlePlaceId || ""} onChange={(e) => setOpenData({...openData, googlePlaceId: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none" placeholder="ChIJ..." />
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-blue-500">Reviews Embed URL</label>
-              <input type="text" value={openData.googleReviewsEmbedUrl || ""} onChange={(e) => setOpenData({...openData, googleReviewsEmbedUrl: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none" placeholder="https://..." />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-blue-500">Personnel Image URL</label>
               <input type="text" value={openData.image || ""} onChange={(e) => setOpenData({...openData, image: e.target.value})} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none" placeholder="https://..." />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 underline decoration-blue-500">Links (Comma Separated)</label>
-              <input 
-                type="text" 
-                value={openData.links?.join(', ') || ""} 
-                onChange={(e) => setOpenData({...openData, links: e.target.value.split(',').map(l => l.trim()).filter(l => l !== "")})} 
-                className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white outline-none" 
-                placeholder="website.com, linkedin.com..." 
-              />
             </div>
           </div>
 

@@ -28,15 +28,12 @@ describe('HealthcarePersonnelListingCRUDModal Component', () => {
   const mockListing: HealthcarePersonnelListing = {
     id: 'listing-1',
     name: 'Dr. Ahmed Hassan',
-    slug: 'dr-ahmed-hassan',
     personnelType: 'Doctor',
-    specialization: 'Cardiology',
+    specialization: 'Plastic, Reconstructive and Aesthetic Surgery',
     country: 'Turkey',
     province: 'Istanbul',
     rating: 4.8,
     reviewCount: 42,
-    image: 'https://example.com/image.jpg',
-    links: [],
     userId: 'user-456',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -96,7 +93,7 @@ describe('HealthcarePersonnelListingCRUDModal Component', () => {
       />
     );
     expect(mockListing.name).toBe('Dr. Ahmed Hassan');
-    expect(mockListing.specialization).toBe('Cardiology');
+    expect(mockListing.specialization).toBe('Plastic, Reconstructive and Aesthetic Surgery');
   });
 
   it('supports all personnel types', () => {
@@ -133,26 +130,6 @@ describe('HealthcarePersonnelListingCRUDModal Component', () => {
     expect(onSuccess).toBeDefined();
   });
 
-  it('preserves listing links', () => {
-    const listingWithLinks: HealthcarePersonnelListing = {
-      ...mockListing,
-      links: [
-        { platform: 'website', url: 'https://example.com' },
-        { platform: 'facebook', url: 'https://facebook.com/example' },
-      ],
-    };
-
-    render(
-      <HealthcarePersonnelListingCRUDModal
-        isOpen={true}
-        onClose={vi.fn()}
-        openDataRecord={listingWithLinks}
-        mode="edit"
-        onSuccess={vi.fn()}
-      />
-    );
-    expect(listingWithLinks.links.length).toBe(2);
-  });
 
   it('handles user linking', () => {
     render(

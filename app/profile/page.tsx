@@ -212,10 +212,6 @@ export default function ProfilePage() {
                       <p className="text-white">{userProfile.healthcarePersonnelAccountData.specialization || 'Not provided'}</p>
                     </div>
                     <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">License Number</label>
-                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.licenseNumber || 'Not provided'}</p>
-                    </div>
-                    <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Years of Experience</label>
                       <p className="text-white">{userProfile.healthcarePersonnelAccountData.yearsOfExperience?.toString() || 'Not provided'}</p>
                     </div>

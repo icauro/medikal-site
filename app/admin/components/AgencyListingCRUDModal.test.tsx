@@ -130,8 +130,8 @@ describe('AgencyListingCRUDModal Component', () => {
     const listingWithLinks: AgencyListing = {
       ...mockListing,
       links: [
-        { platform: 'website', url: 'https://agency.com' },
-        { platform: 'facebook', url: 'https://facebook.com/agency' },
+        'https://agency.com',
+        'https://facebook.com/agency',
       ],
     };
 

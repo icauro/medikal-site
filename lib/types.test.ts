@@ -56,7 +56,7 @@ describe('Type Assignments', () => {
   });
 
   it('allows valid account statuses', () => {
-    const validStatuses: AccountStatus[] = ['pending_gdpr', 'active', 'banned'];
+    const validStatuses: AccountStatus[] = ['pending_gdpr', 'active', 'suspended'];
     expect(validStatuses).toBeDefined();
   });
 });
