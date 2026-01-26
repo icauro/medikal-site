@@ -23,7 +23,9 @@ This document provides a high-level overview of all main pages/routes in the Med
 | `/`                                       | Home page with search and featured content   | Public       |
 | `/about`                                  | About the platform                           | Public       |
 | `/blogs`                                  | Blog articles and medical content            | Public       |
-| `/legal`                                  | Legal information (Terms, Privacy)           | Public       |
+| `/legal`                                  | Legal information landing page with links to privacy policy and terms | Public       |
+| `/legal/privacy-policy`                   | Privacy policy page                           | Public       |
+| `/legal/terms-of-service`                 | Terms of service page                         | Public       |
 | `/healthcare-database`                    | Comprehensive healthcare provider search/filter | Public |
 | `/healthcare-personnel/[slug]`            | Healthcare professional profile page        | Public       |
 | `/medical-facilities/[slug]`              | Medical facility profile page with doctors   | Public       |
@@ -70,7 +72,9 @@ This document provides a high-level overview of all main pages/routes in the Med
 |---------------------------------------|-----------------------------------------|--------------|
 | `/support`                            | Support request creation and management | Authenticated|
 | `/support/tickets/[id]`               | View/respond to specific support ticket | Authenticated|
-| `/legal`                              | Terms of Service and Privacy Policy     | Public       |
+| `/legal`                              | Legal information landing page          | Public       |
+| `/legal/privacy-policy`               | Privacy policy page                     | Public       |
+| `/legal/terms-of-service`             | Terms of service page                   | Public       |
 
 ---
 
