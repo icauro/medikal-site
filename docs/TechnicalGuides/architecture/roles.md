@@ -212,133 +212,23 @@ The platform maintains a strict separation between account ownership (Account Da
 | View other profiles                 |   ✅    |    ✅   |   ✅   |  ✅   |
 | **Reviews & Comments**              |         |         |        |       |
 | Submit reviews                      |   ✅    |    ❌   |   ❌   |  ✅   |
-| Respond to reviews (own profile)    |   ❌    |    ❌   |   ❌   |  ✅   |
+| Respond to reviews (own profile)    |   ❌    |    ✅   |   ✅   |  ✅   |
 | Comment on reviews                  |   ✅    |    ❌   |   ❌   |  ✅   |
 | Delete any review                   |   ❌    |    ❌   |   ❌   |  ✅   |
 | **Treatment Plans**                 |         |         |        |       |
-| Submit treatment plan request       |   ✅    |    ❌   |   ❌   |  ✅   |
+| Submit treatment plan request       |   ✅    |    ❌   |   ❌   |  ❌   |
 | Respond to requests                 |   ❌    |    ✅   |   ✅   |  ❌   |
 | **Support**                         |         |         |        |       |
-| Create support ticket               |   ✅    |    🔮   |   🔮   |  ✅   |
-| View own tickets                    |   ✅    |    🔮   |   🔮   |  ✅   |
+| Create support ticket               |   ✅    |    ✅   |   ✅   |  ✅   |
+| View own tickets                    |   ✅    |    ✅   |   ✅   |  ✅   |
 | View all tickets                    |   ❌    |    ❌   |   ❌   |  ✅   |
 | **Admin Functions**                 |         |         |        |       |
 | Access admin dashboard              |   ❌    |    ❌   |   ❌   |  ✅   |
-| Approve doctor verifications        |   ❌    |    ❌   |   ❌   |  ✅   |
-| Manage openDoctorData               |   ❌    |    ❌   |   ❌   |  ✅   |
+| Approve professional verifications        |   ❌    |    ❌   |   ❌   |  ✅   |
+| Manage listing data               |   ❌    |    ❌   |   ❌   |  ✅   |
 | Suspend accounts                    |   ❌    |    ❌   |   ❌   |  ✅   |
 | Moderate content                    |   ❌    |    ❌   |   ❌   |  ✅   |
 
 **Legend**: ✅ Allowed | ❌ Not allowed | 🔮 Future/planned
 
 ---
-
-## Data Access Patterns
-
-### Public Data (No Authentication Required)
-- `open_doctor_data` collection (name, specialty)
-- `doctors` collection (public profiles, if exists)
-- `clinics` collection (public clinic info)
-- `reviews` collection (read-only)
-
-### Authenticated User Data
-- Own `users/{uid}` document (read/write)
-- Own `support_tickets` (read/write)
-- Other users' public profile fields (read-only)
-
-### Doctor-Specific Data
-- Own `personalDoctorData` (read/write)
-- Linked `openDoctorData` (read-only, admin writes)
-- Treatment plan requests (read)
-
-### Admin-Only Data
-- All `users` collection documents (read/write)
-- All `personalDoctorData` (read/write)
-- All `openDoctorData` (read/write)
-- All `support_tickets` (read/write)
-- Pending doctor approvals (read/write)
-
----
-
-## Security Notes
-
-### 1. Custom Claims vs. Document-Based Roles
-**Current Implementation**: Roles are stored in user documents (`users/{uid}.role`)
-
-**Limitation**: Firestore rules checking `request.auth.token.role` won't work because the client SDK cannot set custom claims.
-
-**Solution**: Use Firebase Admin SDK to set custom claims after profile creation:
-```javascript
-admin.auth().setCustomUserClaims(uid, { role: 'admin' });
-```
-
-**Workaround**: Current rules read from `users/{uid}` document directly (less efficient but functional).
-
-### 2. Admin Assignment Security
-- Admin emails are hardcoded in `.env.local` via `NEXT_PUBLIC_ADMIN_EMAILS`
-- ⚠️ **Risk**: If environment variables are exposed, unauthorized users could be granted admin access
-- ✅ **Mitigation**: Use server-side environment variables (without `NEXT_PUBLIC_` prefix) and validate via backend API
-
-### 3. Role Escalation Prevention
-- Firestore rules must prevent users from changing their own `role` field
-- Only admins (via Admin SDK) should be able to modify user roles
-- Client-side role checks are for UX only; always enforce server-side
-
-### 4. Doctor Data Separation
-- **personalDoctorData**: Private, editable by doctor and admin
-- **openDoctorData**: Public, editable only by admin
-- Linking is one-way admin action; doctors cannot self-link or unlink
-
-### 5. Protected Routes
-- Use `<ProtectedRoute requiredRole="admin">` wrapper for admin pages
-- Always check `accountStatus === 'active'` before granting access
-- Pending doctors should be redirected to `/doctor/pending-approval`
-
-### 6. Firestore Security Rules Pattern
-```javascript
-match /users/{userId} {
-  // User can read/write their own profile
-  allow read, update: if request.auth.uid == userId;
-  
-  // Only admins can change role or accountStatus
-  allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-}
-
-match /open_doctor_data/{docId} {
-  // Public read
-  allow read: if true;
-  
-  // Only admins can write
-  allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-}
-```
-
----
-
-## Role Transition Workflows
-
-### Role Transitions
-Users can request to change or add roles through the support ticketing system. Once a professional role is granted, the user must complete the relevant data application to become `active` in that role. Admin carries out the linking process between user accounts and public directory entries.
-
-### Admin Demotion (Emergency)
-1. Admin removes email from `NEXT_PUBLIC_ADMIN_EMAILS`
-2. Redeploy application
-3. User's `role` remains `admin` in database until manually changed
-4. Admin manually updates user document: `role: 'patient'` or `role: 'doctor'`
-5. User loses admin access on next login
-
----
-
-## Future Enhancements
-
-1. **Role-Based Notifications**: Different notification preferences per role
-2. **Multi-Role Support**: Users can have multiple roles (e.g., doctor + clinic owner)
-3. **Granular Permissions**: Fine-grained permissions within roles (e.g., admin subtypes)
-4. **Role History**: Audit log of role changes
-5. **Temporary Elevated Access**: Time-limited admin permissions for support staff
-6. **API Key Authentication**: For clinic/agency API integrations
-
----
-
-**Last Updated**: January 24, 2026  
-**Maintained By**: Development Team
