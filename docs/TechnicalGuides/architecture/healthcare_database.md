@@ -33,11 +33,13 @@ This page provides a searchable, filterable directory of public healthcare listi
   - Behavior: Controls which categories are shown. `All` shows all three categories.
 
 - Country (select):
-  - Options: `All Countries`, `Turkey` (currently hard-coded list).
+  - Options: Dynamically loaded from `country-state-city` library via `COUNTRIES` constant.
+  - Currently filtered to display: `Turkey` (can be extended to other countries).
   - Behavior: Applies to personnel, facilities, and agencies (filters by `country` field).
 
 - Province (select):
-  - Options: `All Provinces`, `Istanbul`, `Ankara`, `Izmir`, `Bursa`, `Antalya`, `Adana`, `Gaziantep`, `Konya`, `Kayseri`, `Diyarbakır`.
+  - Options: Dynamically loaded from `country-state-city` library's `State.getStatesOfCountry()` based on selected country.
+  - Currently: All Turkish provinces (e.g., Istanbul, Ankara, Izmir, Bursa, etc.).
   - Behavior: Applies to personnel, facilities, and agencies (filters by `province` field).
 
 - Specialization (select):
@@ -60,9 +62,10 @@ This page provides a searchable, filterable directory of public healthcare listi
 
 ## Tips for Future Enhancements
 
-- Populate `provinces` dynamically from the API or derived from country selection instead of hard-coding.
-- Make `countries` and `provinces` configurable/dynamic from the API.
-- Allow multi-select or more granular location filters.
+- Make countries list dynamic: allow users to select any country in the dropdown, then auto-populate provinces from that country.
+- Cache province data at module level for better performance.
+- Add a reset filters button for convenience.
+- Allow multi-select filters.
 - Add pagination or infinite scroll for large result sets.
 - Add server-side filtering parameters to `/api/listings` to reduce client CPU and network usage.
 
@@ -70,4 +73,5 @@ This page provides a searchable, filterable directory of public healthcare listi
 
 - `app/healthcare-database/page.tsx` — UI implementation.
 - `app/components/ListingCard.tsx` — card component used to render each result.
+- `lib/constants.ts` — `COUNTRIES` constant imported from `country-state-city`.
 - `lib/supabase.ts` — conversion utilities like `convertDatabaseRow()`.

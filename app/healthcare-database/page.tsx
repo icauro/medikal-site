@@ -8,6 +8,8 @@ import {
 } from "@/lib/types";
 import ListingCard from "@/app/components/ListingCard";
 import { convertDatabaseRow } from "@/lib/supabase";
+import { COUNTRIES } from "@/lib/constants";
+import { State } from "country-state-city";
 
 type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
@@ -26,24 +28,15 @@ export default function HealthcareDatabase() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Countries list for filter
-  const countries = [
-    "Turkey",
-  ];
+  // Get Turkey country object
+  const turkeyCountry = COUNTRIES.find((c) => c.name === "Turkey");
+  const turkeyCountryCode = turkeyCountry?.isoCode || "TR";
 
-  // Provinces list (could be made dynamic based on country selection)
-  const provinces = [
-    "Istanbul",
-    "Ankara",
-    "Izmir",
-    "Bursa",
-    "Antalya",
-    "Adana",
-    "Gaziantep",
-    "Konya",
-    "Kayseri",
-    "Diyarbakır",
-  ];
+  // Get provinces (states) for Turkey
+  const provinces = State.getStatesOfCountry(turkeyCountryCode).map((s) => s.name);
+
+  // Countries list for filter - only Turkey for now
+  const countries = ["Turkey"];
 
   // Fetch data from Supabase immediately (public data, no auth needed)
   useEffect(() => {
