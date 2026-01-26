@@ -1,180 +1,41 @@
-# Supabase Documentation Index
+# Medikal-Site Documentation
 
-## 📖 Welcome!
-
-Your Medikal Site project uses Supabase for authentication and database management. This documentation index helps you navigate the guides and get started quickly.
+Welcome to the documentation for the Medikal-Site project. This folder has been organized to help you find the relevant technical guides and historical information quickly.
 
 ---
 
-## 🚀 START HERE - Quick Links
+## 🚀 Technical Guides
 
-### For Getting Started
-1. **[QUICK_START.md](QUICK_START.md)** ⭐ START HERE
-   - Setup guide
-   - Authentication configuration
-   - Test your OAuth flow
+### [Setup & Configuration](./technical-guides/setup/)
+- **[Quick Start](./technical-guides/setup/QUICK_START.md)**: 5-minute setup guide.
+- **[Environment Variables](./technical-guides/setup/ENVIRONMENT_VARIABLES.md)**: Required keys and secrets.
+- **[Testing Guide](./technical-guides/setup/TESTING_GUIDE.md)**: How to run Vitest and UI tests.
+- **[Deployment Checklist](./technical-guides/setup/DEPLOYMENT_CHECKLIST.md)**: Preparation for production.
 
----
+### [Architecture & Design](./technical-guides/architecture/)
+- **[Pages Overview](./technical-guides/architecture/pages-overview.md)**: Sitemap and routing structure.
+- **[Signup Flow](./technical-guides/architecture/SIGNUP_FLOW.md)**: Detailed multi-step registration logic.
+- **[User Roles](./technical-guides/architecture/roles.md)**: Permissions and role-based access control.
+- **[Modal Architecture](./technical-guides/architecture/MODAL_ARCHITECTURE.md)**: UI component management.
+- **[Theme Configuration](./technical-guides/architecture/THEME_CONFIG.md)**: Styling and Tailwind tokens.
 
-## 📚 Complete Documentation
+### [Database & Supabase](./technical-guides/database/)
+- **[Supabase Integration](./technical-guides/database/SUPABASE_INTEGRATION.md)**: Backend architecture overview.
+- **[Database Schema](./technical-guides/database/SUPABASE_SCHEMA.sql)**: Raw SQL definition of tables and RLS.
+- **[CLI Guide](./technical-guides/database/SUPABASE_CLI_GUIDE.md)**: Managing Supabase locally.
+- **[Logging & Monitoring](./technical-guides/database/DATABASE_LOGGING.md)**: Tracking DB events.
 
-### Core Files
-#### Configuration & Authentication
-- **[lib/supabase.ts](../lib/supabase.ts)** - Supabase client & helpers
-- **[lib/contexts/AuthContext.tsx](../lib/contexts/AuthContext.tsx)** - Auth context
-- **[app/auth/callback/route.ts](../app/auth/callback/route.ts)** - OAuth callback handler
-- **[.env.example](../.env.example)** - Environment variables template
-
-#### Database
-- **[SUPABASE_SCHEMA.sql](SUPABASE_SCHEMA.sql)** - PostgreSQL schema with RLS policies
-  - 10 tables with proper relationships
-  - 20+ Row Level Security policies
-  - All indexes for performance
-
-### Reference Guides
-
-#### [SUPABASE_INTEGRATION.md](SUPABASE_INTEGRATION.md) - Architecture & Overview
-- Project architecture
-- How auth works
-- Database organization
-- Common operations
-- Performance tips
-
-#### [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Problem Solving
-- Critical issue fixes
-- Database issues
-- Authentication issues
-- Query issues
-- Debugging commands
+### [API Documentation](./technical-guides/api/)
+- **[API Folder Overview](./technical-guides/api/API_FOLDER_DOCUMENTATION.md)**: Route handlers and logic.
+- **[Listings API Enhancement](./technical-guides/api/LISTINGS_API_ENHANCEMENT.md)**: Specialized endpoints for directory data.
 
 ---
 
-## 🔑 Key Files Reference
+## 📜 History & Archives
 
-### Configuration
-| File | Purpose |
-|------|---------|
-| `lib/supabase.ts` | Supabase client initialization |
-| `.env.example` | Environment variables template |
-| `lib/contexts/AuthContext.tsx` | Authentication & user management |
-
-### Database
-| File | Purpose |
-|------|---------|
-| `docs/SUPABASE_SCHEMA.sql` | PostgreSQL schema with RLS |
-| `app/auth/callback/route.ts` | OAuth callback handler |
-
-
-### Documentation
-| File | Purpose |
-|------|---------|
-| `QUICK_START.md` | 5-step setup (start here!) |
-| `MIGRATION_SUMMARY.md` | What was done & what remains |
-| `SUPABASE_INTEGRATION.md` | Architecture & how things work |
-| `CODE_CONVERSION_EXAMPLES.md` | How to convert code patterns |
-| `FIREBASE_TO_SUPABASE_MIGRATION.md` | Detailed migration guide |
-| `CONVERSION_CHECKLIST.md` | Track all files needing conversion |
-| `TROUBLESHOOTING.md` | Fix common problems |
+All previous implementation logs, session summaries, and cleanup records have been moved to the **[history/](./history/)** folder for reference.
 
 ---
 
-## 💡 Quick Tips
-
-### Before You Start
-- [ ] Read QUICK_START.md (5 min)
-- [ ] Bookmark this index
-- [ ] Have Supabase credentials ready
-
-### During Conversion
-- [ ] Use CODE_CONVERSION_EXAMPLES.md as reference
-- [ ] Check CONVERSION_CHECKLIST.md for priority
-- [ ] Use TROUBLESHOOTING.md if stuck
-- [ ] Run `npm run lint` after each file
-
-### During Testing
-- [ ] Check browser console for emoji-prefixed logs
-- [ ] Test login flow first
-- [ ] Verify each page loads without errors
-- [ ] Check RLS policies if query fails
-
----
-
-## 📞 Need Help?
-
-### In This Project
-1. Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for your error
-2. Search [CODE_CONVERSION_EXAMPLES.md](CODE_CONVERSION_EXAMPLES.md) for pattern
-3. Review [FIREBASE_TO_SUPABASE_MIGRATION.md](FIREBASE_TO_SUPABASE_MIGRATION.md) for details
-
-### External Resources
-- **Supabase Docs**: https://supabase.com/docs
-- **Next.js Guide**: https://supabase.com/docs/guides/getting-started/frameworks/nextjs
-- **Discord**: https://discord.supabase.com
-- **GitHub Issues**: https://github.com/supabase/supabase/issues
-
----
-
-## 🎯 Priority Reading Order
-
-### Must Read First
-1. **QUICK_START.md** - Get your environment running
-2. **SUPABASE_INTEGRATION.md** - Understand the architecture
-3. **CODE_CONVERSION_EXAMPLES.md** - Learn how to write Supabase code
-
-### Must Read Before Converting Code
-4. **FIREBASE_TO_SUPABASE_MIGRATION.md** - Detailed field mappings
-5. **CONVERSION_CHECKLIST.md** - Plan your work
-6. **TROUBLESHOOTING.md** - Know how to fix problems
-
-### Reference As Needed
-7. **MIGRATION_SUMMARY.md** - Progress overview
-8. **SUPABASE_SCHEMA.sql** - Database structure
-
----
-
-## ✨ Key Metrics
-
-| Metric | Value |
-|--------|-------|
-| **Setup Time** | 23 minutes |
-| **Files Converted** | 8/44 (18%) |
-| **Remaining Effort** | ~15-20 hours |
-| **Database Tables** | 10 |
-| **RLS Policies** | 20+ |
-| **Documentation Pages** | 8 |
-
----
-
-## 📋 Documentation Checklist
-
-As you work, refer to these docs:
-
-- [ ] **QUICK_START.md** - Initial setup
-- [ ] **SUPABASE_INTEGRATION.md** - Architecture understanding
-- [ ] **CODE_CONVERSION_EXAMPLES.md** - Code patterns (use constantly)
-- [ ] **FIREBASE_TO_SUPABASE_MIGRATION.md** - Field name mappings
-- [ ] **CONVERSION_CHECKLIST.md** - Track what you've done
-- [ ] **TROUBLESHOOTING.md** - When something breaks
-- [ ] **SUPABASE_SCHEMA.sql** - Reference for database structure
-
----
-
-## 🎉 Summary
-
-Your Firebase to Supabase migration is off to a great start!
-
-✅ **Foundation is solid**
-- Core configuration complete
-- Database schema ready
-- Documentation comprehensive
-- Example page converted
-
-🚀 **You're ready to**
-- Set up Supabase (23 min)
-- Convert remaining pages (11+ hours)
-- Test thoroughly
-- Deploy to production
-
-📖 **Start with**: [QUICK_START.md](QUICK_START.md)
-
-Good luck with your migration! 🎯
+## 🛠 Maintenance
+To keep these docs helpful, please ensure any new major feature includes a corresponding update in the `technical-guides/` directory.
