@@ -18,7 +18,7 @@ import { theme } from "@/lib/theme";
 export default function HealthcareDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("all");
-  const [filterCountry, setFilterCountry] = useState("");
+  const [filterCountry, setFilterCountry] = useState("Turkey"); // Default to Turkey
   const [filterProvince, setFilterProvince] = useState("");
   const [filterSpecialization, setFilterSpecialization] = useState("");
 
@@ -28,15 +28,15 @@ export default function HealthcareDatabase() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get Turkey country object
-  const turkeyCountry = COUNTRIES.find((c) => c.name === "Turkey");
-  const turkeyCountryCode = turkeyCountry?.isoCode || "TR";
+  // Get provinces for selected country dynamically
+  const selectedCountry = COUNTRIES.find((c) => c.name === filterCountry);
+  const selectedCountryCode = selectedCountry?.isoCode || "TR";
+  const provinces = State.getStatesOfCountry(selectedCountryCode).map((s) => s.name);
 
-  // Get provinces (states) for Turkey
-  const provinces = State.getStatesOfCountry(turkeyCountryCode).map((s) => s.name);
-
-  // Countries list for filter - only Turkey for now
-  const countries = ["Turkey"];
+  // Reset province when country changes
+  useEffect(() => {
+    setFilterProvince("");
+  }, [filterCountry]);
 
   // Fetch data from Supabase immediately (public data, no auth needed)
   useEffect(() => {
@@ -236,10 +236,10 @@ export default function HealthcareDatabase() {
               onChange={(e) => setFilterCountry(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
-              <option value="">All Countries</option>
-              {countries.map((country) => (
-                <option key={country} value={country}>
-                  {country}
+              <option value="">Select Country</option>
+              {COUNTRIES.map((country) => (
+                <option key={country.isoCode} value={country.name}>
+                  {country.name}
                 </option>
               ))}
             </select>

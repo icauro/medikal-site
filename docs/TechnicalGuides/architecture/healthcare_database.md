@@ -33,13 +33,12 @@ This page provides a searchable, filterable directory of public healthcare listi
   - Behavior: Controls which categories are shown. `All` shows all three categories.
 
 - Country (select):
-  - Options: Dynamically loaded from `country-state-city` library via `COUNTRIES` constant.
-  - Currently filtered to display: `Turkey` (can be extended to other countries).
-  - Behavior: Applies to personnel, facilities, and agencies (filters by `country` field).
+  - Options: Dynamically loaded from `country-state-city` library via `COUNTRIES` constant (200+ countries).
+  - Behavior: When country is selected, provinces are dynamically loaded for that country. Applies to personnel, facilities, and agencies (filters by `country` field).
 
 - Province (select):
   - Options: Dynamically loaded from `country-state-city` library's `State.getStatesOfCountry()` based on selected country.
-  - Currently: All Turkish provinces (e.g., Istanbul, Ankara, Izmir, Bursa, etc.).
+  - Resets automatically when country selection changes.
   - Behavior: Applies to personnel, facilities, and agencies (filters by `province` field).
 
 - Specialization (select):
@@ -54,7 +53,12 @@ This page provides a searchable, filterable directory of public healthcare listi
 - `filterProvince`: string
 - `filterSpecialization`: string
 
-## Filtering Logic Notes
+## Implementation Details
+
+- Countries and provinces are fetched from the `country-state-city` library (imported via `COUNTRIES` constant and `State` class).
+- Country dropdown defaults to "Turkey" on mount for better UX.
+- When country selection changes, provinces are recomputed and province filter is automatically reset to avoid conflicts.
+- All filtering happens client-side for immediate feedback; consider server-side filtering for larger datasets.
 
 - Personnel filter checks `name` and `specialization`, plus country, province, and specialization selections.
 - Facilities and agencies filter by `name`, country, and province.
@@ -62,12 +66,11 @@ This page provides a searchable, filterable directory of public healthcare listi
 
 ## Tips for Future Enhancements
 
-- Make countries list dynamic: allow users to select any country in the dropdown, then auto-populate provinces from that country.
-- Cache province data at module level for better performance.
-- Add a reset filters button for convenience.
-- Allow multi-select filters.
+- Cache provinces at module level or use `useMemo` to avoid recalculating on every render.
+- Add a "Reset Filters" button for user convenience.
+- Consider implementing server-side filtering to improve performance with large datasets.
 - Add pagination or infinite scroll for large result sets.
-- Add server-side filtering parameters to `/api/listings` to reduce client CPU and network usage.
+- Allow multi-select filters for more granular search capabilities.
 
 ## Related Files
 
