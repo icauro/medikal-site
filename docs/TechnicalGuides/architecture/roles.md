@@ -22,25 +22,27 @@ The platform supports the following user roles:
 | `patient`              | End users seeking medical services               | GDPR → Role selection → Active                           | ✅ Active |
 | `healthcare_personnel` | Medical professionals with personal profiles     | GDPR → Role selection → Personal personnel data → Active | ⚠️ **Deprecated** (admin only) |
 | `admin`                | Platform administrators                          | Auto-assigned via ADMIN_EMAILS                           | ✅ Active |
-| `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Fill facility data → **Pending Verification** → Active | ✅ Active |
-| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Fill agency data → **Pending Verification** → Active | ✅ Active |
+| `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Fill facility data on profile page→ **Pending Verification** → Active | ✅ Active |
+| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Fill agency data on profile page→ **Pending Verification** → Active | ✅ Active |
 
 ---
 
-## Data Architecture: Personal vs. Open Data
+Professional Roles: term to refer a group of roles included healthcare_personnel, medical_facility, agency
 
-The platform maintains a strict separation between account ownership (Personal Data) and directory visibility (Open Data).
+## Data Architecture: Listing data vs Account data
 
-### Open Data (The Listing)
+The platform maintains a strict separation between account ownership (Account Data) and directory visibility (Listing Data).
+
+###  Listing Data
 - **Nature**: Public-facing record that represents the entity on the website.
 - **Primary Field**: `slug` (used for the entity's dedicated URL).
-- **Independence**: Open Data records **can exist without a linked user**. This allows admins to populate the directory with hospitals or doctors who haven't registered an account yet.
+- **Independence**: Listing Data records **can exist without a linked user**. This allows admins to populate the directory with hospitals or doctors who haven't registered an account yet.
 - **Collections**: `healthcare_personnel_listings`, `medical_facility_listings`, `agency_listings`.
 
-### Personal Data (The Account)
+### Account Data
 - **Nature**: Private user-owned data required for authentication and onboarding.
-- **Constraint**: **Personal Data cannot exist without a corresponding Open Data record.** 
-- **Linking**: Every user with a professional role must be linked to an Open Data record. During account creation, if no link exists, a new Open Data record is generated.
+- **Constraint**: **Personal Data Professional Roles cannot exist without a corresponding Open Data record.** 
+- **Linking**: Every user with a professional role must be linked to an Open Data record. During account creation, if no link exists, a new Listing data record is generated.
 - **Collections**: `users/{uid}`.
 
 ---
@@ -49,16 +51,15 @@ The platform maintains a strict separation between account ownership (Personal D
 
 ### Patient Role
 
-**Description**: Regular users who search for healthcare personnel, submit reviews, and request treatment plans.
+**Description**: Regular users who search in Healtcare database, submit reviews, and request treatment plans.
 
 **Capabilities**:
-- ✅ Search and browse healthcare personnel (Doctors/Coordinators)
 - ✅ View professional profiles and reviews
 - ✅ Submit reviews on professional pages
 - ✅ Comment on other reviews (Reddit-style)
-- ✅ Post treatment plan requests (visible to facilities/personnel)
-- ✅ Receive treatment plan proposals and cost inquiries (paid)
-- ✅ Create and manage support tickets
+- ✅ Post treatment plan requests (visible to facilities/agencyies)
+- ✅ Receive treatment plan proposals and cost inquiries
+- ✅ Create and manage support their own tickets (max 3 unresoveld at the same time)
 - ✅ Edit own profile
 
 **Restrictions**:
@@ -161,15 +162,6 @@ The platform maintains a strict separation between account ownership (Personal D
 
 ---
 
-### Clinic Role (Consolidated with Medical Facility)
-
-**Status**: 🔮 **Future** - Currently consolidated under `medical_facility` role
-
-**Description**: Medical clinics/facilities that can list doctors and receive patient inquiries.
-
-**Note**: The clinic role functionality is currently handled by the `medical_facility` role. A separate clinic role may be introduced in the future for more granular facility type management.
-
----
 
 ### Agency Role
 
@@ -210,40 +202,32 @@ The platform maintains a strict separation between account ownership (Personal D
 
 ## Permissions Matrix
 
-| Feature                          | Patient | Doctor | Admin | Clinic | Agency |
-|----------------------------------|---------|--------|-------|--------|--------|
-| **Authentication**               |         |        |       |        |        |
-| Google OAuth login               | ✅      | ✅     | ✅    | 🔮     | 🔮     |
-| GDPR consent flow                | ✅      | ✅     | ❌    | 🔮     | 🔮     |
-| Role selection                   | ✅      | ✅     | ❌    | 🔮     | 🔮     |
-| **Profile Management**           |         |        |       |        |        |
-| Edit own profile                 | ✅      | ✅     | ✅    | 🔮     | 🔮     |
-| View other profiles              | ✅      | ✅     | ✅    | 🔮     | 🔮     |
-| **Doctor Features**              |         |        |       |        |        |
-| Submit personalDoctorData        | ❌      | ✅     | ✅    | ❌     | ❌     |
-| Edit personalDoctorData          | ❌      | ✅     | ✅    | ❌     | ❌     |
-| Edit openDoctorData              | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Link personal ↔ open data        | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Claim clinic connection          | ❌      | ✅     | ✅    | ❌     | ❌     |
-| Request clinic moderation        | ❌      | ✅     | ✅    | ❌     | ❌     |
-| **Reviews & Comments**           |         |        |       |        |        |
-| Submit reviews                   | ✅      | ✅     | ✅    | ❌     | ❌     |
-| Respond to reviews (own profile) | ❌      | ✅     | ✅    | ❌     | ❌     |
-| Comment on reviews               | ✅      | ✅     | ✅    | ❌     | ❌     |
-| Delete any review                | ❌      | ❌     | ✅    | ❌     | ❌     |
-| **Treatment Plans**              |         |        |       |        |        |
-| Submit treatment plan request    | ✅      | ✅     | ✅    | ❌     | 🔮     |
-| Respond to requests              | ❌      | ✅     | ✅    | 🔮     | ❌     |
-| **Support**                      |         |        |       |        |        |
-| Create support ticket            | ✅      | ✅     | ✅    | 🔮     | 🔮     |
-| View own tickets                 | ✅      | ✅     | ✅    | 🔮     | 🔮     |
-| View all tickets                 | ❌      | ❌     | ✅    | ❌     | ❌     |
-| **Admin Functions**              |         |        |       |        |        |
-| Access admin dashboard           | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Approve doctor verifications     | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Manage openDoctorData            | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Suspend accounts                 | ❌      | ❌     | ✅    | ❌     | ❌     |
-| Moderate content                 | ❌      | ❌     | ✅    | ❌     | ❌     |
+| Feature                             | Patient |  Clinic | Agency |Admin  |
+| :---------------------------------- | :-----: |  :----: | :----: |:----: |
+| **Authentication**                  |         |         |        |       |
+| Google OAuth login                  |   ✅    |    ✅   |   ✅   |  ✅   |
+| GDPR consent flow                   |   ✅    |    ✅   |   ✅   |  ❌   |
+| **Profile Management**              |         |         |        |       |
+| Edit own profile                    |   ✅    |    ✅   |   ✅   |  ✅   |
+| View other profiles                 |   ✅    |    ✅   |   ✅   |  ✅   |
+| **Reviews & Comments**              |         |         |        |       |
+| Submit reviews                      |   ✅    |    ❌   |   ❌   |  ✅   |
+| Respond to reviews (own profile)    |   ❌    |    ❌   |   ❌   |  ✅   |
+| Comment on reviews                  |   ✅    |    ❌   |   ❌   |  ✅   |
+| Delete any review                   |   ❌    |    ❌   |   ❌   |  ✅   |
+| **Treatment Plans**                 |         |         |        |       |
+| Submit treatment plan request       |   ✅    |    ❌   |   ❌   |  ✅   |
+| Respond to requests                 |   ❌    |    ✅   |   ✅   |  ❌   |
+| **Support**                         |         |         |        |       |
+| Create support ticket               |   ✅    |    🔮   |   🔮   |  ✅   |
+| View own tickets                    |   ✅    |    🔮   |   🔮   |  ✅   |
+| View all tickets                    |   ❌    |    ❌   |   ❌   |  ✅   |
+| **Admin Functions**                 |         |         |        |       |
+| Access admin dashboard              |   ❌    |    ❌   |   ❌   |  ✅   |
+| Approve doctor verifications        |   ❌    |    ❌   |   ❌   |  ✅   |
+| Manage openDoctorData               |   ❌    |    ❌   |   ❌   |  ✅   |
+| Suspend accounts                    |   ❌    |    ❌   |   ❌   |  ✅   |
+| Moderate content                    |   ❌    |    ❌   |   ❌   |  ✅   |
 
 **Legend**: ✅ Allowed | ❌ Not allowed | 🔮 Future/planned
 
