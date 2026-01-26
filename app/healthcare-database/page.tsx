@@ -17,6 +17,7 @@ export default function HealthcareDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [filterCountry, setFilterCountry] = useState("");
+  const [filterProvince, setFilterProvince] = useState("");
   const [filterSpecialization, setFilterSpecialization] = useState("");
 
   const [personnel, setPersonnel] = useState<HealthcarePersonnelListing[]>([]);
@@ -28,6 +29,20 @@ export default function HealthcareDatabase() {
   // Countries list for filter
   const countries = [
     "Turkey",
+  ];
+
+  // Provinces list (could be made dynamic based on country selection)
+  const provinces = [
+    "Istanbul",
+    "Ankara",
+    "Izmir",
+    "Bursa",
+    "Antalya",
+    "Adana",
+    "Gaziantep",
+    "Konya",
+    "Kayseri",
+    "Diyarbakır",
   ];
 
   // Fetch data from Supabase immediately (public data, no auth needed)
@@ -94,13 +109,14 @@ export default function HealthcareDatabase() {
         item.specialization?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
+      const matchesProvince = !filterProvince || item.province === filterProvince;
       const matchesSpecialization =
         !filterSpecialization ||
         item.specialization
           ?.toLowerCase()
           .includes(filterSpecialization.toLowerCase());
 
-      return matchesSearch && matchesCountry && matchesSpecialization;
+      return matchesSearch && matchesCountry && matchesProvince && matchesSpecialization;
     });
   };
 
@@ -110,8 +126,9 @@ export default function HealthcareDatabase() {
         item.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
+      const matchesProvince = !filterProvince || item.province === filterProvince;
 
-      return matchesSearch && matchesCountry;
+      return matchesSearch && matchesCountry && matchesProvince;
     });
   };
 
@@ -121,8 +138,9 @@ export default function HealthcareDatabase() {
         item.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCountry = !filterCountry || item.country === filterCountry;
+      const matchesProvince = !filterProvince || item.province === filterProvince;
 
-      return matchesSearch && matchesCountry;
+      return matchesSearch && matchesCountry && matchesProvince;
     });
   };
 
@@ -197,7 +215,7 @@ export default function HealthcareDatabase() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Type Filter */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">
@@ -229,6 +247,25 @@ export default function HealthcareDatabase() {
               {countries.map((country) => (
                 <option key={country} value={country}>
                   {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Province Filter */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Province
+            </label>
+            <select
+              value={filterProvince}
+              onChange={(e) => setFilterProvince(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              <option value="">All Provinces</option>
+              {provinces.map((province) => (
+                <option key={province} value={province}>
+                  {province}
                 </option>
               ))}
             </select>
