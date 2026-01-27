@@ -1,7 +1,7 @@
 # Healthcare Database (app/healthcare-database/page.tsx)
 
 ## Purpose
-
+ 
 This page provides a searchable, filterable directory of public healthcare listings: healthcare personnel, medical facilities, and agencies. It fetches listings from the server API (`/api/listings`) and displays results in categorized sections.
 
 ## Location
