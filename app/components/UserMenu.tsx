@@ -26,7 +26,7 @@ export default function UserMenu() {
     hasProfile: !!userProfile,
     userRole: userProfile?.role,
     userEmail: user?.email,
-    userId: user?.id,
+    userUid: user?.id,
     accountStatus: userProfile?.accountStatus
   });
 
@@ -42,13 +42,25 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleProfileClick = () => {
+    console.log('📝 [USERMENU] Profile button clicked, navigating to /profile');
+    setIsOpen(false);
+    // Use setTimeout to ensure dropdown closes before navigation
+    setTimeout(() => {
+      router.push('/profile');
+    }, 0);
+  };
+
   const handleLogout = async () => {
     console.log('🚪 [USERMENU] User initiated logout');
     setIsOpen(false);
     try {
       await logout();
       console.log('✅ [USERMENU] Logout completed successfully');
-      router.push('/');
+      // Use setTimeout to ensure state updates complete
+      setTimeout(() => {
+        router.push('/');
+      }, 0);
     } catch (error) {
       console.error('❌ [USERMENU] Logout failed:', error);
     }
@@ -89,7 +101,7 @@ export default function UserMenu() {
 
   const formatRole = (role: UserRole | null | undefined): string => {
     if (!role) return 'pending role';
-    return role.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   const getRoleColor = (role: UserRole | null | undefined) => {
@@ -114,12 +126,6 @@ export default function UserMenu() {
     }
   };
 
-  // Return null if profile isn't loaded yet
-  if (!userProfile) {
-    console.log('⚠️ [USERMENU] userProfile not loaded, returning null');
-    return null;
-  }
-
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -129,19 +135,19 @@ export default function UserMenu() {
         {userProfile.photoURL ? (
           <Image
             src={userProfile.photoURL}
-            alt={userProfile.displayName || 'User avatar'}
+            alt={userProfile.displayName}
             width={32}
             height={32}
             className="rounded-full ring-2 ring-zinc-700 hover:ring-zinc-600"
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-sm font-medium ring-2 ring-zinc-700 hover:ring-zinc-600">
-            {(userProfile.displayName || 'U').charAt(0).toUpperCase()}
+            {userProfile.displayName.charAt(0).toUpperCase()}
           </div>
         )}
         <div className="hidden md:block text-left">
           <div className="text-white text-sm font-medium">
-            {userProfile.displayName || 'User'}
+            {userProfile.displayName}
           </div>
           <div className={`text-xs ${getRoleColor(userProfile.role)}`}>
             {formatRole(userProfile.role)}
@@ -173,12 +179,12 @@ export default function UserMenu() {
                 />
               ) : (
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-lg font-bold">
-                  {(userProfile.displayName || 'U').charAt(0).toUpperCase()}
+                  {userProfile.displayName.charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="flex-1">
-                <div className="text-white font-semibold">{userProfile.displayName || 'User'}</div>
-                <div className="text-zinc-400 text-sm">{userProfile.email || 'No email'}</div>
+                <div className="text-white font-semibold">{userProfile.displayName}</div>
+                <div className="text-zinc-400 text-sm">{userProfile.email}</div>
               </div>
             </div>
             <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getRoleBadgeColor(userProfile.role)}`}>
@@ -187,18 +193,15 @@ export default function UserMenu() {
           </div>
 
           {/* Profile Link */}
-          <Link
-            href="/profile"
-            onClick={() => setIsOpen(false)}
-            className="block px-4 py-3 hover:bg-zinc-800 transition-colors text-white border-b border-zinc-800"
+          <button
+            onClick={handleProfileClick}
+            className="w-full px-4 py-3 hover:bg-zinc-800 transition-colors text-white border-b border-zinc-800 text-left flex items-center gap-3"
           >
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>View Profile</span>
-            </div>
-          </Link>
+            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>View Profile</span>
+          </button>
 
           {/* Logout Button */}
           <div className="p-2">

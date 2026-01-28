@@ -215,13 +215,14 @@ export interface MedicalFacilityListing {
   rating?: number;
   reviewCount?: number;
   googlePlaceId?: string;
+  externalReviewLinks?: string[]; // Links to external review platforms
   userId?: string; // Link to user account (admin-controlled)
   verifiedDoctorIds?: string[]; // UIDs of verified doctors associated with this facility
   slug?: string;
   link?: string; // Consolidated link field
+  verified?: boolean;
   createdAt: Date;
   updatedAt: Date;
-  createdBy?: string; // Admin UID
 }
 
 // Agency Account Data (private, agency-managed)
