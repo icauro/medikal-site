@@ -51,7 +51,7 @@ export const ProtectedRoute = ({
 
       // Check if account is not active
       const accountStatus = userProfile?.accountStatus;
-      
+
       // Special exception for profile page or when explicitly allowed
       if (accountStatus === 'pending_personal_data' && allowPendingPersonalData) {
         console.log('📝 [PROTECTED] Allowing access with pending_personal_data status');
@@ -80,7 +80,7 @@ export const ProtectedRoute = ({
         requiredRole: requiredRole
       });
     }
-  }, [user, userProfile, loading, requiredRole, router, fallbackPath]);
+  }, [user, userProfile, loading, requiredRole, router, fallbackPath, allowPendingPersonalData]);
 
   if (loading) {
     console.log('⏳ [PROTECTED] Showing loading spinner while checking authentication');
