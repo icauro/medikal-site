@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   email TEXT NOT NULL UNIQUE,
   display_name TEXT,
   photo_url TEXT,
-  role TEXT CHECK (role IN ('patient', 'healthcare_personnel', 'medical_facility', 'agency', 'admin')),
+  role TEXT CHECK (role IN ('patient', 'healthcare_personnel', 'medical_facility', 'admin')),
   account_status TEXT CHECK (account_status IN ('pending_gdpr', 'pending_role', 'pending_personal_data', 'active')) DEFAULT 'pending_gdpr',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -71,13 +71,10 @@ CREATE TABLE IF NOT EXISTS public.medical_facility_listings (
   google_place_id TEXT,
   google_reviews_embed_url TEXT,
   links TEXT[],
+  external_review_links TEXT[],
   verified BOOLEAN DEFAULT FALSE,
-  verification_notes TEXT,
-  verified_at TIMESTAMP WITH TIME ZONE,
-  verified_by UUID REFERENCES public.users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES public.users(id)
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.agency_listings (

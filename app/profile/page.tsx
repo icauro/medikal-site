@@ -3,15 +3,17 @@
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ProtectedRoute } from '@/app/components/ProtectedRoute';
+import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { theme } from '@/lib/theme';
 
 export default function ProfilePage() {
-  const { user, userProfile, logout, deleteAccount } = useAuth();
+  const { user, userProfile, logout, deleteAccount, refreshUserProfile } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -20,11 +22,15 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(userProfile?.displayName || '');
   const [isSavingName, setIsSavingName] = useState(false);
+  const [brokenPhotoUrl, setBrokenPhotoUrl] = useState(false);
+  const { upload, isLoading: isUploading, error: uploadError, success: uploadSuccess } = useImageUpload();
 
   useEffect(() => {
     if (userProfile?.displayName) {
       setNewName(userProfile.displayName);
     }
+    // Reset broken photo state when user profile changes
+    setBrokenPhotoUrl(false);
   }, [userProfile]);
 
   useEffect(() => {
@@ -35,6 +41,15 @@ export default function ProfilePage() {
     const timer = setTimeout(() => setSyncError(''), 7000);
     return () => clearTimeout(timer);
   }, [syncError, syncingStatus]);
+
+  /**
+   * Handle image load error - occurs when the R2 image URL is broken or deleted
+   * Sets flag to display fallback emoji instead of broken image
+   */
+  const handleImageError = () => {
+    console.log('🖼️ [PROFILE] Image failed to load from R2, falling back to placeholder');
+    setBrokenPhotoUrl(true);
+  };
 
   const handleUpdateName = async () => {
     if (!user || !newName.trim() || newName === userProfile?.displayName) {
@@ -112,6 +127,29 @@ export default function ProfilePage() {
     }
   };
 
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await upload(file, 'profile');
+      if (result.success) {
+        console.log('✅ [PROFILE] Image uploaded successfully:', result.url);
+        // Refresh user profile to show new image
+        await refreshUserProfile();
+      } else {
+        console.error('❌ [PROFILE] Upload failed:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ [PROFILE] Image upload error:', error);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white p-8`}>
@@ -132,7 +170,77 @@ export default function ProfilePage() {
 
           {userProfile && (
             <div className="space-y-6">
-              {/* COMMON SECTION - Top */}
+              {/* PROFILE PICTURE SECTION */}
+              <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+                <h2 className="text-xl font-bold mb-6 text-white">Profile Picture</h2>
+                <div className="flex items-center gap-6">
+                  {/* Profile Image */}
+                  <div className="relative w-24 h-24">
+                    {userProfile.photoURL && !brokenPhotoUrl ? (
+                      <Image
+                        src={userProfile.photoURL}
+                        alt="Profile Picture"
+                        width={96}
+                        height={96}
+                        className="w-24 h-24 rounded-lg object-cover border border-zinc-700"
+                        onError={handleImageError}
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-3xl">
+                        👤
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Area */}
+                  <div className="flex-1">
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors flex items-center gap-2"
+                      >
+                        {isUploading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Upload Photo
+                          </>
+                        )}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageChange}
+                        disabled={isUploading}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-zinc-400">JPG, PNG, WebP or GIF (Max 5MB)</p>
+                      {uploadError && (
+                        <p className="text-xs text-red-400">
+                          <span className="inline-block mr-1">❌</span>
+                          {uploadError}
+                        </p>
+                      )}
+                      {uploadSuccess && (
+                        <p className="text-xs text-green-400">
+                          <span className="inline-block mr-1">✅</span>
+                          Photo updated successfully!
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ACCOUNT INFORMATION SECTION */}
               <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
                 <h2 className="text-xl font-bold mb-6 text-white">Account Information</h2>
                 

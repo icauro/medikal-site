@@ -23,11 +23,16 @@ The platform supports the following user roles:
 | `healthcare_personnel` | Medical professionals with personal profiles     | GDPR → Role selection → Personal personnel data → Active | ⚠️ **Deprecated** (admin only) |
 | `admin`                | Platform administrators                          | Auto-assigned via ADMIN_EMAILS                           | ✅ Active |
 | `medical_facility`     | Medical facilities (Clinics, Hospitals, etc.)   | GDPR → Role selection → Fill facility data on profile page→ **Pending Verification** → Active | ✅ Active |
-| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Fill agency data on profile page→ **Pending Verification** → Active | ✅ Active |
+| `agency`               | Medical tourism agencies                         | GDPR → Role selection → Fill agency data on profile page→ **Pending Verification** → Active | ⚠️ **Deprecated** (admin only) |
 
 ---
 
-Professional Roles: term to refer a group of roles included healthcare_personnel, medical_facility, agency
+Professional Roles: term to refer a group of roles included healthcare_personnel and medical_facility
+
+**Note on Disabled Roles**: 
+- `healthcare_personnel` and `agency` are no longer available for user signup
+- These roles are now **admin-only** and can only be assigned by administrators
+- Existing accounts with these roles remain functional
 
 ## Data Architecture: Listing data vs Account data
 
@@ -165,11 +170,14 @@ The platform maintains a strict separation between account ownership (Account Da
 
 ### Agency Role
 
+**Status**: ⚠️ **DEPRECATED FOR USER SIGNUP** - Now admin-only assignment
+
 **Description**: Medical tourism agencies that facilitate patient-doctor connections.
 
-**Signup Flow**: GDPR → Role selection → Fill agency data → **Pending Verification** → Active
+**Important Note**: Users can no longer sign up as agencies. This role is now assigned and managed exclusively by administrators. Existing agency accounts remain functional.
 
-**Planned Capabilities**:
+**Capabilities** (when assigned by admin):
+- ✅ All patient capabilities
 - ✅ Browse doctors and clinics
 - ✅ Submit treatment plan requests on behalf of patients
 - ✅ Manage patient inquiries
@@ -185,18 +193,18 @@ The platform maintains a strict separation between account ownership (Account Da
 - ❌ Limited to coordination/facilitation role
 
 **Account Status**: 
-- `pending_personal_data` → after role selection
-- `pending_verification` → after submitting agency data (waiting for admin approval)
-- `active` → after admin verification and approval
+- `active` → assigned directly by admin
+- Agencies are immediately active when assigned by admin
 
-**Verification Process**:
-1. Agency user completes signup and fills agency data (status: `pending_personal_data`)
-2. User data submitted to admin for review
-3. Admin reviews agency details and verifies legitimacy
-4. Admin activates account via UserCRUDModal (status: `active`)
-5. Agency information becomes visible on public listing
-6. User now has full access to submit treatment plan requests and manage inquiries
-- Limited to coordination/facilitation role
+**Admin Assignment Process**:
+1. Admin accesses admin dashboard
+2. Admin opens UserCRUDModal
+3. Admin creates new user with `role: 'agency'`
+4. Admin fills in agency data (name, country, province, etc.)
+5. Admin optionally links to public agency_listings
+6. User becomes active immediately
+
+**Verification**: Agencies are active upon admin assignment. Admin can manually link their account data to a public listing for public visibility.
 
 ---
 

@@ -16,7 +16,8 @@ Medikal Portal is a Next.js 16+ healthcare directory platform specializing in pl
 
 ### 2. Authentication & User Roles
 - **Context-based**: `AuthContext` in [lib/contexts/AuthContext.tsx](lib/contexts/AuthContext.tsx) manages user state globally
-- **Role hierarchy**: `patient`, `healthcare_personnel` (admin-only), `medical_facility`, `agency`, `admin`
+- **Role hierarchy**: `patient`, `healthcare_personnel` (admin-only), `medical_facility`, `admin`
+- **Disabled roles**: `agency` (disabled - admin-only if needed in future)
 - **Account status flow**: `pending_gdpr` → `pending_role` → `pending_personal_data` → `pending_verification` → `active` (or `suspended`)
 - **Admin bypass**: Admin users (`role: 'admin'`) bypass most status checks; use carefully in `ProtectedRoute`
 - Access control: `ProtectedRoute` component wraps pages requiring auth; pass `requiredRole` prop to restrict by role
