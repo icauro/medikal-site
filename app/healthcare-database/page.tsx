@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   HealthcarePersonnelListing,
   MedicalFacilityListing,
@@ -15,8 +16,10 @@ type FilterType = "all" | "personnel" | "facilities" | "agencies";
 
 import { theme } from "@/lib/theme";
 
-export default function HealthcareDatabase() {
-  const [searchQuery, setSearchQuery] = useState("");
+function HealthcareDatabaseContent() {
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q");
+  const [searchQuery, setSearchQuery] = useState(q || "");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [filterCountry, setFilterCountry] = useState("Turkey"); // Default to Turkey
   const [filterProvince, setFilterProvince] = useState("");
@@ -45,7 +48,7 @@ export default function HealthcareDatabase() {
         setLoading(true);
         setError(null);
         console.log("📋 [DATABASE] Starting to fetch healthcare data...");
-        
+
         // Call server-side API to avoid client-side Supabase initialization delays
         const response = await fetch('/api/listings');
         const result = await response.json();
@@ -390,5 +393,24 @@ export default function HealthcareDatabase() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HealthcareDatabase() {
+  return (
+    <Suspense fallback={
+      <div className={`min-h-screen ${theme.gradients.pageBgClasses} py-12`}>
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-700 border-r-green-400"></div>
+              <p className="mt-4 text-zinc-400">Loading healthcare database...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <HealthcareDatabaseContent />
+    </Suspense>
   );
 }
