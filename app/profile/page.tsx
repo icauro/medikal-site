@@ -3,11 +3,14 @@
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ProtectedRoute } from '@/app/components/ProtectedRoute';
+import { ImageCropModal } from '@/app/components/ImageCropModal';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
+import { COUNTRIES } from '@/lib/constants';
+import { State } from 'country-state-city';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { theme } from '@/lib/theme';
 
 export default function ProfilePage() {
@@ -23,11 +26,56 @@ export default function ProfilePage() {
   const [newName, setNewName] = useState(userProfile?.displayName || '');
   const [isSavingName, setIsSavingName] = useState(false);
   const [brokenPhotoUrl, setBrokenPhotoUrl] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
   const { upload, isLoading: isUploading, error: uploadError, success: uploadSuccess } = useImageUpload();
+
+  // Medical Facility editing state
+  const [isEditingFacility, setIsEditingFacility] = useState(
+    userProfile?.role === 'medical_facility' && userProfile?.accountStatus === 'pending_personal_data'
+  );
+  const [isSavingFacility, setIsSavingFacility] = useState(false);
+  const [facilityFormData, setFacilityFormData] = useState({
+    name: userProfile?.medicalFacilityAccountData?.name || '',
+    facilityType: userProfile?.medicalFacilityAccountData?.facilityType || '',
+    contactPerson: userProfile?.medicalFacilityAccountData?.contactPerson || '',
+    phone: userProfile?.medicalFacilityAccountData?.phone || '',
+    email: userProfile?.medicalFacilityAccountData?.email || '',
+    address: userProfile?.medicalFacilityAccountData?.address || '',
+    website: userProfile?.medicalFacilityAccountData?.website || '',
+    country: userProfile?.medicalFacilityAccountData?.country || '',
+    province: userProfile?.medicalFacilityAccountData?.province || '',
+  });
+
+  // Get provinces for selected country
+  const provinces = useMemo(() => {
+    if (!facilityFormData.country) return [];
+    const country = COUNTRIES.find(c => c.name === facilityFormData.country);
+    if (!country) return [];
+    return State.getStatesOfCountry(country.isoCode);
+  }, [facilityFormData.country]);
 
   useEffect(() => {
     if (userProfile?.displayName) {
       setNewName(userProfile.displayName);
+    }
+    // Reset facility form data when user profile changes
+    if (userProfile?.medicalFacilityAccountData) {
+      setFacilityFormData({
+        name: userProfile.medicalFacilityAccountData.name || '',
+        facilityType: userProfile.medicalFacilityAccountData.facilityType || '',
+        contactPerson: userProfile.medicalFacilityAccountData.contactPerson || '',
+        phone: userProfile.medicalFacilityAccountData.phone || '',
+        email: userProfile.medicalFacilityAccountData.email || '',
+        address: userProfile.medicalFacilityAccountData.address || '',
+        website: userProfile.medicalFacilityAccountData.website || '',
+        country: userProfile.medicalFacilityAccountData.country || '',
+        province: userProfile.medicalFacilityAccountData.province || '',
+      });
+      // Auto-enable edit mode for pending medical facility users
+      if (userProfile.role === 'medical_facility' && userProfile.accountStatus === 'pending_personal_data') {
+        setIsEditingFacility(true);
+      }
     }
     // Reset broken photo state when user profile changes
     setBrokenPhotoUrl(false);
@@ -73,6 +121,50 @@ export default function ProfilePage() {
       setSyncError('Failed to update name');
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  const handleUpdateMedicalFacility = async () => {
+    if (!user) return;
+
+    setIsSavingFacility(true);
+    setSyncError('');
+    try {
+      // Validate required fields
+      if (!facilityFormData.name.trim() || !facilityFormData.country || !facilityFormData.province) {
+        setSyncError('Please fill in all required fields (Facility Name, Country, Province)');
+        setIsSavingFacility(false);
+        return;
+      }
+
+      // Update user profile with medical facility data
+      const { error } = await supabase
+        .from('users')
+        .update({
+          medical_facility_account_data: {
+            name: facilityFormData.name.trim(),
+            facilityType: facilityFormData.facilityType,
+            contactPerson: facilityFormData.contactPerson.trim(),
+            phone: facilityFormData.phone.trim(),
+            email: facilityFormData.email.trim(),
+            address: facilityFormData.address.trim(),
+            website: facilityFormData.website.trim(),
+            country: facilityFormData.country,
+            province: facilityFormData.province,
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      console.log('✅ [PROFILE] Medical facility data saved to database');
+      setIsEditingFacility(false);
+      await refreshUserProfile();
+    } catch (error) {
+      console.error('❌ [PROFILE] Failed to save facility data:', error);
+      setSyncError('Failed to save facility information. Please try again.');
+    } finally {
+      setIsSavingFacility(false);
     }
   };
 
@@ -131,29 +223,62 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      const result = await upload(file, 'profile');
-      if (result.success) {
-        console.log('✅ [PROFILE] Image uploaded successfully:', result.url);
-        // Refresh user profile to show new image
-        await refreshUserProfile();
-      } else {
-        console.error('❌ [PROFILE] Upload failed:', result.error);
-      }
-    } catch (error) {
-      console.error('❌ [PROFILE] Image upload error:', error);
-    }
-    
+    // Create preview for crop modal
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageSrc = event.target?.result as string;
+      setSelectedImageSrc(imageSrc);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    try {
+      // Convert blob to File object
+      const croppedFile = new File([croppedBlob], 'cropped-profile.jpg', {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+      });
+
+      // Upload the cropped image
+      const result = await upload(croppedFile, 'profile');
+      if (result.success) {
+        console.log('✅ [PROFILE] Cropped image uploaded successfully:', result.url);
+        setShowCropModal(false);
+        setSelectedImageSrc(null);
+        // Refresh user profile to show new image
+        await refreshUserProfile();
+      } else {
+        console.error('❌ [PROFILE] Upload failed:', result.error);
+        setSyncError(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('❌ [PROFILE] Image upload error:', error);
+      setSyncError('Failed to upload image');
+    }
+  };
+
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowPendingPersonalData={true}>
       <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white p-8`}>
         <div className="max-w-4xl mx-auto">
+          {/* Crop Modal */}
+          <ImageCropModal
+            isOpen={showCropModal}
+            imageSrc={selectedImageSrc || ''}
+            onCropComplete={handleCropComplete}
+            onCancel={() => {
+              setShowCropModal(false);
+              setSelectedImageSrc(null);
+            }}
+            aspectRatio={1}
+          />
           {/* Header with Logout */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold">My Profile</h1>
@@ -367,47 +492,215 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {userProfile.role === 'medical_facility' && userProfile.medicalFacilityAccountData && (
+              {userProfile.role === 'medical_facility' && (
                 <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-                  <h2 className="text-xl font-bold mb-6 text-white">Medical Facility Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex justify-between items-center mb-6">
                     <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Name</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.name || 'Not provided'}</p>
+                      <h2 className="text-xl font-bold text-white">Medical Facility Details</h2>
+                      {userProfile.accountStatus === 'pending_personal_data' && (
+                        <p className="text-sm text-yellow-400 mt-2">
+                          ⏳ Please complete your facility information. This is required for verification.
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Type</label>
-                      <p className="text-white capitalize">{userProfile.medicalFacilityAccountData.facilityType || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.contactPerson || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.phone || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.email || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Address</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.address || 'Not provided'}</p>
-                    </div>
-                    {userProfile.medicalFacilityAccountData.website && (
-                      <div>
-                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
-                        <a href={userProfile.medicalFacilityAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                          {userProfile.medicalFacilityAccountData.website}
-                        </a>
-                      </div>
+                    {!isEditingFacility && userProfile.accountStatus !== 'pending_personal_data' && (
+                      <button
+                        onClick={() => setIsEditingFacility(true)}
+                        className="p-2 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
                     )}
-                    <div>
-                      <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
-                      <p className="text-white">{userProfile.medicalFacilityAccountData.province}, {userProfile.medicalFacilityAccountData.country}</p>
-                    </div>
                   </div>
+
+                  {!isEditingFacility ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Name</label>
+                        <p className="text-white">{userProfile.medicalFacilityAccountData?.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Type</label>
+                        <p className="text-white capitalize">{userProfile.medicalFacilityAccountData?.facilityType || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
+                        <p className="text-white">{userProfile.medicalFacilityAccountData?.contactPerson || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
+                        <p className="text-white">{userProfile.medicalFacilityAccountData?.phone || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
+                        <p className="text-white">{userProfile.medicalFacilityAccountData?.email || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-sm font-medium mb-2 block">Address</label>
+                        <p className="text-white">{userProfile.medicalFacilityAccountData?.address || 'Not provided'}</p>
+                      </div>
+                      {userProfile.medicalFacilityAccountData?.website && (
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
+                          <a href={userProfile.medicalFacilityAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                            {userProfile.medicalFacilityAccountData.website}
+                          </a>
+                        </div>
+                      )}
+                      {userProfile.medicalFacilityAccountData?.province && (
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
+                          <p className="text-white">{userProfile.medicalFacilityAccountData.province}, {userProfile.medicalFacilityAccountData.country}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Name</label>
+                          <input
+                            type="text"
+                            value={facilityFormData.name}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, name: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Type</label>
+                          <input
+                            type="text"
+                            value={facilityFormData.facilityType}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, facilityType: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
+                          <input
+                            type="text"
+                            value={facilityFormData.contactPerson}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, contactPerson: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
+                          <input
+                            type="tel"
+                            value={facilityFormData.phone}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, phone: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
+                          <input
+                            type="email"
+                            value={facilityFormData.email}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, email: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Address</label>
+                          <input
+                            type="text"
+                            value={facilityFormData.address}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, address: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
+                          <input
+                            type="url"
+                            value={facilityFormData.website}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, website: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Country <span className="text-red-400">*</span></label>
+                          <select
+                            value={facilityFormData.country}
+                            onChange={(e) => {
+                              setFacilityFormData({...facilityFormData, country: e.target.value, province: ''});
+                            }}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select a country...</option>
+                            {COUNTRIES.map((country) => (
+                              <option key={country.isoCode} value={country.name}>
+                                {country.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 text-sm font-medium mb-2 block">Province/State <span className="text-red-400">*</span></label>
+                          <select
+                            value={facilityFormData.province}
+                            onChange={(e) => setFacilityFormData({...facilityFormData, province: e.target.value})}
+                            className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={!facilityFormData.country}
+                          >
+                            <option value="">Select a province/state...</option>
+                            {provinces.map((state) => (
+                              <option key={state.isoCode} value={state.name}>
+                                {state.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      {syncError && (
+                        <p className="text-sm text-red-400">
+                          <span className="inline-block mr-1">❌</span>
+                          {syncError}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleUpdateMedicalFacility}
+                          disabled={isSavingFacility}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-medium transition-colors flex items-center gap-2"
+                        >
+                          {isSavingFacility ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            'Save Changes'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsEditingFacility(false);
+                            if (userProfile?.medicalFacilityAccountData) {
+                              setFacilityFormData({
+                                name: userProfile.medicalFacilityAccountData.name || '',
+                                facilityType: userProfile.medicalFacilityAccountData.facilityType || '',
+                                contactPerson: userProfile.medicalFacilityAccountData.contactPerson || '',
+                                phone: userProfile.medicalFacilityAccountData.phone || '',
+                                email: userProfile.medicalFacilityAccountData.email || '',
+                                address: userProfile.medicalFacilityAccountData.address || '',
+                                website: userProfile.medicalFacilityAccountData.website || '',
+                                country: userProfile.medicalFacilityAccountData.country || '',
+                                province: userProfile.medicalFacilityAccountData.province || '',
+                              });
+                            }
+                          }}
+                          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

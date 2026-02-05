@@ -42,7 +42,7 @@ export default function GDPRConsent({ onAccept, onDecline }: GDPRConsentProps) {
                 <p className="font-semibold">Data Protection:</p>
                 <ul className="list-disc ml-5 space-y-1">
                   <li>We use industry-standard encryption and security measures</li>
-                  <li>Your data is stored securely using Firebase services</li>
+                  <li>Your data is stored securely using Supabase services</li>
                   <li>We never sell your personal information to third parties</li>
                   <li>Medical information is handled with strict confidentiality</li>
                 </ul>

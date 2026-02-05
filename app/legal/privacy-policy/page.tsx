@@ -61,7 +61,7 @@ export default function PrivacyPolicyPage() {
             <h3 className="text-xl font-semibold text-white mb-3">3. Data Protection & Security</h3>
             <ul className="list-disc ml-6 space-y-2 text-zinc-300">
               <li>Industry-standard encryption (SSL/TLS) for data in transit</li>
-              <li>Secure storage using Firebase with data encryption at rest</li>
+              <li>Secure storage using Supabase with data encryption at rest</li>
               <li>Regular security audits and vulnerability assessments</li>
               <li>Strict access controls limiting data access to authorized personnel only</li>
               <li>Medical information receives enhanced protection under HIPAA-aligned protocols</li>
@@ -97,7 +97,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc ml-6 space-y-2 text-zinc-300">
               <li><strong>Google Authentication:</strong> For secure login and account creation</li>
-              <li><strong>Firebase:</strong> For secure data storage and management</li>
+              <li><strong>Supabase:</strong> For secure data storage and management</li>
               <li><strong>Email Service Provider:</strong> For transactional emails</li>
             </ul>
             <p className="text-zinc-300 mt-3">

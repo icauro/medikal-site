@@ -1,4 +1,4 @@
-﻿-- Remove fields marked with //R from healthcare personnel tables
+-- Remove fields marked with //R from healthcare personnel tables
 -- This migration removes:
 -- From healthcare_personnel_listings:
 --   - google_reviews_embed_url

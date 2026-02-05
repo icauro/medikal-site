@@ -180,6 +180,70 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     try {
+      // Create role-specific user data based on the selected role
+      let roleUserData = {};
+      let userDataIdField = '';
+
+      switch (role) {
+        case 'patient': {
+          userDataIdField = 'patient_user_data_id';
+          const { data: patientUserData, error: patientError } = await supabase
+            .from('patient_user_data')
+            .insert([{ user_id: user.id, preferred_language: 'en' }])
+            .select()
+            .single();
+          if (patientError) throw patientError;
+          roleUserData = { patient_user_data_id: patientUserData.id };
+          console.log('✅ [PROFILE] Patient user data created:', patientUserData.id);
+          break;
+        }
+        case 'healthcare_personnel': {
+          userDataIdField = 'healthcare_personnel_user_data_id';
+          const { data: personnelUserData, error: personnelError } = await supabase
+            .from('healthcare_personnel_user_data')
+            .insert([{ 
+              user_id: user.id,
+              personnel_type: 'Doctor',
+              specialization: 'Dermatology',
+              phone_number: '',
+              country: '',
+              province: ''
+            }])
+            .select()
+            .single();
+          if (personnelError) throw personnelError;
+          roleUserData = { healthcare_personnel_user_data_id: personnelUserData.id };
+          console.log('✅ [PROFILE] Healthcare personnel user data created:', personnelUserData.id);
+          break;
+        }
+        case 'medical_facility': {
+          userDataIdField = 'medical_facility_user_data_id';
+          const { data: facilityUserData, error: facilityError } = await supabase
+            .from('medical_facility_user_data')
+            .insert([{
+              user_id: user.id,
+              name: '',
+              facility_type: 'Clinic',
+              phone: '',
+              email: user.email || '',
+              country: '',
+              province: '',
+              contact_person: ''
+            }])
+            .select()
+            .single();
+          if (facilityError) throw facilityError;
+          roleUserData = { medical_facility_user_data_id: facilityUserData.id };
+          console.log('✅ [PROFILE] Medical facility user data created:', facilityUserData.id);
+          break;
+        }
+        case 'admin': {
+          console.log('✅ [PROFILE] Admin role assigned (no user data table needed)');
+          break;
+        }
+      }
+
+      // Update user with new role, user data reference, and status
       const { data, error } = await supabase
         .from('users')
         .update(
@@ -187,6 +251,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             role,
             accountStatus: 'pending_personal_data',
             updatedAt: new Date().toISOString(),
+            ...roleUserData,
           })
         )
         .eq('id', user.id)
@@ -197,7 +262,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (userProfile) {
         setUserProfile(formatUserProfile(data));
-        console.log('✅ [PROFILE] User role updated successfully');
+        console.log('✅ [PROFILE] User role updated successfully with profile reference');
       }
     } catch (error) {
       console.error('❌ [PROFILE] Failed to update user role:', error);

@@ -18,6 +18,7 @@ export default function UserMenu() {
   });
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   console.log('👤 [USERMENU] UserMenu rendered', {
@@ -27,8 +28,14 @@ export default function UserMenu() {
     userRole: userProfile?.role,
     userEmail: user?.email,
     userUid: user?.id,
-    accountStatus: userProfile?.accountStatus
+    accountStatus: userProfile?.accountStatus,
+    isHydrated
   });
+
+  // Handle hydration mismatch - ensure component only renders interactive elements after hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,10 +73,10 @@ export default function UserMenu() {
     }
   };
 
-  if (loading) {
-    console.log('⏳ [USERMENU] Showing loading state');
+  if (!isHydrated || loading) {
+    console.log('⏳ [USERMENU] Showing loading state', { isHydrated, loading });
     return (
-      <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
+      <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse" suppressHydrationWarning></div>
     );
   }
 
@@ -77,7 +84,7 @@ export default function UserMenu() {
   if (user && !userProfile) {
     console.log('⏳ [USERMENU] User authenticated but profile not ready, showing loading');
     return (
-      <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse"></div>
+      <div className="h-8 w-8 rounded-full bg-zinc-800 animate-pulse" suppressHydrationWarning></div>
     );
   }
 
@@ -194,8 +201,9 @@ export default function UserMenu() {
 
           {/* Profile Link */}
           <button
+            type="button"
             onClick={handleProfileClick}
-            className="w-full px-4 py-3 hover:bg-zinc-800 transition-colors text-white border-b border-zinc-800 text-left flex items-center gap-3"
+            className="w-full px-4 py-3 hover:bg-zinc-800 transition-colors text-white border-b border-zinc-800 text-left flex items-center gap-3 cursor-pointer"
           >
             <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

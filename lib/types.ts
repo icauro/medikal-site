@@ -76,7 +76,19 @@ export interface UserProfile {
     version: string; // e.g., "1.0"
   };
 
-  // Role-specific fields
+  // Role-specific Profile References (two-way linked)
+  patientUserDataId?: string;
+  healthcarePersonnelUserDataId?: string;
+  medicalFacilityUserDataId?: string;
+  agencyUserDataId?: string;
+
+  // Role-specific Profile Data (populated when needed)
+  patientUserData?: PatientUserData;
+  healthcarePersonnelUserData?: HealthcarePersonnelUserData;
+  medicalFacilityUserData?: MedicalFacilityUserData;
+  agencyUserData?: AgencyUserData;
+
+  // Legacy JSONB fields (kept for backward compatibility during migration)
   adminAccountData?: AdminAccountData;
   patientAccountData?: PatientAccountData;
   healthcarePersonnelAccountData?: HealthcarePersonnelAccountData;
@@ -414,4 +426,117 @@ export interface TreatmentPlan {
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
+}
+
+// ============================================================================
+// NEW ROLE-SPECIFIC PROFILE TABLES (Two-way linked with users)
+// ============================================================================
+
+export interface PatientUserData {
+  id: string;
+  userId: string; // Two-way link to users table
+  medicalHistory?: string[];
+  preferredLanguage?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  interestedProcedures?: MedicalProcedureType[];
+  preferredFacilities?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface HealthcarePersonnelUserData {
+  id: string;
+  userId: string; // Two-way link to users table
+  personnelType: PersonnelType;
+  specialization: MedicalSpecialization;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  country: string;
+  province: string;
+  city?: string;
+  bio?: string;
+  photoUrl?: string;
+  yearsOfExperience?: number;
+  medicalSchool?: string;
+  graduationYear?: number;
+  certifications?: string[];
+  nationalIdNumber?: string;
+  currentMedicalFacilityId?: string; // Reference to medical_facility_user_data
+  position?: string;
+  procedureTags?: MedicalProcedureType[];
+  listingId?: string; // Link to healthcare_personnel_listings
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MedicalFacilityUserData {
+  id: string;
+  userId: string; // Two-way link to users table
+  name: string;
+  facilityType: MedicalFacilityType;
+  phoneNumber: string;
+  email: string;
+  country: string;
+  province: string;
+  city?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  logoUrl?: string;
+  specializations?: MedicalSpecialization[];
+  services?: string[];
+  contactPerson: string;
+  ownerName?: string;
+  taxIdNumber?: string;
+  registrationNumber?: string;
+  establishedYear?: number;
+  numberOfDoctors?: number;
+  internalNotes?: string;
+  listingId?: string; // Link to medical_facility_listings
+  verified: boolean;
+  verificationNotes?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+  claimedDoctorIds?: string[]; // Healthcare personnel claiming to work here
+  verifiedDoctorIds?: string[]; // Admin-verified doctors
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AgencyUserData {
+  id: string;
+  userId: string; // Two-way link to users table
+  name: string;
+  phoneNumber: string;
+  email: string;
+  country: string;
+  province: string;
+  city?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  logoUrl?: string;
+  servicesOffered?: string[];
+  focusCountries?: string[];
+  contactPerson: string;
+  ownerName?: string;
+  taxIdNumber?: string;
+  registrationNumber?: string;
+  establishedYear?: number;
+  internalNotes?: string;
+  listingId?: string; // Link to agency_listings
+  verified: boolean;
+  verificationNotes?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string; // Admin UID
+  createdAt: Date;
+  updatedAt: Date;
 }
