@@ -87,7 +87,7 @@ The platform maintains a strict separation between account ownership (Account Da
 **Capabilities**:
 - ✅ All patient capabilities
 - ✅ Respond to reviews on their profile
-- ✅ Edit their healthcarePersonnelAccountData (name, photo, bio, personnelType, etc.)
+- ✅ Edit their healthcarePersonnelUserData (name, photo, bio, personnelType, specialization, etc.)
 - ✅ Post links and images on their profile
 - ✅ Claim connection to medical facilities
 - ✅ Request to moderate medical facility pages (requires admin approval)

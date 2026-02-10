@@ -1,21 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand Colors - from lib/theme.ts */
-  --background: #000000;
-  --foreground: #e5e7eb;
-  --primary-green: #10b981;      /* Emerald Green */
-  --primary-blue: #0ea5e9;       /* Sky Blue */
-  --accent-green: #34d399;       /* Light Emerald */
-  --accent-blue: #38bdf8;        /* Light Sky Blue */
-  
-  /* Background Colors */
-  --background-darkest: #000000;
-  --background-dark: #050505;
-  --background-medium: #0a0a0a;
-  --background-surface: #0f0f0f;
-  
-  /* Note: These CSS variables are synchronized with lib/theme.ts theme.cssVariables */
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
 @theme inline {
@@ -27,44 +14,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a1929;
-    --foreground: #e5e7eb;
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
 }
 
 body {
-  background: linear-gradient(135deg, #000000 0%, #050505 50%, #0a0a0a 100%);
+  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-}
-
-/* Comment thread line - L-shaped connector with 90 degree turn */
-.comment-thread-line {
-  position: relative;
-  padding-left: 16px;
-}
-
-/* Vertical line down from parent */
-.comment-thread-line::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  height: 12px;
-  width: 2px;
-  background-color: rgb(113, 113, 122); /* zinc-600 */
-}
-
-/* Horizontal line turning right to child */
-.comment-thread-line::after {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 12px;
-  width: 10px;
-  height: 2px;
-  background-color: rgb(113, 113, 122); /* zinc-600 */
 }
 
 /* Custom Animations */

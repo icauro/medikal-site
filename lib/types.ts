@@ -87,65 +87,6 @@ export interface UserProfile {
   healthcarePersonnelUserData?: HealthcarePersonnelUserData;
   medicalFacilityUserData?: MedicalFacilityUserData;
   agencyUserData?: AgencyUserData;
-
-  // Legacy JSONB fields (kept for backward compatibility during migration)
-  adminAccountData?: AdminAccountData;
-  patientAccountData?: PatientAccountData;
-  healthcarePersonnelAccountData?: HealthcarePersonnelAccountData;
-  medicalFacilityAccountData?: MedicalFacilityAccountData;
-  agencyAccountData?: AgencyAccountData;
-}
-
-export interface AdminAccountData {
-  permissions: string[];
-  lastLogin: Date;
-}
-
-export interface PatientAccountData {
-  medicalHistory?: string[];
-  preferredLanguage: string;
-  country?: string;   // Optional - patient may not want to share location
-  province?: string;  // Optional - patient may not want to share location
-  emergencyContact?: {
-    name: string;
-    phone: string;
-  };
-}
-
-// Healthcare Personnel Account Data (private, personnel-managed)
-export interface HealthcarePersonnelAccountData {
-  personnelType: PersonnelType;
-  name: string;
-  specialization: MedicalSpecialization;
-  
-  // Private Credentials & Identity
-  dateOfBirth: string;
-  phoneNumber: string;
-  nationalIdNumber?: string;
-  country: string;   // Required field
-  province: string;  // Required field - state/province based on country
-  bio?: string;
-  photoUrl?: string;
-
-  // Professional Credentials (Private)
-  yearsOfExperience: number;
-
-  // Education (Private)
-  medicalSchool: string;
-  graduationYear: number;
-  certifications?: string[];
-
-  // Employment (Private)
-  currentMedicalFacility?: string;
-  position: string;
-
-  // Private Notes
-  procedureTags?: MedicalProcedureType[];
-
-  // Verification & Linking (set by admin only)
-  listingId?: string; // Link to public healthcare personnel listing (admin-controlled)
-  verifiedAt?: Date; //if its null, not verified
-  verifiedBy?: string; // Admin email
 }
 
 // Healthcare Personnel Listing (public, admin-managed)
@@ -167,44 +108,6 @@ export interface HealthcarePersonnelListing {
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin email
-}
-
-// Medical Facility Account Data (private, facility-managed)
-export interface MedicalFacilityAccountData {
-  // Publicly Visible basic info
-  name: string;
-  facilityType: MedicalFacilityType;
-  address?: string;  // Optional - not required for locating facility
-  country: string;
-  province: string;  // Required field - state/province based on country
-  phone: string;
-  email: string;
-  website?: string;
-  description?: string;
-  logoUrl?: string;
-  specializations?: MedicalSpecialization[];
-  services?: string[];
-
-  // Private Business Information
-  contactPerson: string;
-  ownerName?: string;
-  taxIdNumber?: string;
-  registrationNumber?: string;
-  establishedYear?: number;
-
-  // Internal Management
-  numberOfDoctors?: number;
-  internalNotes?: string;
-  
-  // Verification & Linking (set by admin only)
-  verified: boolean;
-  listingId?: string; // Link to public medical facility listing (admin-controlled)
-  verificationNotes?: string;
-  verifiedAt?: Date;
-  verifiedBy?: string; // Admin UID
-
-  // Doctor Claims (doctors claimed by facility, pending verification)
-  claimedDoctorIds?: string[]; // Pending verification
 }
 
 // Medical Facility User Data (user-specific, private)
@@ -235,40 +138,6 @@ export interface MedicalFacilityListing {
   verified?: boolean;
   createdAt: Date;
   updatedAt: Date;
-}
-
-// Agency Account Data (private, agency-managed)
-export interface AgencyAccountData {
-  // Publicly Visible basic info
-  name: string;
-  address?: string;  // Optional - not required for locating agency
-  country: string;
-  province: string;  // Required field - state/province based on country
-  phone: string;
-  email: string;
-  website?: string;
-  description?: string;
-  logoUrl?: string;
-  servicesOffered?: string[];
-  focusCountries?: string[];
-
-  // Private Business Information
-  contactPerson: string;
-  ownerName?: string;
-  taxIdNumber?: string;
-  registrationNumber?: string;
-  establishedYear?: number;
-  
-  // Internal Management
-  languages?: string[];
-  internalNotes?: string;
-  
-  // Verification & Linking (set by admin only)
-  verified: boolean;
-  listingId?: string; // Link to public agency listing (admin-controlled)
-  verificationNotes?: string;
-  verifiedAt?: Date;
-  verifiedBy?: string; // Admin UID
 }
 
 // Agency Listing (public, admin-managed)

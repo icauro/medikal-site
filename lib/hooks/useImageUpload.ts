@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { createDebugger } from '@/lib/debugLogger';
+
+const log = createDebugger('medikal:upload');
 
 interface UploadProgress {
   isLoading: boolean;
@@ -137,11 +140,11 @@ export function useImageUpload() {
           success: true,
         });
 
-        console.log('✅ [useImageUpload] Upload successful:', data.url);
+        log.info('Upload successful', { url: data.url });
         return data;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
-        console.error('🚫 [useImageUpload] Upload error:', error);
+        log.error('Upload error', error);
         setState({
           isLoading: false,
           progress: 0,

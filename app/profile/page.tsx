@@ -241,7 +241,7 @@ export default function ProfilePage() {
   const handleCropComplete = async (croppedBlob: Blob) => {
     try {
       // Convert blob to File object
-      const croppedFile = new File([croppedBlob], 'cropped-profile.jpg', {
+      const croppedFile = new File([croppedBlob], 'profile.jpg', {
         type: 'image/jpeg',
         lastModified: Date.now(),
       });

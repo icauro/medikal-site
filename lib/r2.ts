@@ -18,6 +18,9 @@ import {
   DeleteObjectCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
+import { createDebugger } from '@/lib/debugLogger';
+
+const log = createDebugger('medikal:r2');
 
 // Initialize R2 Client (compatible with S3 API)
 const getR2Client = () => {
@@ -26,7 +29,7 @@ const getR2Client = () => {
   const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
-    console.error('🚫 [R2] Missing required environment variables for R2 initialization');
+    log.error('Missing required environment variables for R2 initialization');
     return null;
   }
 
@@ -78,7 +81,7 @@ export async function uploadToR2(
     const bucketName = getBucketName();
     const publicUrl = getPublicUrl();
 
-    console.log('💾 [R2] Uploading file:', { key, contentType, size: body.length });
+    log.debug('Uploading file', { key, contentType, size: body.length });
 
     const command = new PutObjectCommand({
       Bucket: bucketName,
@@ -90,11 +93,11 @@ export async function uploadToR2(
     await client.send(command);
 
     const fileUrl = `${publicUrl}/${key}`;
-    console.log('✅ [R2] File uploaded successfully:', fileUrl);
+    log.info('File uploaded successfully', { fileUrl });
 
     return fileUrl;
   } catch (error) {
-    console.error('🚫 [R2] Upload failed:', error);
+    log.error('Upload failed', error);
     throw error;
   }
 }
@@ -113,7 +116,7 @@ export async function deleteFromR2(key: string): Promise<void> {
 
     const bucketName = getBucketName();
 
-    console.log('🗑️ [R2] Deleting file:', { key });
+    log.debug('Deleting file', { key });
 
     const command = new DeleteObjectCommand({
       Bucket: bucketName,
@@ -122,9 +125,9 @@ export async function deleteFromR2(key: string): Promise<void> {
 
     await client.send(command);
 
-    console.log('✅ [R2] File deleted successfully:', key);
+    log.info('File deleted successfully', { key });
   } catch (error) {
-    console.error('🚫 [R2] Delete failed:', error);
+    log.error('Delete failed', error);
     throw error;
   }
 }
@@ -155,7 +158,7 @@ export async function fileExistsInR2(key: string): Promise<boolean> {
     if ((error as any)?.name === 'NotFound') {
       return false;
     }
-    console.error('🚫 [R2] Error checking file existence:', error);
+    log.error('Error checking file existence', error);
     return false;
   }
 }
@@ -228,20 +231,20 @@ export async function validateR2Url(publicUrl: string): Promise<boolean> {
   try {
     const key = extractKeyFromUrl(publicUrl);
     if (!key) {
-      console.warn('⚠️ [R2] Could not extract R2 key from URL:', publicUrl);
+      log.warn('Could not extract R2 key from URL', { publicUrl });
       return false;
     }
 
     const exists = await fileExistsInR2(key);
     if (!exists) {
-      console.warn('⚠️ [R2] ORPHANED URL - File exists in database but not in R2:', {
+      log.warn('ORPHANED URL - File exists in database but not in R2', {
         url: publicUrl,
         key,
       });
     }
     return exists;
   } catch (error) {
-    console.error('🚫 [R2] Error validating URL:', error);
+    log.error('Error validating URL', error);
     return false;
   }
 }

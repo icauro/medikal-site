@@ -284,54 +284,130 @@ Go to Supabase Dashboard → Logs → choose service to view errors
 
 ## 📱 User Roles & Data
 
-### Role-Specific Data Columns
+### Role-Specific Data Tables
 
-Each user role stores extended data in JSONB columns:
+Each user role stores extended data in a dedicated normalized table:
 
 ```typescript
-// Patient
-patient_account_data: {
-  medicalHistory: string[],
-  preferredLanguage: string,
-  country?: string,
-  province?: string,
-  emergencyContact?: {
-    name: string,
-    phone: string
-  }
-}
-
-// Healthcare Personnel
-healthcare_personnel_account_data: {
-  personnelType: string,
-  name: string,
-  specialization: string,
-  dateOfBirth: string,
-  phoneNumber: string,
-  nationalIdNumber?: string,
+// Patient User Data
+patient_user_data: {
+  id: UUID,
+  user_id: UUID,
+  medical_history: string[],
+  preferred_language: string,
   country: string,
   province: string,
-  bio?: string,
-  photoUrl?: string,
-  licenseNumber: string,
-  licenseIssuingAuthority: string,
-  licenseExpirationDate: string,
-  yearsOfExperience: number,
-  medicalSchool: string,
-  graduationYear: number,
-  certifications?: string[],
-  currentMedicalFacility?: string,
-  medicalFacilityAddress?: string,
-  position: string,
-  motivation?: string,
-  procedureTags?: string[]
+  city: string,
+  emergency_contact_name: string,
+  emergency_contact_phone: string,
+  interested_procedures: string[],
+  preferred_facilities: string[]
 }
 
-// Admin
-admin_account_data: {
-  permissions: string[],
-  lastLogin: Date
+// Healthcare Personnel User Data
+healthcare_personnel_user_data: {
+  id: UUID,
+  user_id: UUID,
+  personnel_type: string,
+  specialization: string,
+  phone_number: string,
+  date_of_birth: string,
+  country: string,
+  province: string,
+  city: string,
+  bio: string,
+  photo_url: string,
+  years_of_experience: number,
+  medical_school: string,
+  graduation_year: number,
+  certifications: string[],
+  national_id_number: string,
+  current_medical_facility_id: UUID,
+  position: string,
+  procedure_tags: string[],
+  listing_id: UUID,
+  verified_at: timestamp,
+  verified_by: UUID
 }
+
+// Medical Facility User Data
+medical_facility_user_data: {
+  id: UUID,
+  user_id: UUID,
+  name: string,
+  facility_type: string,
+  phone: string,
+  email: string,
+  country: string,
+  province: string,
+  city: string,
+  address: string,
+  website: string,
+  description: string,
+  logo_url: string,
+  specializations: string[],
+  services: string[],
+  contact_person: string,
+  owner_name: string,
+  tax_id_number: string,
+  registration_number: string,
+  established_year: number,
+  number_of_doctors: number,
+  internal_notes: string,
+  listing_id: UUID,
+  verified: boolean,
+  verification_notes: string,
+  verified_at: timestamp,
+  verified_by: UUID,
+  claimed_doctor_ids: UUID[],
+  verified_doctor_ids: UUID[]
+}
+
+// Agency User Data
+agency_user_data: {
+  id: UUID,
+  user_id: UUID,
+  name: string,
+  phone: string,
+  email: string,
+  country: string,
+  province: string,
+  city: string,
+  address: string,
+  website: string,
+  description: string,
+  logo_url: string,
+  services_offered: string[],
+  focus_countries: string[],
+  contact_person: string,
+  owner_name: string,
+  tax_id_number: string,
+  registration_number: string,
+  established_year: number,
+  internal_notes: string,
+  listing_id: UUID,
+  verified: boolean,
+  verification_notes: string,
+  verified_at: timestamp,
+  verified_by: UUID
+}
+```
+
+### Accessing User Data
+```typescript
+// In TypeScript
+import { supabase } from '@/lib/supabase';
+
+// Get user with their patient data
+const { data: user } = await supabase
+  .from('users')
+  .select('*, patient_user_data(*)')
+  .eq('id', userId)
+  .single();
+
+// Data is two-way linked
+user.patientUserDataId  // FK to patient_user_data table
+user.patientUserData    // Actual data (if selected with *)
 ```
 
 ---

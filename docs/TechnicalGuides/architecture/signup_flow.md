@@ -127,27 +127,63 @@ export interface UserProfile {
     acceptedAt: Date;
     version: string;
   };
-  healthcarePersonnelAccountData?: HealthcarePersonnelAccountData; // Only for healthcare personnel
+  
+  // Role-specific data references (two-way linked)
+  patientUserDataId?: string;
+  healthcarePersonnelUserDataId?: string;
+  medicalFacilityUserDataId?: string;
+  agencyUserDataId?: string;
+  
+  // Actual data (populated when queried with *)
+  patientUserData?: PatientUserData;
+  healthcarePersonnelUserData?: HealthcarePersonnelUserData;
+  medicalFacilityUserData?: MedicalFacilityUserData;
+  agencyUserData?: AgencyUserData;
 }
 ```
 
-### HealthcarePersonnelAccountData Interface
-* listingId is set by admin after verification; personnel cannot edit this link themselves.
-* Verification is tracked via verifiedAt and verifiedBy fields (null values indicate pending verification)
+### HealthcarePersonnelUserData Interface
+Data stored in dedicated `healthcare_personnel_user_data` table (normalized, not JSONB). ListingId is set by admin after verification; personnel cannot edit this link themselves. Verification is tracked via verifiedAt and verifiedBy fields (null values indicate pending verification).
+
 ```typescript
-export interface HealthcarePersonnelAccountData {
-  personnelType: PersonnelType; // 'Doctor' | 'Patient Coordinator'
-  name: string;
-  specialization: MedicalSpecialization;
+export interface HealthcarePersonnelUserData {
+  id: string; // UUID
+  userId: string; // FK to users table
   
-  // Private Credentials & Identity
-  dateOfBirth: string;
+  // Basic Information
+  personnelType: PersonnelType; // 'Doctor' | 'Patient Coordinator'
+  specialization: MedicalSpecialization;
   phoneNumber: string;
-  nationalIdNumber?: string;
+  dateOfBirth: string;
+  
+  // Location
   country: string;   // Required field
   province: string;  // Required field - state/province based on country
+  city?: string;
+  
+  // Bio & Professional Info
   bio?: string;
   photoUrl?: string;
+  yearsOfExperience: number;
+  
+  // Education
+  medicalSchool: string;
+  graduationYear: number;
+  certifications?: string[];
+  nationalIdNumber?: string;
+  
+  // Employment
+  currentMedicalFacilityId?: UUID;
+  position: string;
+  
+  // Procedure Specializations
+  procedureTags?: string[];
+  
+  // Verification & Linking (set by admin only)
+  listingId?: UUID;
+  verifiedAt?: Date;
+  verifiedBy?: UUID;
+}
 
   // Professional Credentials (Private)
   yearsOfExperience: number;

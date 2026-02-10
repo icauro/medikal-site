@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
-import { supabase, convertDatabaseRow } from "@/lib/supabase";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, PLASTIC_SURGERY_PROCEDURES, MedicalProcedureType } from "@/lib/types";
-import { theme } from "@/lib/theme";
+import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, MEDICAL_PROCEDURES, MedicalProcedureType } from "@/lib/types";
 
 export default function TreatmentPlanPage() {
   const { user, userProfile } = useAuth();
@@ -38,36 +36,89 @@ export default function TreatmentPlanPage() {
     if (!user) return;
 
     try {
-      let query = supabase.from('treatment_plans').select('*');
+      let plansQuery;
+      let plansData: TreatmentPlan[] = [];
       
       if (userProfile?.role === 'admin') {
         // Admins see all plans
+        plansQuery = query(
+          collection(db, "treatment_plans"),
+          orderBy("createdAt", "desc")
+        );
+        
+        const querySnapshot = await getDocs(plansQuery);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          plansData.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+            completedAt: data.completedAt?.toDate(),
+            preferredDate: data.preferredDate?.toDate(),
+            responses: (data.responses || []).map((resp: any) => ({
+              ...resp,
+              createdAt: resp.createdAt?.toDate(),
+            })),
+          } as TreatmentPlan);
+        });
       } else if (userProfile?.role === 'healthcare_personnel') {
-        // Healthcare Personnel see plans matching their procedure tags (for now, see all)
+        // Healthcare Personnel see plans matching their procedure tags
+        plansQuery = query(
+          collection(db, "treatment_plans"),
+          orderBy("createdAt", "desc")
+        );
+        
+        const querySnapshot = await getDocs(plansQuery);
+        const personnelTags = userProfile.personalHealthcarePersonnelData?.procedureTags || [];
+        
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const planTags = data.procedureTags || [];
+          
+          // Check if any personnel tag matches any plan tag
+          const hasMatch = personnelTags.some(tag => planTags.includes(tag));
+          
+          if (hasMatch) {
+            plansData.push({
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate(),
+              updatedAt: data.updatedAt?.toDate(),
+              completedAt: data.completedAt?.toDate(),
+              preferredDate: data.preferredDate?.toDate(),
+              responses: (data.responses || []).map((resp: any) => ({
+                ...resp,
+                createdAt: resp.createdAt?.toDate(),
+              })),
+            } as TreatmentPlan);
+          }
+        });
       } else {
         // Patients see only their own plans
-        query = query.eq('user_id', user.id);
+        plansQuery = query(
+          collection(db, "treatment_plans"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        
+        const querySnapshot = await getDocs(plansQuery);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          plansData.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+            completedAt: data.completedAt?.toDate(),
+            preferredDate: data.preferredDate?.toDate(),
+            responses: (data.responses || []).map((resp: any) => ({
+              ...resp,
+              createdAt: resp.createdAt?.toDate(),
+            })),
+          } as TreatmentPlan);
+        });
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const plansData = (data || []).map((plan: any) => convertDatabaseRow({
-        id: plan.id,
-        userId: plan.user_id,
-        title: plan.title,
-        description: plan.description,
-        medicalCondition: plan.medical_condition,
-        currentSymptoms: plan.current_symptoms,
-        desiredOutcome: plan.desired_outcome,
-        budget: plan.budget,
-        priority: plan.priority,
-        status: plan.status,
-        procedures: plan.procedures,
-        createdAt: new Date(plan.created_at),
-        updatedAt: new Date(plan.updated_at),
-        responses: []
-      }));
 
       setPlans(plansData);
       if (plansData.length > 0 && !selectedPlan) {
@@ -92,29 +143,27 @@ export default function TreatmentPlanPage() {
     setSubmitting(true);
 
     try {
-      const planData = {
-        user_id: user.id,
+      const newPlan = {
+        userId: user.uid,
+        userEmail: userProfile.email,
+        userName: userProfile.displayName,
         title: formData.title,
         description: formData.description,
-        medical_condition: formData.medicalCondition,
-        current_symptoms: formData.currentSymptoms,
-        desired_outcome: formData.desiredOutcome,
-        budget: formData.budget || null,
+        medicalCondition: formData.medicalCondition,
+        currentSymptoms: formData.currentSymptoms,
+        desiredOutcome: formData.desiredOutcome,
+        procedureTags: selectedProcedures,
+        budget: formData.budget ? parseFloat(formData.budget) : undefined,
         priority: formData.priority,
         status: 'pending',
-        procedures: selectedProcedures,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        responses: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      const { error } = await supabase
-        .from('treatment_plans')
-        .insert([planData]);
-
-      if (error) throw error;
-
-      console.log('✅ [TREATMENT_PLAN] Plan created successfully');
-
+      await addDoc(collection(db, "treatment_plans"), newPlan);
+      
+      setShowCreateForm(false);
       setFormData({
         title: "",
         description: "",
@@ -141,24 +190,22 @@ export default function TreatmentPlanPage() {
     setSubmitting(true);
 
     try {
-      const responseData = {
-        plan_id: selectedPlan.id,
-        doctor_id: user.id,
-        doctor_name: userProfile.displayName,
-        doctor_email: userProfile.email,
-        doctor_specialization: userProfile.healthcarePersonnelAccountData?.specialization,
+      const response: DoctorResponse = {
+        id: `${Date.now()}`,
+        doctorId: user.id,
+        doctorName: userProfile.displayName,
+        doctorEmail: userProfile.email,
+        doctorSpecialty: userProfile.personalHealthcarePersonnelData?.specialization,
         response: responseText,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date(),
       };
 
-      const { error } = await supabase
-        .from('treatment_plan_responses')
-        .insert([responseData]);
-
-      if (error) throw error;
-
-      console.log('✅ [TREATMENT_PLAN] Response added successfully');
+      const planRef = doc(db, "treatment_plans", selectedPlan.id);
+      await updateDoc(planRef, {
+        responses: arrayUnion(response),
+        status: 'reviewed',
+        updatedAt: serverTimestamp(),
+      });
 
       setResponseText("");
       setRespondingToPlan(null);
@@ -203,7 +250,7 @@ export default function TreatmentPlanPage() {
 
   return (
     <ProtectedRoute>
-      <div className={`min-h-screen ${theme.gradients.pageBgClasses} text-white`}>
+      <div className="min-h-screen bg-black text-white">
         <div className="flex h-screen">
           {/* Sidebar - Treatment Plans List */}
           <div className="w-80 border-r border-zinc-800 overflow-y-auto">
@@ -322,7 +369,7 @@ export default function TreatmentPlanPage() {
                     <div>
                       <label className="block text-sm font-medium mb-2">Medical Procedures <span className="text-red-400">*</span></label>
                       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-h-60 overflow-y-auto">
-                        {PLASTIC_SURGERY_PROCEDURES.map((procedure) => (
+                        {MEDICAL_PROCEDURES.map((procedure) => (
                           <label key={procedure} className="flex items-center gap-2 py-2 hover:bg-zinc-800 px-2 rounded cursor-pointer">
                             <input
                               type="checkbox"
@@ -529,7 +576,7 @@ export default function TreatmentPlanPage() {
                                   <div>
                                     <div className="font-semibold">{response.doctorName}</div>
                                     <div className="text-sm text-zinc-400">
-                                      {response.doctorSpecialization || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
+                                      {response.doctorSpecialty || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>

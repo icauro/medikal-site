@@ -258,6 +258,26 @@ BEGIN
 END $$;
 
 -- ============================================================================
+-- REMOVE OLD PROFILE COLUMNS FROM USERS TABLE (if they exist)
+-- ============================================================================
+
+DO $$
+BEGIN
+  IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='patient_profile_id') THEN
+    ALTER TABLE public.users DROP COLUMN patient_profile_id;
+  END IF;
+  IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='healthcare_personnel_profile_id') THEN
+    ALTER TABLE public.users DROP COLUMN healthcare_personnel_profile_id;
+  END IF;
+  IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='medical_facility_profile_id') THEN
+    ALTER TABLE public.users DROP COLUMN medical_facility_profile_id;
+  END IF;
+  IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='agency_profile_id') THEN
+    ALTER TABLE public.users DROP COLUMN agency_profile_id;
+  END IF;
+END $$;
+
+-- ============================================================================
 -- PUBLIC LISTINGS (Admin-managed, publicly readable)
 -- ============================================================================
 
