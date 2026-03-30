@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { ProtectedRoute } from "@/app/components/ProtectedRoute";
-import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, MEDICAL_PROCEDURES, MedicalProcedureType } from "@/lib/types";
+import { TreatmentPlan, TreatmentPlanPriority, DoctorResponse, ALL_PROCEDURES, MedicalProcedureType } from "@/lib/types";
+// TODO: Migrate to Supabase instead of Firebase
+// import { collection, query, where, orderBy, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 
 export default function TreatmentPlanPage() {
   const { user, userProfile } = useAuth();
@@ -28,107 +31,16 @@ export default function TreatmentPlanPage() {
 
   useEffect(() => {
     if (user) {
-      fetchPlans();
+      // TODO: Implement Supabase-based treatment plan fetching
+      setPlans([]);
+      setLoading(false);
     }
   }, [user, userProfile]);
 
   const fetchPlans = async () => {
-    if (!user) return;
-
-    try {
-      let plansQuery;
-      let plansData: TreatmentPlan[] = [];
-      
-      if (userProfile?.role === 'admin') {
-        // Admins see all plans
-        plansQuery = query(
-          collection(db, "treatment_plans"),
-          orderBy("createdAt", "desc")
-        );
-        
-        const querySnapshot = await getDocs(plansQuery);
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          plansData.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate(),
-            updatedAt: data.updatedAt?.toDate(),
-            completedAt: data.completedAt?.toDate(),
-            preferredDate: data.preferredDate?.toDate(),
-            responses: (data.responses || []).map((resp: any) => ({
-              ...resp,
-              createdAt: resp.createdAt?.toDate(),
-            })),
-          } as TreatmentPlan);
-        });
-      } else if (userProfile?.role === 'healthcare_personnel') {
-        // Healthcare Personnel see plans matching their procedure tags
-        plansQuery = query(
-          collection(db, "treatment_plans"),
-          orderBy("createdAt", "desc")
-        );
-        
-        const querySnapshot = await getDocs(plansQuery);
-        const personnelTags = userProfile.personalHealthcarePersonnelData?.procedureTags || [];
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const planTags = data.procedureTags || [];
-          
-          // Check if any personnel tag matches any plan tag
-          const hasMatch = personnelTags.some(tag => planTags.includes(tag));
-          
-          if (hasMatch) {
-            plansData.push({
-              id: doc.id,
-              ...data,
-              createdAt: data.createdAt?.toDate(),
-              updatedAt: data.updatedAt?.toDate(),
-              completedAt: data.completedAt?.toDate(),
-              preferredDate: data.preferredDate?.toDate(),
-              responses: (data.responses || []).map((resp: any) => ({
-                ...resp,
-                createdAt: resp.createdAt?.toDate(),
-              })),
-            } as TreatmentPlan);
-          }
-        });
-      } else {
-        // Patients see only their own plans
-        plansQuery = query(
-          collection(db, "treatment_plans"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-        
-        const querySnapshot = await getDocs(plansQuery);
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          plansData.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate(),
-            updatedAt: data.updatedAt?.toDate(),
-            completedAt: data.completedAt?.toDate(),
-            preferredDate: data.preferredDate?.toDate(),
-            responses: (data.responses || []).map((resp: any) => ({
-              ...resp,
-              createdAt: resp.createdAt?.toDate(),
-            })),
-          } as TreatmentPlan);
-        });
-      }
-
-      setPlans(plansData);
-      if (plansData.length > 0 && !selectedPlan) {
-        setSelectedPlan(plansData[0]);
-      }
-    } catch (error) {
-      console.error("Error fetching treatment plans:", error);
-    } finally {
-      setLoading(false);
-    }
+    // TODO: Implement Supabase-based treatment plan fetching
+    setPlans([]);
+    setLoading(false);
   };
 
   const handleCreatePlan = async (e: React.FormEvent) => {
@@ -144,7 +56,7 @@ export default function TreatmentPlanPage() {
 
     try {
       const newPlan = {
-        userId: user.uid,
+        userId: user.id,
         userEmail: userProfile.email,
         userName: userProfile.displayName,
         title: formData.title,
@@ -157,11 +69,12 @@ export default function TreatmentPlanPage() {
         priority: formData.priority,
         status: 'pending',
         responses: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      await addDoc(collection(db, "treatment_plans"), newPlan);
+      // TODO: Add to Supabase treatment_plans table
+      // await addDoc(collection(db, "treatment_plans"), newPlan);
       
       setShowCreateForm(false);
       setFormData({
@@ -195,17 +108,18 @@ export default function TreatmentPlanPage() {
         doctorId: user.id,
         doctorName: userProfile.displayName,
         doctorEmail: userProfile.email,
-        doctorSpecialty: userProfile.personalHealthcarePersonnelData?.specialization,
+        doctorSpecialization: userProfile.healthcarePersonnelUserData?.specialization,
         response: responseText,
         createdAt: new Date(),
       };
 
-      const planRef = doc(db, "treatment_plans", selectedPlan.id);
-      await updateDoc(planRef, {
-        responses: arrayUnion(response),
-        status: 'reviewed',
-        updatedAt: serverTimestamp(),
-      });
+      // TODO: Update Supabase treatment plan responses
+      // const planRef = doc(db, "treatment_plans", selectedPlan.id);
+      // await updateDoc(planRef, {
+      //   responses: arrayUnion(response),
+      //   status: 'reviewed',
+      //   updatedAt: serverTimestamp(),
+      // });
 
       setResponseText("");
       setRespondingToPlan(null);
@@ -369,14 +283,14 @@ export default function TreatmentPlanPage() {
                     <div>
                       <label className="block text-sm font-medium mb-2">Medical Procedures <span className="text-red-400">*</span></label>
                       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-h-60 overflow-y-auto">
-                        {MEDICAL_PROCEDURES.map((procedure) => (
+                        {ALL_PROCEDURES.map((procedure) => (
                           <label key={procedure} className="flex items-center gap-2 py-2 hover:bg-zinc-800 px-2 rounded cursor-pointer">
                             <input
                               type="checkbox"
-                              checked={selectedProcedures.includes(procedure)}
+                              checked={selectedProcedures.includes(procedure as MedicalProcedureType)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedProcedures([...selectedProcedures, procedure]);
+                                  setSelectedProcedures([...selectedProcedures, procedure as MedicalProcedureType]);
                                 } else {
                                   setSelectedProcedures(selectedProcedures.filter(p => p !== procedure));
                                 }
@@ -576,7 +490,7 @@ export default function TreatmentPlanPage() {
                                   <div>
                                     <div className="font-semibold">{response.doctorName}</div>
                                     <div className="text-sm text-zinc-400">
-                                      {response.doctorSpecialty || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
+                                      {response.doctorSpecialization || 'Personnel'} • {response.createdAt?.toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>

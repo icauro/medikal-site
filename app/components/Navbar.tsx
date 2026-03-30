@@ -32,30 +32,6 @@ export default function Navbar() {
             >
               Blogs
             </Link>
-            <Link
-              href="/doctors"
-              className="text-zinc-400 transition-colors hover:text-white"
-            >
-              Doctors
-            </Link>
-            <Link
-              href="/medical-facilities"
-              className="text-zinc-400 transition-colors hover:text-white"
-            >
-              Medical Facilities
-            </Link>
-            <Link
-              href="/agencies"
-              className="text-zinc-400 transition-colors hover:text-white"
-            >
-              Agencies
-            </Link>
-            <Link
-              href="/support"
-              className="text-zinc-400 transition-colors hover:text-white"
-            >
-              Support
-            </Link>
           </div>
 
           {/* Quick Links & User Menu */}

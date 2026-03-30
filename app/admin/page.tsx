@@ -184,7 +184,7 @@ export default function AdminDashboard() {
   };
 
   const renderPersonnelTab = () => {
-    const personnelUsers = users.filter(u => u.role === 'healthcare_personnel' || u.healthcarePersonnelAccountData);
+    const personnelUsers = users.filter(u => u.role === 'healthcare_personnel' || u.healthcarePersonnelUserData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -227,26 +227,26 @@ export default function AdminDashboard() {
             ) : personnelUsers.map(user => (
               <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.healthcarePersonnelAccountData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                  {user.healthcarePersonnelAccountData?.personnelType || 'N/A'}
+                  {user.healthcarePersonnelUserData?.personnelType || 'N/A'}
                 </td>
-                <td className="p-4 text-sm">{user.healthcarePersonnelAccountData?.specialization || 'N/A'}</td>
+                <td className="p-4 text-sm">{user.healthcarePersonnelUserData?.specialization || 'N/A'}</td>
                 <td className="p-4 text-sm">
-                  {user.healthcarePersonnelAccountData?.province && user.healthcarePersonnelAccountData?.country 
-                    ? `${user.healthcarePersonnelAccountData.province}, ${user.healthcarePersonnelAccountData.country}` 
+                  {user.healthcarePersonnelUserData?.province && user.healthcarePersonnelUserData?.country 
+                    ? `${user.healthcarePersonnelUserData.province}, ${user.healthcarePersonnelUserData.country}` 
                     : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.healthcarePersonnelAccountData?.verifiedAt ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelUserData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.healthcarePersonnelUserData?.verifiedAt ? 'Yes' : 'No'}
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.healthcarePersonnelAccountData?.listingId ? 'Linked' : 'Not Linked'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.healthcarePersonnelUserData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.healthcarePersonnelUserData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
   };
 
   const renderFacilitiesTab = () => {
-    const facilityUsers = users.filter(u => u.role === 'medical_facility' || u.medicalFacilityAccountData);
+    const facilityUsers = users.filter(u => u.role === 'medical_facility' || u.medicalFacilityUserData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -312,25 +312,25 @@ export default function AdminDashboard() {
             ) : facilityUsers.map(user => (
               <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.medicalFacilityAccountData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-[10px] font-bold uppercase text-zinc-400">
-                  {user.medicalFacilityAccountData?.facilityType || 'N/A'}
+                  {user.medicalFacilityUserData?.facilityType || 'N/A'}
                 </td>
                 <td className="p-4 text-sm">
-                  {user.medicalFacilityAccountData?.province && user.medicalFacilityAccountData?.country 
-                    ? `${user.medicalFacilityAccountData.province}, ${user.medicalFacilityAccountData.country}` 
+                  {user.medicalFacilityUserData?.province && user.medicalFacilityUserData?.country 
+                    ? `${user.medicalFacilityUserData.province}, ${user.medicalFacilityUserData.country}` 
                     : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.medicalFacilityAccountData?.verifiedAt ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityUserData?.verifiedAt ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.medicalFacilityUserData?.verifiedAt ? 'Yes' : 'No'}
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.medicalFacilityAccountData?.listingId ? 'Linked' : 'Not Linked'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.medicalFacilityUserData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.medicalFacilityUserData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
   };
 
   const renderAgenciesTab = () => {
-    const agencyUsers = users.filter(u => u.role === 'agency' || u.agencyAccountData);
+    const agencyUsers = users.filter(u => u.role === 'agency' || u.agencyUserData);
     return (
       <div className="space-y-4">
         <div className="px-4 py-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex justify-between items-center">
@@ -382,22 +382,22 @@ export default function AdminDashboard() {
             ) : agencyUsers.map(user => (
               <tr key={user.id} className="hover:bg-zinc-800/50">
                 <td className="p-4">
-                  <div className="font-medium">{user.agencyAccountData?.name || user.displayName}</div>
+                  <div className="font-medium">{user.displayName}</div>
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="p-4 text-sm">
-                  {user.agencyAccountData?.province && user.agencyAccountData?.country 
-                    ? `${user.agencyAccountData.province}, ${user.agencyAccountData.country}` 
+                  {user.agencyUserData?.province && user.agencyUserData?.country 
+                    ? `${user.agencyUserData.province}, ${user.agencyUserData.country}` 
                     : 'N/A'}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.agencyAccountData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {user.agencyAccountData?.verified ? 'Yes' : 'No'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.agencyUserData?.verified ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                    {user.agencyUserData?.verified ? 'Yes' : 'No'}
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs ${user.agencyAccountData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                    {user.agencyAccountData?.listingId ? 'Linked' : 'Not Linked'}
+                  <span className={`px-2 py-1 rounded text-xs ${user.agencyUserData?.listingId ? 'bg-blue-500/10 text-blue-500' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                    {user.agencyUserData?.listingId ? 'Linked' : 'Not Linked'}
                   </span>
                 </td>
                 <td className="p-4 text-right">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 
 interface Area {
@@ -40,17 +40,27 @@ export function ImageCropModal({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Log when modal opens or image changes
+  useEffect(() => {
+    if (isOpen && imageSrc) {
+      console.log('📸 [CROP MODAL] Opening with image source, length:', imageSrc.length);
+    }
+  }, [isOpen, imageSrc]);
 
   const handleCropAreaChange = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
   const handleCropImage = async () => {
-    if (!croppedAreaPixels) return;
+    if (!croppedAreaPixels || !imageSrc) return;
 
     setIsProcessing(true);
     try {
+      console.log('🔄 [CROP] Starting crop operation...');
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
+      console.log('✅ [CROP] Crop successful, blob size:', croppedImage.size);
       onCropComplete(croppedImage);
     } catch (error) {
       console.error('🚫 [CROP] Error cropping image:', error);
@@ -63,7 +73,7 @@ export function ImageCropModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
           <h2 className="text-xl font-bold text-white">Crop Image</h2>
@@ -76,20 +86,26 @@ export function ImageCropModal({
           </button>
         </div>
 
-        {/* Crop Area */}
-        <div className="flex-1 relative bg-black overflow-hidden">
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspectRatio}
-            cropShape="round"
-            showGrid={true}
-            onCropChange={setCrop}
-            onCropAreaChange={handleCropAreaChange}
-            onZoomChange={setZoom}
-            restrictPosition={true}
-          />
+        {/* Crop Area - Fixed height container */}
+        <div className="flex-1 relative bg-black overflow-hidden min-h-[400px]">
+          {!imageSrc ? (
+            <div className="w-full h-full flex items-center justify-center text-zinc-400">
+              No image selected
+            </div>
+          ) : (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspectRatio}
+              cropShape="round"
+              showGrid={true}
+              onCropChange={setCrop}
+              onCropAreaChange={handleCropAreaChange}
+              onZoomChange={setZoom}
+              restrictPosition={true}
+            />
+          )}
         </div>
 
         {/* Controls */}
@@ -121,7 +137,7 @@ export function ImageCropModal({
             </button>
             <button
               onClick={handleCropImage}
-              disabled={isProcessing || !croppedAreaPixels}
+              disabled={isProcessing || !croppedAreaPixels || !imageSrc}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
             >
               {isProcessing ? (
@@ -151,6 +167,7 @@ export function ImageCropModal({
  */
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.src = imageSrc;
 
   return new Promise((resolve, reject) => {
@@ -188,7 +205,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
     };
 
     image.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error('Failed to load image: ' + imageSrc));
     };
   });
 }

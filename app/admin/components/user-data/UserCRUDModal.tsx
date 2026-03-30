@@ -19,7 +19,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { UserProfile, UserRole, MedicalSpecialization, MEDICAL_SPECIALIZATIONS, HealthcarePersonnelAccountData, MedicalFacilityAccountData, AgencyAccountData, PatientAccountData, HealthcarePersonnelListing, MedicalFacilityListing, AgencyListing, PersonnelType, MedicalFacilityType } from "@/lib/types";
+import { UserProfile, UserRole, MedicalSpecialization, MEDICAL_SPECIALIZATIONS, HealthcarePersonnelUserData, MedicalFacilityUserData, AgencyUserData, PatientUserData, HealthcarePersonnelListing, MedicalFacilityListing, AgencyListing, PersonnelType, MedicalFacilityType } from "@/lib/types";
 import { Country, State } from "country-state-city";
 import { COUNTRIES } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
@@ -39,10 +39,10 @@ export default function UserCRUDModal({ isOpen, onClose, user, onSuccess }: User
   const [status, setStatus] = useState(user.accountStatus);
   
   // Role-specific data states
-  const [personnelData, setPersonnelData] = useState<Partial<HealthcarePersonnelAccountData>>({});
-  const [facilityData, setFacilityData] = useState<Partial<MedicalFacilityAccountData>>({});
-  const [agencyData, setAgencyData] = useState<Partial<AgencyAccountData>>({});
-  const [patientData, setPatientData] = useState<Partial<PatientAccountData>>({});
+  const [personnelData, setPersonnelData] = useState<Partial<HealthcarePersonnelUserData>>({});
+  const [facilityData, setFacilityData] = useState<Partial<MedicalFacilityUserData>>({});
+  const [agencyData, setAgencyData] = useState<Partial<AgencyUserData>>({});
+  const [patientData, setPatientData] = useState<Partial<PatientUserData>>({});
   
   // Listing search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,21 +60,20 @@ export default function UserCRUDModal({ isOpen, onClose, user, onSuccess }: User
       
       // Initialize role-specific data
       if (user.role === 'healthcare_personnel') {
-        const data = user.healthcarePersonnelAccountData || ({} as HealthcarePersonnelAccountData);
+        const data = user.healthcarePersonnelUserData || ({} as HealthcarePersonnelUserData);
         setPersonnelData(data);
         setInitialListingId(data.listingId || "");
       } else if (user.role === 'medical_facility') {
-        const data = user.medicalFacilityAccountData || ({} as MedicalFacilityAccountData);
+        const data = user.medicalFacilityUserData || ({} as MedicalFacilityUserData);
         setFacilityData(data);
         setInitialListingId(data.listingId || "");
       } else if (user.role === 'agency') {
-        const data = user.agencyAccountData || ({} as AgencyAccountData);
+        const data = user.agencyUserData || ({} as AgencyUserData);
         setAgencyData(data);
         setInitialListingId(data.listingId || "");
       } else if (user.role === 'patient') {
-        setPatientData(user.patientAccountData || {
+        setPatientData(user.patientUserData || {
           preferredLanguage: 'English',
-          emergencyContact: { name: '', phone: '' },
           medicalHistory: []
         });
       }
@@ -521,10 +520,10 @@ export default function UserCRUDModal({ isOpen, onClose, user, onSuccess }: User
                   <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-2">Emergency Contact Name</label>
                   <input
                     type="text"
-                    value={patientData.emergencyContact?.name || ''}
+                    value={patientData.emergencyContactName || ''}
                     onChange={(e) => setPatientData({ 
                       ...patientData, 
-                      emergencyContact: { ...patientData.emergencyContact, name: e.target.value } as any
+                      emergencyContactName: e.target.value
                     })}
                     className="w-full bg-zinc-800 border border-zinc-700 text-white px-3 py-2 rounded text-sm"
                   />
@@ -533,10 +532,10 @@ export default function UserCRUDModal({ isOpen, onClose, user, onSuccess }: User
                   <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-2">Emergency Contact Phone</label>
                   <input
                     type="text"
-                    value={patientData.emergencyContact?.phone || ''}
+                    value={patientData.emergencyContactPhone || ''}
                     onChange={(e) => setPatientData({ 
                       ...patientData, 
-                      emergencyContact: { ...patientData.emergencyContact, phone: e.target.value } as any
+                      emergencyContactPhone: e.target.value
                     })}
                     className="w-full bg-zinc-800 border border-zinc-700 text-white px-3 py-2 rounded text-sm"
                   />

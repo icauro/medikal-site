@@ -3,21 +3,18 @@
  *
  * Wrapper around the 'debug' library with verbose level support.
  *
- * Environment Variables:
- * - DEBUG: Enable specific namespaces (e.g., "medikal:*" or "medikal:auth,medikal:profile")
- * - DEBUG_VERBOSE: Set to "true" to enable verbose output (includes debug.debug() calls)
+ * Environment Variable:
+ * - LOG_LEVEL: Controls logging verbosity
+ *   - "debug": Enable all debug logging and verbose output
+ *   - "info": Enable info level (no verbose)
+ *   - "warn": Disable debug, show only warnings
+ *   - "error": Disable debug, show only errors
  *
  * Usage in Browser:
- * - localStorage.setItem('DEBUG', 'medikal:*')
- * - localStorage.setItem('DEBUG_VERBOSE', 'true')
- *
- * Usage in Development:
- * - DEBUG=medikal:* npm run dev
- * - DEBUG_VERBOSE=true DEBUG=medikal:* npm run dev
+ * - localStorage.setItem('LOG_LEVEL', 'debug')
  *
  * Usage in Next.js:
- * - .env.local: DEBUG=medikal:*
- * - .env.local: DEBUG_VERBOSE=true
+ * - .env.local: LOG_LEVEL=debug
  */
 
 import debug from 'debug';
@@ -31,26 +28,38 @@ interface DebuggerInstance {
 }
 
 let verboseMode = false;
+let debugEnabled = false;
 
-// Check verbose mode from multiple sources
-function initVerboseMode(): void {
+// Map LOG_LEVEL to feature flags
+function initLogLevel(): void {
+  const logLevel = typeof window !== 'undefined'
+    ? localStorage.getItem('LOG_LEVEL') || process.env.NEXT_PUBLIC_LOG_LEVEL
+    : process.env.LOG_LEVEL || process.env.NEXT_PUBLIC_LOG_LEVEL;
+
+  const level = (logLevel || 'info').toLowerCase();
+  
+  debugEnabled = ['debug', 'info'].includes(level);
+  verboseMode = level === 'debug';
+
+  // Set debug namespace based on log level
+  if (typeof window !== 'undefined' && debugEnabled) {
+    process.env.DEBUG = 'medikal:*';
+  }
+
+  // Log the current log level on initialization
   if (typeof window !== 'undefined') {
-    // Client-side
-    verboseMode =
-      localStorage.getItem('DEBUG_VERBOSE') === 'true' ||
-      process.env.NEXT_PUBLIC_DEBUG_VERBOSE === 'true';
+    console.log(`🎯 [DEBUG LOGGER] Client-side LOG_LEVEL initialized: ${level} (verbose: ${verboseMode})`);
   } else {
-    // Server-side
-    verboseMode = process.env.DEBUG_VERBOSE === 'true';
+    console.log(`🎯 [DEBUG LOGGER] Server-side LOG_LEVEL initialized: ${level} (verbose: ${verboseMode})`);
   }
 }
 
 // Initialize on module load
-initVerboseMode();
+initLogLevel();
 
 // Watch for storage changes in browser
 if (typeof window !== 'undefined') {
-  window.addEventListener('storage', () => initVerboseMode());
+  window.addEventListener('storage', () => initLogLevel());
 }
 
 /**
@@ -72,13 +81,15 @@ export function createDebugger(namespace: string): DebuggerInstance {
 
   return {
     debug: (message: string, ...args: any[]) => {
-      if (verboseMode) {
+      if (verboseMode && debugEnabled) {
         verboseLogger(message, ...args);
       }
     },
 
     info: (message: string, ...args: any[]) => {
-      baseLogger('ℹ️', message, ...args);
+      if (debugEnabled) {
+        baseLogger('ℹ️', message, ...args);
+      }
     },
 
     warn: (message: string, ...args: any[]) => {
@@ -90,7 +101,7 @@ export function createDebugger(namespace: string): DebuggerInstance {
     },
 
     isEnabled: () => {
-      return baseLogger.enabled;
+      return debugEnabled && baseLogger.enabled;
     },
   };
 }
@@ -99,14 +110,11 @@ export function createDebugger(namespace: string): DebuggerInstance {
  * Enable or disable verbose logging at runtime
  */
 export function setVerboseMode(enabled: boolean): void {
-  verboseMode = enabled;
+  const level = enabled ? 'debug' : 'info';
   if (typeof window !== 'undefined') {
-    if (enabled) {
-      localStorage.setItem('DEBUG_VERBOSE', 'true');
-    } else {
-      localStorage.removeItem('DEBUG_VERBOSE');
-    }
+    localStorage.setItem('LOG_LEVEL', level);
   }
+  initLogLevel();
 }
 
 /**
@@ -117,22 +125,26 @@ export function isVerboseMode(): boolean {
 }
 
 /**
- * Convenience wrapper to enable/disable specific debug namespace
- * Useful for toggle debugging in browser console
+ * Set log level at runtime
+ * @param level - "debug", "info", "warn", or "error"
  */
-export function setDebugNamespace(namespace: string | boolean): void {
-  if (typeof window === 'undefined') return;
-
-  if (namespace === false) {
-    localStorage.removeItem('DEBUG');
-  } else if (namespace === true) {
-    localStorage.setItem('DEBUG', 'medikal:*');
+export function setLogLevel(level: 'debug' | 'info' | 'warn' | 'error'): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('LOG_LEVEL', level);
   } else {
-    localStorage.setItem('DEBUG', namespace);
+    process.env.NEXT_PUBLIC_LOG_LEVEL = level;
   }
+  initLogLevel();
+}
 
-  // Reload debug to apply changes
-  window.location.reload();
+/**
+ * Get current log level
+ */
+export function getLogLevel(): string {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('LOG_LEVEL') || process.env.NEXT_PUBLIC_LOG_LEVEL || 'info';
+  }
+  return process.env.NEXT_PUBLIC_LOG_LEVEL || 'info';
 }
 
 export default createDebugger;

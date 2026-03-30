@@ -1,11 +1,11 @@
 import HeroSection from "./components/HeroSection";
-import DatabaseSearchSection from "./components/DatabaseSearchSection";
+import HealthcareDatabaseTool from "./components/HealthcareDatabaseTool";
 
 export default function Home() {
   return (
     <main className="min-h-screen">
       <HeroSection />
-      <DatabaseSearchSection />
+      <HealthcareDatabaseTool />
     </main>
   );
 }

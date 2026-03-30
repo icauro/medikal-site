@@ -36,15 +36,15 @@ export default function ProfilePage() {
   );
   const [isSavingFacility, setIsSavingFacility] = useState(false);
   const [facilityFormData, setFacilityFormData] = useState({
-    name: userProfile?.medicalFacilityAccountData?.name || '',
-    facilityType: userProfile?.medicalFacilityAccountData?.facilityType || '',
-    contactPerson: userProfile?.medicalFacilityAccountData?.contactPerson || '',
-    phone: userProfile?.medicalFacilityAccountData?.phone || '',
-    email: userProfile?.medicalFacilityAccountData?.email || '',
-    address: userProfile?.medicalFacilityAccountData?.address || '',
-    website: userProfile?.medicalFacilityAccountData?.website || '',
-    country: userProfile?.medicalFacilityAccountData?.country || '',
-    province: userProfile?.medicalFacilityAccountData?.province || '',
+    name: userProfile?.medicalFacilityUserData?.name || '',
+    facilityType: userProfile?.medicalFacilityUserData?.facilityType || '',
+    contactPerson: userProfile?.medicalFacilityUserData?.contactPerson || '',
+    phone: userProfile?.medicalFacilityUserData?.phoneNumber || '',
+    email: userProfile?.medicalFacilityUserData?.email || '',
+    address: userProfile?.medicalFacilityUserData?.address || '',
+    website: userProfile?.medicalFacilityUserData?.website || '',
+    country: userProfile?.medicalFacilityUserData?.country || '',
+    province: userProfile?.medicalFacilityUserData?.province || '',
   });
 
   // Get provinces for selected country
@@ -60,17 +60,17 @@ export default function ProfilePage() {
       setNewName(userProfile.displayName);
     }
     // Reset facility form data when user profile changes
-    if (userProfile?.medicalFacilityAccountData) {
+    if (userProfile?.medicalFacilityUserData) {
       setFacilityFormData({
-        name: userProfile.medicalFacilityAccountData.name || '',
-        facilityType: userProfile.medicalFacilityAccountData.facilityType || '',
-        contactPerson: userProfile.medicalFacilityAccountData.contactPerson || '',
-        phone: userProfile.medicalFacilityAccountData.phone || '',
-        email: userProfile.medicalFacilityAccountData.email || '',
-        address: userProfile.medicalFacilityAccountData.address || '',
-        website: userProfile.medicalFacilityAccountData.website || '',
-        country: userProfile.medicalFacilityAccountData.country || '',
-        province: userProfile.medicalFacilityAccountData.province || '',
+        name: userProfile.medicalFacilityUserData.name || '',
+        facilityType: userProfile.medicalFacilityUserData.facilityType || '',
+        contactPerson: userProfile.medicalFacilityUserData.contactPerson || '',
+        phone: userProfile.medicalFacilityUserData.phoneNumber || '',
+        email: userProfile.medicalFacilityUserData.email || '',
+        address: userProfile.medicalFacilityUserData.address || '',
+        website: userProfile.medicalFacilityUserData.website || '',
+        country: userProfile.medicalFacilityUserData.country || '',
+        province: userProfile.medicalFacilityUserData.province || '',
       });
       // Auto-enable edit mode for pending medical facility users
       if (userProfile.role === 'medical_facility' && userProfile.accountStatus === 'pending_personal_data') {
@@ -432,59 +432,59 @@ export default function ProfilePage() {
               </div>
 
               {/* ROLE-SPECIFIC SECTION - Bottom */}
-              {userProfile.role === 'healthcare_personnel' && userProfile.healthcarePersonnelAccountData && (
+              {userProfile.role === 'healthcare_personnel' && userProfile.healthcarePersonnelUserData && (
                 <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
                   <h2 className="text-xl font-bold mb-6 text-white">Healthcare Personnel Details</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Personnel Type</label>
-                      <p className="text-white capitalize">{userProfile.healthcarePersonnelAccountData.personnelType || 'Not provided'}</p>
+                      <p className="text-white capitalize">{userProfile.healthcarePersonnelUserData.personnelType || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Specialization</label>
-                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.specialization || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.healthcarePersonnelUserData.specialization || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Years of Experience</label>
-                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.yearsOfExperience?.toString() || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.healthcarePersonnelUserData.yearsOfExperience?.toString() || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
-                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.phoneNumber || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.healthcarePersonnelUserData.phoneNumber || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
-                      <p className="text-white">{userProfile.healthcarePersonnelAccountData.province}, {userProfile.healthcarePersonnelAccountData.country}</p>
+                      <p className="text-white">{userProfile.healthcarePersonnelUserData.province}, {userProfile.healthcarePersonnelUserData.country}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {userProfile.role === 'patient' && userProfile.patientAccountData && (
+              {userProfile.role === 'patient' && userProfile.patientUserData && (
                 <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
                   <h2 className="text-xl font-bold mb-6 text-white">Patient Details</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Preferred Language</label>
-                      <p className="text-white capitalize">{userProfile.patientAccountData.preferredLanguage || 'Not provided'}</p>
+                      <p className="text-white capitalize">{userProfile.patientUserData.preferredLanguage || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Country</label>
-                      <p className="text-white">{userProfile.patientAccountData.country || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.patientUserData.country || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Province/State</label>
-                      <p className="text-white">{userProfile.patientAccountData.province || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.patientUserData.province || 'Not provided'}</p>
                     </div>
-                    {userProfile.patientAccountData.emergencyContact && (
+                    {userProfile.patientUserData.emergencyContactName && (
                       <>
                         <div>
                           <label className="text-zinc-400 text-sm font-medium mb-2 block">Emergency Contact Name</label>
-                          <p className="text-white">{userProfile.patientAccountData.emergencyContact.name}</p>
+                          <p className="text-white">{userProfile.patientUserData.emergencyContactName}</p>
                         </div>
                         <div>
                           <label className="text-zinc-400 text-sm font-medium mb-2 block">Emergency Phone</label>
-                          <p className="text-white">{userProfile.patientAccountData.emergencyContact.phone}</p>
+                          <p className="text-white">{userProfile.patientUserData.emergencyContactPhone}</p>
                         </div>
                       </>
                     )}
@@ -519,40 +519,40 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Name</label>
-                        <p className="text-white">{userProfile.medicalFacilityAccountData?.name || 'Not provided'}</p>
+                        <p className="text-white">{userProfile.medicalFacilityUserData?.name || 'Not provided'}</p>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Facility Type</label>
-                        <p className="text-white capitalize">{userProfile.medicalFacilityAccountData?.facilityType || 'Not provided'}</p>
+                        <p className="text-white capitalize">{userProfile.medicalFacilityUserData?.facilityType || 'Not provided'}</p>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
-                        <p className="text-white">{userProfile.medicalFacilityAccountData?.contactPerson || 'Not provided'}</p>
+                        <p className="text-white">{userProfile.medicalFacilityUserData?.contactPerson || 'Not provided'}</p>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
-                        <p className="text-white">{userProfile.medicalFacilityAccountData?.phone || 'Not provided'}</p>
+                        <p className="text-white">{userProfile.medicalFacilityUserData?.phoneNumber || 'Not provided'}</p>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
-                        <p className="text-white">{userProfile.medicalFacilityAccountData?.email || 'Not provided'}</p>
+                        <p className="text-white">{userProfile.medicalFacilityUserData?.email || 'Not provided'}</p>
                       </div>
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Address</label>
-                        <p className="text-white">{userProfile.medicalFacilityAccountData?.address || 'Not provided'}</p>
+                        <p className="text-white">{userProfile.medicalFacilityUserData?.address || 'Not provided'}</p>
                       </div>
-                      {userProfile.medicalFacilityAccountData?.website && (
+                      {userProfile.medicalFacilityUserData?.website && (
                         <div>
                           <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
-                          <a href={userProfile.medicalFacilityAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                            {userProfile.medicalFacilityAccountData.website}
+                          <a href={userProfile.medicalFacilityUserData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                            {userProfile.medicalFacilityUserData.website}
                           </a>
                         </div>
                       )}
-                      {userProfile.medicalFacilityAccountData?.province && (
+                      {userProfile.medicalFacilityUserData?.province && (
                         <div>
                           <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
-                          <p className="text-white">{userProfile.medicalFacilityAccountData.province}, {userProfile.medicalFacilityAccountData.country}</p>
+                          <p className="text-white">{userProfile.medicalFacilityUserData.province}, {userProfile.medicalFacilityUserData.country}</p>
                         </div>
                       )}
                     </div>
@@ -680,17 +680,17 @@ export default function ProfilePage() {
                         <button
                           onClick={() => {
                             setIsEditingFacility(false);
-                            if (userProfile?.medicalFacilityAccountData) {
+                            if (userProfile?.medicalFacilityUserData) {
                               setFacilityFormData({
-                                name: userProfile.medicalFacilityAccountData.name || '',
-                                facilityType: userProfile.medicalFacilityAccountData.facilityType || '',
-                                contactPerson: userProfile.medicalFacilityAccountData.contactPerson || '',
-                                phone: userProfile.medicalFacilityAccountData.phone || '',
-                                email: userProfile.medicalFacilityAccountData.email || '',
-                                address: userProfile.medicalFacilityAccountData.address || '',
-                                website: userProfile.medicalFacilityAccountData.website || '',
-                                country: userProfile.medicalFacilityAccountData.country || '',
-                                province: userProfile.medicalFacilityAccountData.province || '',
+                                name: userProfile.medicalFacilityUserData.name || '',
+                                facilityType: userProfile.medicalFacilityUserData.facilityType || '',
+                                contactPerson: userProfile.medicalFacilityUserData.contactPerson || '',
+                                phone: userProfile.medicalFacilityUserData.phoneNumber || '',
+                                email: userProfile.medicalFacilityUserData.email || '',
+                                address: userProfile.medicalFacilityUserData.address || '',
+                                website: userProfile.medicalFacilityUserData.website || '',
+                                country: userProfile.medicalFacilityUserData.country || '',
+                                province: userProfile.medicalFacilityUserData.province || '',
                               });
                             }
                           }}
@@ -704,35 +704,35 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {userProfile.role === 'agency' && userProfile.agencyAccountData && (
+              {userProfile.role === 'agency' && userProfile.agencyUserData && (
                 <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
                   <h2 className="text-xl font-bold mb-6 text-white">Agency Details</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Agency Name</label>
-                      <p className="text-white">{userProfile.agencyAccountData.name || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.agencyUserData.name || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Contact Person</label>
-                      <p className="text-white">{userProfile.agencyAccountData.contactPerson || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.agencyUserData.contactPerson || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Phone</label>
-                      <p className="text-white">{userProfile.agencyAccountData.phone || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.agencyUserData.phoneNumber || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Email</label>
-                      <p className="text-white">{userProfile.agencyAccountData.email || 'Not provided'}</p>
+                      <p className="text-white">{userProfile.agencyUserData.email || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-zinc-400 text-sm font-medium mb-2 block">Location</label>
-                      <p className="text-white">{userProfile.agencyAccountData.province}, {userProfile.agencyAccountData.country}</p>
+                      <p className="text-white">{userProfile.agencyUserData.province}, {userProfile.agencyUserData.country}</p>
                     </div>
-                    {userProfile.agencyAccountData.website && (
+                    {userProfile.agencyUserData.website && (
                       <div>
                         <label className="text-zinc-400 text-sm font-medium mb-2 block">Website</label>
-                        <a href={userProfile.agencyAccountData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                          {userProfile.agencyAccountData.website}
+                        <a href={userProfile.agencyUserData.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                          {userProfile.agencyUserData.website}
                         </a>
                       </div>
                     )}
