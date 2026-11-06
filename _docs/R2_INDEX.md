@@ -4,13 +4,13 @@
 
 **New to R2 integration?** Start here:
 
-1. **[R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md)** ⚡
+1. **[R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md)** ⚡
    - 5-minute quick reference
    - Setup checklist
    - API endpoint info
    - Common troubleshooting
 
-2. **[CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)** 🔧
+2. **[CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)** 🔧
    - Step-by-step setup instructions
    - Bucket creation
    - API token generation
@@ -20,7 +20,7 @@
 
 ### Technical Guides
 
-**[R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md)** - Complete Technical Overview
+**[R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md)** - Complete Technical Overview
 - Architecture and design
 - Security features
 - Testing instructions
@@ -28,7 +28,7 @@
 - Cost estimation
 - File organization
 
-**[R2_COMPLETION_REPORT.md](./R2_COMPLETION_REPORT.md)** - Implementation Summary
+**[R2_COMPLETION_REPORT.md](R2_COMPLETION_REPORT.md)** - Implementation Summary
 - What was built
 - Feature checklist
 - Quick start guide
@@ -36,7 +36,7 @@
 
 ### Developer Guides
 
-**[R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md)** - How to Extend R2 to Other Features
+**[R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md)** - How to Extend R2 to Other Features
 - Add review images
 - Add facility images
 - Add healthcare personnel images
@@ -44,7 +44,7 @@
 - Database migration examples
 - Batch upload patterns
 
-**[R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md)** - Quick Reference Card
+**[R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md)** - Quick Reference Card
 - Setup checklist
 - Core files
 - API reference
@@ -56,19 +56,19 @@
 
 ### Profile Picture Upload
 - **File**: [app/profile/page.tsx](../app/profile/page.tsx)
-- **Documentation**: [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#testing-upload-functionality)
+- **Documentation**: [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#testing-upload-functionality)
 - **Status**: ✅ Complete
 
 ### Review/Comment Images
-- **Documentation**: [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#how-to-add-review-images)
+- **Documentation**: [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#how-to-add-review-images)
 - **Status**: 📋 Ready to implement
 
 ### Facility Images
-- **Documentation**: [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#how-to-add-facility-images)
+- **Documentation**: [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#how-to-add-facility-images)
 - **Status**: 📋 Ready to implement
 
 ### Personnel Images
-- **Documentation**: [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#how-to-add-healthcare-personnel-images)
+- **Documentation**: [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#how-to-add-healthcare-personnel-images)
 - **Status**: 📋 Ready to implement
 
 ## 📁 Core Files
@@ -108,45 +108,45 @@ npm run dev
 ## 📖 Reading Guide
 
 **For Developers**:
-1. Start with [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md)
-2. Setup Cloudflare: [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)
-3. Understand implementation: [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md)
-4. Extend to other features: [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md)
+1. Start with [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md)
+2. Setup Cloudflare: [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
+3. Understand implementation: [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md)
+4. Extend to other features: [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md)
 
 **For DevOps/Ops**:
-1. Setup guide: [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)
+1. Setup guide: [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
 2. Monitoring: See "Monitoring & Maintenance" section
-3. Troubleshooting: [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#troubleshooting)
+3. Troubleshooting: [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#troubleshooting)
 
 **For Project Managers**:
-1. Status overview: [R2_COMPLETION_REPORT.md](./R2_COMPLETION_REPORT.md)
-2. Features & costs: [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#monitoring--maintenance)
-3. Future roadmap: [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#future-enhancements)
+1. Status overview: [R2_COMPLETION_REPORT.md](R2_COMPLETION_REPORT.md)
+2. Features & costs: [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#monitoring--maintenance)
+3. Future roadmap: [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#future-enhancements)
 
 ## 🔍 Search Index
 
 | Topic | Document |
 |-------|----------|
-| Authentication errors | [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#troubleshooting) |
-| API endpoint spec | [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#api-endpoint) |
-| Allowed file types | [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#allowed-file-types) |
-| Batch uploads | [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#advanced-batch-upload-multiple-images) |
-| Cost estimation | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#cost-estimation) |
-| Custom domain | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#step-4-optional-set-up-a-custom-domain-for-r2) |
-| Database schema | [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#database-schema) |
-| Error handling | [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#error-handling) |
-| Environment variables | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#step-3-configure-environment-variables) |
-| Extension patterns | [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#key-patterns) |
-| File organization | [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#file-organization-in-r2) |
-| Hook usage | [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#generic-reusable-upload-component) |
-| Image optimization | [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#future-enhancements) |
-| Monitoring | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#monitoring) |
-| Profile upload | [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#using-the-upload-hook) |
-| Review images | [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md#how-to-add-review-images) |
-| Security | [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#security-features) |
-| Setup steps | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md) |
-| Troubleshooting | [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md#troubleshooting) |
-| Upload examples | [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md#using-the-upload-hook) |
+| Authentication errors | [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#troubleshooting) |
+| API endpoint spec | [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#api-endpoint) |
+| Allowed file types | [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#allowed-file-types) |
+| Batch uploads | [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#advanced-batch-upload-multiple-images) |
+| Cost estimation | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#cost-estimation) |
+| Custom domain | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#step-4-optional-set-up-a-custom-domain-for-r2) |
+| Database schema | [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#database-schema) |
+| Error handling | [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#error-handling) |
+| Environment variables | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#step-3-configure-environment-variables) |
+| Extension patterns | [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#key-patterns) |
+| File organization | [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#file-organization-in-r2) |
+| Hook usage | [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#generic-reusable-upload-component) |
+| Image optimization | [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#future-enhancements) |
+| Monitoring | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#monitoring) |
+| Profile upload | [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#using-the-upload-hook) |
+| Review images | [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md#how-to-add-review-images) |
+| Security | [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#security-features) |
+| Setup steps | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md) |
+| Troubleshooting | [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md#troubleshooting) |
+| Upload examples | [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md#using-the-upload-hook) |
 
 ## 🛠️ Code Snippets
 
@@ -202,10 +202,10 @@ generateReviewImageKey(userId, listingId, fileName)
 
 ## 🎓 Learning Path
 
-1. **Day 1**: [R2_QUICK_REFERENCE.md](./R2_QUICK_REFERENCE.md) + [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)
-2. **Day 2**: [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md) + test upload
-3. **Day 3**: [R2_EXTENSION_GUIDE.md](./R2_EXTENSION_GUIDE.md) + implement extensions
-4. **Ongoing**: Monitor and optimize per [R2_INTEGRATION_SUMMARY.md](./R2_INTEGRATION_SUMMARY.md#monitoring--maintenance)
+1. **Day 1**: [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md) + [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
+2. **Day 2**: [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md) + test upload
+3. **Day 3**: [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md) + implement extensions
+4. **Ongoing**: Monitor and optimize per [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md#monitoring--maintenance)
 
 ## 💡 Tips & Tricks
 

@@ -263,9 +263,9 @@ Code Files:
   • Auth Callback: app/auth/callback/route.ts
 
 Documentation:
-  • Full Flow Guide: docs/SIGNUP_FLOW.md
-  • Architecture: docs/TechnicalGuides/architecture/signup_flow.md
-  • User Roles: docs/TechnicalGuides/architecture/roles.md
+  • Full Flow Guide: _docs/SIGNUP_FLOW.md
+  • Architecture: _docs/TechnicalGuides/architecture/signup_flow.md
+  • User Roles: _docs/TechnicalGuides/architecture/roles.md
 
 Tests:
   • AuthContext Tests: lib/contexts/AuthContext.test.tsx

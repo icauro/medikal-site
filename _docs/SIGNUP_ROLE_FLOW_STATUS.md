@@ -335,7 +335,7 @@ Potential improvements:
 
 ## References
 
-- [Architecture: Signup Flow](./TechnicalGuides/architecture/signup_flow.md)
-- [Architecture: User Roles](./TechnicalGuides/architecture/roles.md)
+- [Architecture: Signup Flow](TechnicalGuides/architecture/signup_flow.md)
+- [Architecture: User Roles](TechnicalGuides/architecture/roles.md)
 - [AuthContext Tests](../lib/contexts/AuthContext.test.tsx)
-- [Supabase RLS Policies](../supabase/migrations/)
+- [Supabase RLS Policies](../supabase/migrations)

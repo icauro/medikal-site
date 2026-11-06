@@ -173,5 +173,5 @@ if (userProfile.photoUrl && brokenPhotoUrl) {
 ## References
 
 - [Cloudflare R2 Documentation](https://developers.cloudflare.com/r2/)
-- [R2 Setup Guide](./CLOUDFLARE_R2_SETUP.md)
-- [R2 Quick Reference](./R2_QUICK_REFERENCE.md)
+- [R2 Setup Guide](CLOUDFLARE_R2_SETUP.md)
+- [R2 Quick Reference](R2_QUICK_REFERENCE.md)

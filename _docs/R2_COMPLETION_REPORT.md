@@ -46,7 +46,7 @@ Cloudflare R2 object storage has been fully integrated into the Medikal Portal p
 
 ### 3. Documentation ✅
 
-- **[docs/CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md)**
+- **[_docs/CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)**
   - 📋 Step-by-step setup guide
   - Bucket creation instructions
   - API token generation
@@ -54,7 +54,7 @@ Cloudflare R2 object storage has been fully integrated into the Medikal Portal p
   - Custom domain setup
   - Troubleshooting section
 
-- **[docs/R2_INTEGRATION_SUMMARY.md](../docs/R2_INTEGRATION_SUMMARY.md)**
+- **[_docs/R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md)**
   - 📚 Complete technical overview
   - Architecture diagrams
   - Security features
@@ -62,14 +62,14 @@ Cloudflare R2 object storage has been fully integrated into the Medikal Portal p
   - Monitoring guidelines
   - Future enhancements
 
-- **[docs/R2_QUICK_REFERENCE.md](../docs/R2_QUICK_REFERENCE.md)**
+- **[_docs/R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md)**
   - ⚡ Quick lookup guide
   - Setup checklist
   - API endpoint reference
   - Code snippets
   - Troubleshooting matrix
 
-- **[docs/R2_EXTENSION_GUIDE.md](../docs/R2_EXTENSION_GUIDE.md)**
+- **[_docs/R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md)**
   - 🔧 How to extend to reviews, facilities, personnel
   - Reusable components
   - Batch upload patterns
@@ -129,10 +129,10 @@ Refresh profile display
 - ✅ [lib/r2.ts](../lib/r2.ts) - Core R2 utilities
 - ✅ [app/api/upload/route.ts](../app/api/upload/route.ts) - Upload endpoint
 - ✅ [lib/hooks/useImageUpload.ts](../lib/hooks/useImageUpload.ts) - Upload hook
-- ✅ [docs/CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md) - Setup guide
-- ✅ [docs/R2_INTEGRATION_SUMMARY.md](../docs/R2_INTEGRATION_SUMMARY.md) - Technical docs
-- ✅ [docs/R2_QUICK_REFERENCE.md](../docs/R2_QUICK_REFERENCE.md) - Quick reference
-- ✅ [docs/R2_EXTENSION_GUIDE.md](../docs/R2_EXTENSION_GUIDE.md) - Extension guide
+- ✅ [_docs/CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md) - Setup guide
+- ✅ [_docs/R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md) - Technical docs
+- ✅ [_docs/R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md) - Quick reference
+- ✅ [_docs/R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md) - Extension guide
 
 ### Modified Files
 - ✅ [package.json](../package.json) - Added @aws-sdk/client-s3
@@ -143,7 +143,7 @@ Refresh profile display
 ## Quick Start for Developers
 
 ### 1. Get Cloudflare R2 Credentials
-Follow [docs/CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md)
+Follow [_docs/CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
 - Create R2 bucket
 - Generate API token
 - Get account ID
@@ -310,10 +310,10 @@ Fields:
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| [CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md) | Setup instructions | Ops, Developers |
-| [R2_INTEGRATION_SUMMARY.md](../docs/R2_INTEGRATION_SUMMARY.md) | Technical details | Developers |
-| [R2_QUICK_REFERENCE.md](../docs/R2_QUICK_REFERENCE.md) | Quick lookup | Developers |
-| [R2_EXTENSION_GUIDE.md](../docs/R2_EXTENSION_GUIDE.md) | How to extend | Developers |
+| [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md) | Setup instructions | Ops, Developers |
+| [R2_INTEGRATION_SUMMARY.md](R2_INTEGRATION_SUMMARY.md) | Technical details | Developers |
+| [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md) | Quick lookup | Developers |
+| [R2_EXTENSION_GUIDE.md](R2_EXTENSION_GUIDE.md) | How to extend | Developers |
 | This document | Completion summary | All |
 
 ---
@@ -372,8 +372,8 @@ For typical usage (1000 users, 2-3 uploads each):
 ## Support & Contact
 
 For issues or questions:
-1. Check [R2_QUICK_REFERENCE.md](../docs/R2_QUICK_REFERENCE.md) troubleshooting
-2. Review [CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md) setup steps
+1. Check [R2_QUICK_REFERENCE.md](R2_QUICK_REFERENCE.md) troubleshooting
+2. Review [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md) setup steps
 3. Check [Cloudflare R2 Documentation](https://developers.cloudflare.com/r2/)
 4. Review browser console and server logs
 

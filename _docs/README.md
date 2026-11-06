@@ -33,7 +33,7 @@ Welcome to the documentation for the Medikal-Site project. This folder has been 
 
 ## 📜 History & Archives
 
-All previous implementation logs, session summaries, and cleanup records have been moved to the **[history/](./history/)** folder for reference.
+All previous implementation logs, session summaries, and cleanup records have been moved to the **[history/](history)** folder for reference.
 
 ---
 

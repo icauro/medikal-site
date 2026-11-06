@@ -1,4 +1,4 @@
-﻿# Deployment Readiness Checklist
+# Deployment Readiness Checklist
 
 ## Date: January 24, 2026
 ## Status: ✅ READY FOR PRODUCTION DEPLOYMENT
@@ -277,7 +277,7 @@ supabase migration down
 
 ## Support & Escalation
 
-**For Questions**: Check `docs/SESSION_COMPLETE_SUMMARY.md` and role documentation
+**For Questions**: Check `_docs/SESSION_COMPLETE_SUMMARY.md` and role documentation
 **For Issues**: Contact development team with error logs and user email
 **For Urgent Issues**: Use rollback procedure and notify stakeholders
 

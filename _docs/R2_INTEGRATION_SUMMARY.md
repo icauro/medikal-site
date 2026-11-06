@@ -51,7 +51,7 @@ Cloudflare R2 object storage has been successfully integrated into the Medikal P
      - File type and size restrictions shown
      - Automatic profile refresh after successful upload
 
-### 5. **Environment Configuration** - [docs/CLOUDFLARE_R2_SETUP.md](../docs/CLOUDFLARE_R2_SETUP.md)
+### 5. **Environment Configuration** - [_docs/CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
    - Complete setup guide for Cloudflare R2
    - Step-by-step bucket and API token creation
    - Environment variable documentation
@@ -323,7 +323,7 @@ Possible improvements for future versions:
 
 ## Related Documentation
 
-- [Cloudflare R2 Setup Guide](./CLOUDFLARE_R2_SETUP.md) - Complete setup instructions
+- [Cloudflare R2 Setup Guide](CLOUDFLARE_R2_SETUP.md) - Complete setup instructions
 - [Copilot Instructions](../.github/copilot-instructions.md) - Project conventions
 - [Supabase Integration](./TechnicalGuides/database/supabase-integration.md) - Database architecture
 
@@ -334,12 +334,12 @@ Possible improvements for future versions:
 - ✅ Created: [lib/hooks/useImageUpload.ts](../lib/hooks/useImageUpload.ts)
 - ✅ Modified: [app/profile/page.tsx](../app/profile/page.tsx)
 - ✅ Modified: [package.json](../package.json) - Added @aws-sdk/client-s3
-- ✅ Created: [docs/CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)
+- ✅ Created: [_docs/CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
 
 ## Next Steps
 
 1. **Get Cloudflare R2 Credentials**:
-   - Follow [CLOUDFLARE_R2_SETUP.md](./CLOUDFLARE_R2_SETUP.md)
+   - Follow [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
    - Create bucket and API token
 
 2. **Configure Environment Variables**:

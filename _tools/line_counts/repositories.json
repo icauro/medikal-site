@@ -1,0 +1,8 @@
+{
+  "repositories": [
+    {
+      "name": "medikal-site",
+      "path": "."
+    }
+  ]
+}

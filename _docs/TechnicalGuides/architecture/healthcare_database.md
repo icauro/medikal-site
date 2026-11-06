@@ -7,7 +7,7 @@ This page provides a searchable, filterable directory of public healthcare listi
 ## Location
 
 - App route: `app/healthcare-database/page.tsx`
-- Doc: `docs/TechnicalGuides/architecture/healthcare_database.md`
+- Doc: `_docs/TechnicalGuides/architecture/healthcare_database.md`
 
 ## Data Source
 

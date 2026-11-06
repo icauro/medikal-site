@@ -46,3 +46,7 @@ next-env.d.ts
 
 # next-agents-md
 .next-docs/
+
+# Explicitly disposable workspace output
+**/.artifacts/
+**/.builds/

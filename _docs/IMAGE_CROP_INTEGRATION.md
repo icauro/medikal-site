@@ -228,7 +228,7 @@ Possible improvements for future versions:
 - [lib/hooks/useImageUpload.ts](lib/hooks/useImageUpload.ts) - Upload hook
 - [app/api/upload/route.ts](app/api/upload/route.ts) - Upload endpoint
 - [lib/r2.ts](lib/r2.ts) - R2 storage utilities
-- [docs/CLOUDFLARE_R2_SETUP.md](docs/CLOUDFLARE_R2_SETUP.md) - R2 setup guide
+- [_docs/CLOUDFLARE_R2_SETUP.md](_docs/CLOUDFLARE_R2_SETUP.md) - R2 setup guide
 
 ## Summary
 The image cropping feature is now fully integrated with the profile upload flow. Users can crop their images before uploading, ensuring consistency and optimal image quality. The implementation uses the industry-standard react-easy-crop library with a polished, user-friendly interface.

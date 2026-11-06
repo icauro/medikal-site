@@ -7,7 +7,7 @@ Your Medikal Site project has been converted from Firebase to Supabase. Here's w
 ### ✅ Completed (8 files)
 1. **Supabase Client** - `lib/supabase.ts`
 2. **Auth Context** - `lib/contexts/AuthContext.tsx` (fully converted)
-3. **Database Schema** - `docs/SUPABASE_SCHEMA.sql` (with RLS policies)
+3. **Database Schema** - `_docs/SUPABASE_SCHEMA.sql` (with RLS policies)
 4. **OAuth Callback** - `app/auth/callback/route.ts` (for Google OAuth)
 5. **Example Config** - `.env.example`
 6. **Dependencies** - `package.json` (Firebase removed)
@@ -37,7 +37,7 @@ Dashboard > Project Settings > API
 ### Step 3: Setup Database Schema (5 min)
 ```
 1. Dashboard > SQL Editor > New Query
-2. Open: docs/SUPABASE_SCHEMA.sql
+2. Open: _docs/SUPABASE_SCHEMA.sql
 3. Copy entire content
 4. Paste into SQL Editor
 5. Click "Run"
@@ -103,9 +103,9 @@ npm run dev
 
 ## 📚 Key Resources
 
-1. **Migration Guide** → `docs/FIREBASE_TO_SUPABASE_MIGRATION.md`
-2. **Conversion Checklist** → `docs/CONVERSION_CHECKLIST.md`
-3. **Database Schema** → `docs/SUPABASE_SCHEMA.sql`
+1. **Migration Guide** → `_docs/FIREBASE_TO_SUPABASE_MIGRATION.md`
+2. **Conversion Checklist** → `_docs/CONVERSION_CHECKLIST.md`
+3. **Database Schema** → `_docs/SUPABASE_SCHEMA.sql`
 
 ---
 
@@ -160,8 +160,8 @@ const { data } = await supabase
 ## 📞 Next Steps
 
 1. **Complete the setup above** (23 min total)
-2. **Read** `docs/FIREBASE_TO_SUPABASE_MIGRATION.md` for detailed conversions
-3. **Convert remaining files** using the checklist in `docs/CONVERSION_CHECKLIST.md`
+2. **Read** `_docs/FIREBASE_TO_SUPABASE_MIGRATION.md` for detailed conversions
+3. **Convert remaining files** using the checklist in `_docs/CONVERSION_CHECKLIST.md`
 4. **Test thoroughly** after each page/component conversion
 
 ---
