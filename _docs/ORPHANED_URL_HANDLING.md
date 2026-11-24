@@ -105,7 +105,7 @@ Example logs:
 ```
 🖼️ [PROFILE] Image failed to load from R2, falling back to placeholder
 ⚠️ [R2] ORPHANED URL - File exists in database but not in R2:
-  url: "https://mp-images.r2.cloudflarestorage.com/users/123/profile-1234567890.jpg"
+  url: "https://pub-your-hash.r2.dev/users/123/profile-1234567890.jpg"
   key: "users/123/profile-1234567890.jpg"
 ```
 

@@ -94,7 +94,7 @@ CLOUDFLARE_R2_ACCOUNT_ID=your-account-id
 CLOUDFLARE_R2_ACCESS_KEY_ID=your-key
 CLOUDFLARE_R2_SECRET_ACCESS_KEY=your-secret
 CLOUDFLARE_R2_BUCKET_NAME=your-bucket
-NEXT_PUBLIC_R2_PUBLIC_URL=https://your-bucket.r2.cloudflarestorage.com
+NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-your-hash.r2.dev
 ```
 
 ### 3. Install & Test

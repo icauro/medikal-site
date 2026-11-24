@@ -1,7 +1,25 @@
 {
-  "name": "nextjs",
+  "name": "medikal-site",
   "version": "0.1.0",
   "private": true,
+  "description": "Healthcare facility directory for Turkey \u2014 Next.js + Supabase + Cloudflare R2",
+  "keywords": [
+    "nextjs",
+    "supabase",
+    "healthcare",
+    "directory",
+    "typescript",
+    "cloudflare-r2"
+  ],
+  "homepage": "https://github.com/icauro/medikal-site#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/icauro/medikal-site.git"
+  },
+  "bugs": {
+    "url": "https://github.com/icauro/medikal-site/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

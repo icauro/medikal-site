@@ -48,7 +48,8 @@ CLOUDFLARE_R2_BUCKET_NAME=your-bucket-name
 # Public URL for accessing uploaded files
 # This is the public endpoint for your bucket
 # Format: https://{bucket-name}.{domain}.com (custom domain) 
-#         or https://{bucket-name}.r2.cloudflarestorage.com (default)
+#         or https://pub-{hash}.r2.dev (r2.dev public development URL)
+# NOT https://<account-id>.r2.cloudflarestorage.com — that is the S3 API endpoint
 NEXT_PUBLIC_R2_PUBLIC_URL=https://your-bucket-name.your-domain.com
 ```
 
@@ -61,7 +62,8 @@ NEXT_PUBLIC_R2_PUBLIC_URL=https://your-bucket-name.your-domain.com
 **Bucket's Public URL**:
 - Go to R2 → Your Bucket → Settings
 - Under "Domain", use either:
-  - **Default domain**: `https://{bucket-name}.r2.cloudflarestorage.com`
+  - **r2.dev subdomain**: `https://pub-<hash>.r2.dev` (Public Development URL, enable it in bucket settings)
+  - **Not** `https://<account-id>.r2.cloudflarestorage.com` — that is the S3 API endpoint and is not public
   - **Custom domain**: If you've configured one (requires additional setup)
 
 ## Step 4: (Optional) Set Up a Custom Domain for R2

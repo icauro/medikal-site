@@ -32,6 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# service-account credentials
+serviceAccountKey.json
+
+# generated Supabase CLI state
+supabase/.temp/
+
+# bulk facility dataset (not redistributed; see README)
+public/merged_medical_facilities.json
+
+# python caches from _tools
+__pycache__/
 
 
 # vercel
@@ -46,6 +59,10 @@ next-env.d.ts
 
 # next-agents-md
 .next-docs/
+
+# large local binaries
+supabase.exe
+supabase.tar.gz
 
 # Explicitly disposable workspace output
 **/.artifacts/

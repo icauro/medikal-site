@@ -91,7 +91,7 @@ CLOUDFLARE_R2_ACCOUNT_ID                 # From Cloudflare Account Settings
 CLOUDFLARE_R2_ACCESS_KEY_ID              # From R2 API token
 CLOUDFLARE_R2_SECRET_ACCESS_KEY          # From R2 API token
 CLOUDFLARE_R2_BUCKET_NAME                # Your bucket name
-NEXT_PUBLIC_R2_PUBLIC_URL                # https://{bucket}.r2.cloudflarestorage.com
+NEXT_PUBLIC_R2_PUBLIC_URL                # https://pub-{hash}.r2.dev (public read URL)
 ```
 
 ## Error Codes

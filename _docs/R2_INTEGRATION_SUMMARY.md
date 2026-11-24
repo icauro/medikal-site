@@ -75,7 +75,7 @@ CLOUDFLARE_R2_SECRET_ACCESS_KEY=your-secret-access-key
 CLOUDFLARE_R2_BUCKET_NAME=your-bucket-name
 
 # Public URL for accessing files (can be custom domain or Cloudflare domain)
-NEXT_PUBLIC_R2_PUBLIC_URL=https://your-bucket-name.r2.cloudflarestorage.com
+NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-your-hash.r2.dev
 ```
 
 ## Architecture
@@ -212,7 +212,7 @@ The implementation includes comprehensive error handling:
    CLOUDFLARE_R2_ACCESS_KEY_ID=your-key
    CLOUDFLARE_R2_SECRET_ACCESS_KEY=your-secret
    CLOUDFLARE_R2_BUCKET_NAME=medikal-test
-   NEXT_PUBLIC_R2_PUBLIC_URL=https://medikal-test.r2.cloudflarestorage.com
+   NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-your-hash.r2.dev
    ```
 
 4. **Restart dev server** (env vars need reload)
